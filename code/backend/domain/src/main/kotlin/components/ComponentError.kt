@@ -1,5 +1,7 @@
 package components
 
+import user.components.Password
+import user.components.Username
 import utils.Either
 
 sealed class IdError(open val value: Int) {
@@ -9,7 +11,7 @@ sealed class IdError(open val value: Int) {
 typealias GetIdResult = Either<IdError, Id>
 
 sealed class EmailError {
-    data object BlankEmail: EmailError()
+    data object BlankEmail : EmailError()
     data object InvalidEmail : EmailError()
 }
 

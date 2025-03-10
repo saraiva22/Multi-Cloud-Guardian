@@ -31,9 +31,7 @@ class Email private constructor(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Email) return false
-
         if (value != other.value) return false
-
         return true
     }
 }
