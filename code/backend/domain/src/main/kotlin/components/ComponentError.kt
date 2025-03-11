@@ -11,7 +11,7 @@ sealed class IdError(open val value: Int) {
 typealias GetIdResult = Either<IdError, Id>
 
 sealed class EmailError {
-    data object BlankEmail : EmailError()
+    data object EmailBlank : EmailError()
     data object InvalidEmail : EmailError()
 }
 
@@ -29,6 +29,7 @@ typealias GetUsernameResult = Either<UsernameError, Username>
 sealed class PasswordError {
     data object PasswordNotSafe : PasswordError()
     data object PasswordBlack : PasswordError()
+    data object InvalidLength : PasswordError()
 }
 
 typealias GetPasswordResult = Either<PasswordError, Password>

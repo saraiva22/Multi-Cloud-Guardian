@@ -15,7 +15,7 @@ class Email private constructor(
 
         operator fun invoke(value: String): Either<EmailError, Email> =
             when {
-                value.isBlank() -> Failure(EmailError.BlankEmail)
+                value.isBlank() -> Failure(EmailError.EmailBlank)
                 !EMAIL_FORMAT.matches(value) -> Failure(EmailError.InvalidEmail)
                 else -> Success(Email(value))
             }
