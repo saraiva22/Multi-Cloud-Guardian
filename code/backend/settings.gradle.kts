@@ -5,10 +5,11 @@ plugins {
     id("org.springframework.boot") version "3.3.3"  apply false
     id("io.spring.dependency-management") version "1.1.6"  apply false
 }
-rootProject.name = "backend"
-include("domain")
-include("host")
-include("http")
-include("repository")
-include("repository-jdbi")
-include("services")
+include("multicloud-guardian")
+include("multicloud-guardian:domain")
+include("multicloud-guardian:host")
+include("multicloud-guardian:http")
+include("multicloud-guardian:repository")
+include("multicloud-guardian:repository-jdbi")
+include("multicloud-guardian:services")
+
