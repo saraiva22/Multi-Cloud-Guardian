@@ -1,7 +1,6 @@
 package pt.isel.leic.multicloudguardian.domain.user.components
 
 import pt.isel.leic.multicloudguardian.domain.components.Component
-import pt.isel.leic.multicloudguardian.domain.components.UsernameError
 import pt.isel.leic.multicloudguardian.domain.utils.Either
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Success
@@ -37,3 +36,10 @@ class Username private constructor(
         return true
     }
 }
+
+sealed class UsernameError {
+    data object InvalidLength : UsernameError()
+    data object UsernameBlank : UsernameError()
+}
+
+typealias GetUsernameResult = Either<UsernameError, Username>

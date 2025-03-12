@@ -1,7 +1,6 @@
 package pt.isel.leic.multicloudguardian.domain.user.components
 
 import pt.isel.leic.multicloudguardian.domain.components.Component
-import pt.isel.leic.multicloudguardian.domain.components.PasswordError
 import pt.isel.leic.multicloudguardian.domain.utils.Either
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Success
@@ -52,3 +51,12 @@ class Password private constructor(
     fun isSafe(password: Password) = isSafePassword(password.value)
 
 }
+
+
+sealed class PasswordError {
+    data object PasswordNotSafe : PasswordError()
+    data object PasswordBlack : PasswordError()
+    data object InvalidLength : PasswordError()
+}
+
+typealias GetPasswordResult = Either<PasswordError, Password>

@@ -16,6 +16,11 @@ repositories {
 }
 
 dependencies {
+    // Module dependencies
+    implementation(project(":multicloud-guardian:domain"))
+    implementation(project(":multicloud-guardian:http"))
+    implementation(project(":multicloud-guardian:services"))
+    implementation(project(":multicloud-guardian:repository-jdbi"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")

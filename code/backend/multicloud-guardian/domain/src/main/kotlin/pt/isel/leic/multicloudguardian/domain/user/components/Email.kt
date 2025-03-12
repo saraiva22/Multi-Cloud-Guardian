@@ -1,7 +1,6 @@
 package pt.isel.leic.multicloudguardian.domain.user.components
 
 import pt.isel.leic.multicloudguardian.domain.components.Component
-import pt.isel.leic.multicloudguardian.domain.components.EmailError
 import pt.isel.leic.multicloudguardian.domain.utils.Either
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Success
@@ -35,3 +34,11 @@ class Email private constructor(
         return true
     }
 }
+
+
+sealed class EmailError {
+    data object EmailBlank : EmailError()
+    data object InvalidEmail : EmailError()
+}
+
+typealias GetEmailResult = Either<EmailError, Email>
