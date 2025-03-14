@@ -1,5 +1,8 @@
 package pt.isel.leic.multicloudguardian.domain.preferences
 
+/** Represents the location preference of a user.
+ * @property location The location preference of the user.w
+ */
 
 enum class LocationType(val location: String) {
     NORTH_AMERICA("north-america"),

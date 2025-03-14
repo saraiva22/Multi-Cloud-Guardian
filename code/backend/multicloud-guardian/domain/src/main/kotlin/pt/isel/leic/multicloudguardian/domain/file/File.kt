@@ -3,13 +3,28 @@ package pt.isel.leic.multicloudguardian.domain.file
 import pt.isel.leic.multicloudguardian.domain.components.Id
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 
+/** Represents a file in the cloud storage.
+ * @property fileId The unique identifier for the file.
+ * @property userId The unique identifier for the user.
+ * @property folderId The unique identifier for the folder.
+ * @property name The name of the file.
+ * @property checksum The checksum of the file.
+ * @property path The path of the file.
+ * @property size The size of the file in bytes.
+ * @property encryption The encryption status of the file.
+ * @property storageProvider The storage provider of the file.
+ * @property url The URL of the file.
+ */
+
 data class File(
     val fileId: Id,
+    val userId: Id,
+    val folderId: Id,
     val name: String,
-    val storageProvider: ProviderType,
-    val encryption: Boolean,
-    val size: Int,
-    val checkSum: Long,
+    val checksum: Long,
     val path : String,
+    val size: Int,
+    val encryption: Boolean,
+    val storageProvider: ProviderType,
     val url: String
 )
