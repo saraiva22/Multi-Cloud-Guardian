@@ -12,6 +12,7 @@ enum class LocationType(val location: String) {
 
     companion object {
         fun fromString(value: String): LocationType? = entries.find { it.location == value }
+        fun isLocationType(value: String): Boolean = entries.any { it.location == value }
     }
 }
 

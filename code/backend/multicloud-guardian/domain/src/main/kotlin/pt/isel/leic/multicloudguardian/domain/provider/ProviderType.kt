@@ -8,6 +8,7 @@ enum class ProviderType(val provider: String) {
 
     companion object {
         fun fromString(value: String): ProviderType? = entries.find { it.provider == value }
+        fun isProviderType(value: String): Boolean = entries.any { it.provider == value }
     }
 }
 
