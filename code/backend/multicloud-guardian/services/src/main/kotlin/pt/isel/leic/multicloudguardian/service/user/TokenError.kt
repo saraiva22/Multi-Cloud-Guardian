@@ -1,4 +1,4 @@
-package pt.isel.leic.multicloudguardian.user
+package pt.isel.leic.multicloudguardian.service.user
 
 import kotlinx.datetime.Instant
 import pt.isel.leic.multicloudguardian.domain.utils.Either

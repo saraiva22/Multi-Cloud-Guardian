@@ -1,4 +1,4 @@
-package pt.isel.leic.multicloudguardian.user
+package pt.isel.leic.multicloudguardian.service.user
 
 import pt.isel.leic.multicloudguardian.domain.components.Id
 import pt.isel.leic.multicloudguardian.domain.user.User
