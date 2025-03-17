@@ -35,6 +35,9 @@ class Password private constructor(
                 else -> Success(Password(value))
             }
 
+        const val minLength = MIN_PASSWORD_LENGTH
+        const val maxLength = MAX_PASSWORD_LENGTH
+
     }
 
     override fun hashCode(): Int = value.hashCode()

@@ -20,6 +20,9 @@ dependencies {
     implementation("org.springframework:spring-webmvc:6.1.13")
     compileOnly("jakarta.servlet:jakarta.servlet-api:6.1.0")
 
+    // for Spring validation
+    implementation("org.springframework.boot:spring-boot-starter-validation:3.0.4")
+
     // To use SLF4J
     implementation("org.slf4j:slf4j-api:2.0.16")
 

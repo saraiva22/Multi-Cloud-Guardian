@@ -12,6 +12,9 @@ repositories {
 }
 
 dependencies {
+    // Module dependencies
+    api(project(":multicloud-guardian:domain"))
+    implementation(project(":multicloud-guardian:repository"))
     // To get the DI annotation
     implementation("jakarta.inject:jakarta.inject-api:2.0.1")
 
