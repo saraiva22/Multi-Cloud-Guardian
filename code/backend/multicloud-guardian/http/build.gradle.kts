@@ -12,12 +12,19 @@ repositories {
 }
 
 dependencies {
+    // Module dependencies
+    implementation(project(":multicloud-guardian:domain"))
+    implementation(project(":multicloud-guardian:services"))
+
     // To use Spring MVC and the Servlet API
     implementation("org.springframework:spring-webmvc:6.1.13")
     compileOnly("jakarta.servlet:jakarta.servlet-api:6.1.0")
 
     // To use SLF4J
     implementation("org.slf4j:slf4j-api:2.0.16")
+
+    // for jackson json library
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
 
     // To use Kotlin specific date and time functions
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
