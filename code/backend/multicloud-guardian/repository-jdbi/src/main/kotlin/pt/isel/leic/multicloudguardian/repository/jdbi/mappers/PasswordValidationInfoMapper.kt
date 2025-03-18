@@ -7,8 +7,8 @@ import java.sql.ResultSet
 import java.sql.SQLException
 import kotlin.jvm.Throws
 
-class PasswordValidationInfoMapper : ColumnMapper<pt.isel.leic.multicloudguardian.domain.user.PasswordValidationInfo> {
+class PasswordValidationInfoMapper : ColumnMapper<PasswordValidationInfo> {
     @Throws(SQLException::class)
-    override fun map(r: ResultSet, columnNumber: Int, ctx: StatementContext?): pt.isel.leic.multicloudguardian.domain.user.PasswordValidationInfo =
-        pt.isel.leic.multicloudguardian.domain.user.PasswordValidationInfo(r.getString(columnNumber))
+    override fun map(r: ResultSet, columnNumber: Int, ctx: StatementContext?): PasswordValidationInfo =
+        PasswordValidationInfo(r.getString(columnNumber))
 }

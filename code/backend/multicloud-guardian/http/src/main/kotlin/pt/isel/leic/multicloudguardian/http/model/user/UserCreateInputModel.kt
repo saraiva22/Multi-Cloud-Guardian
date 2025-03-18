@@ -3,6 +3,8 @@ package pt.isel.leic.multicloudguardian.http.model.user
 
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
+import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
+import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.user.components.Email
 import pt.isel.leic.multicloudguardian.domain.user.components.Password
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
@@ -24,6 +26,7 @@ data class UserCreateInputModel(
         max = Password.maxLength,
         message = "Password must have between 5 and 40 characters"
     )
-    val password: Password
-
+    val password: Password,
+    val performanceType: PerformanceType,
+    val locationType: LocationType
 )

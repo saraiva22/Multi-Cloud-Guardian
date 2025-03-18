@@ -20,9 +20,11 @@ class RequestTokenProcessor(
         if (parts.size != 2) {
             return null
         }
-        if (parts[0].lowercase() != SCHEME) return null
+        val scheme = parts.first()
+        val tokenString = parts.last()
+        if (scheme.lowercase() != SCHEME) return null
 
-        return usersService.getUserByToken(parts[1]?.let { AuthenticatedUser(it, parts[1]) })
+        return usersService.getUserByToken(tokenString)?.let { AuthenticatedUser(it, tokenString) }
     }
 
     fun processCookieValue(cookieValue: String?): AuthenticatedUser? {

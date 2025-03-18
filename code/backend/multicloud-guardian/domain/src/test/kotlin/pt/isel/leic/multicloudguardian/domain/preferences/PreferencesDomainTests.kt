@@ -13,7 +13,6 @@ class PreferencesDomainTests {
         // give: Set up the performance and location preferences
         val performance = PerformanceType.LOW
         val location = LocationType.EUROPE
-        val preferences = Preferences(prefId, userId, location, performance)
 
         // and:
         val performanceString = "low"
@@ -30,7 +29,7 @@ class PreferencesDomainTests {
 
         // when: Associate the provider based on preferences
         val prefDomain = PreferencesDomain()
-        val providerType = prefDomain.associationProvider(preferences)
+        val providerType = prefDomain.associationProvider(performance, location)
 
         // then: Verify that the correct provider is produced
         assertEquals(ProviderType.BACKBLAZE, providerType)
@@ -45,7 +44,6 @@ class PreferencesDomainTests {
         // give: Set up the performance and location preferences
         val performance = PerformanceType.MEDIUM
         val location = LocationType.EUROPE
-        val preferences = Preferences(prefId, userId, location, performance)
 
         // and:
         val performanceString = "medium"
@@ -61,7 +59,7 @@ class PreferencesDomainTests {
 
         // when: Associate the provider based on preferences
         val prefDomain = PreferencesDomain()
-        val providerType = prefDomain.associationProvider(preferences)
+        val providerType = prefDomain.associationProvider(performance, location)
 
         // then: Verify that the correct provider is produced
         assertEquals(ProviderType.GOOGLE, providerType)
@@ -75,10 +73,8 @@ class PreferencesDomainTests {
         // give: Set up the performance and location preferences
         val performance = PerformanceType.HIGH
         val location = LocationType.NORTH_AMERICA
-        val preferences = Preferences(prefId, userId, location, performance)
 
         val location1 = LocationType.EUROPE
-        val preferences1 = Preferences(prefId, userId, location1, performance)
 
         // and:
         val performanceString = "high"
@@ -97,8 +93,8 @@ class PreferencesDomainTests {
 
         // when: Associate the provider based on preferences
         val prefDomain = PreferencesDomain()
-        val providerType = prefDomain.associationProvider(preferences)
-        val providerType1 = prefDomain.associationProvider(preferences1)
+        val providerType = prefDomain.associationProvider(performance, location)
+        val providerType1 = prefDomain.associationProvider(performance, location1)
 
         // then: Verify that the correct provider is produced
         assertEquals(ProviderType.AZURE, providerType)
@@ -112,10 +108,8 @@ class PreferencesDomainTests {
         // give: Set up the performance and location preferences
         val performance = PerformanceType.HIGH
         val location = LocationType.SOUTH_AMERICA
-        val preferences = Preferences(prefId, userId, location, performance)
 
         val location1 = LocationType.OTHERS
-        val preferences1 = Preferences(prefId, userId, location1, performance)
 
         // and:
         val performanceString = "high"
@@ -134,9 +128,8 @@ class PreferencesDomainTests {
 
         // when: Associate the provider based on preferences
         val prefDomain = PreferencesDomain()
-        val providerType = prefDomain.associationProvider(preferences)
-        val providerType1 = prefDomain.associationProvider(preferences1)
-
+        val providerType = prefDomain.associationProvider(performance,location)
+        val providerType1 = prefDomain.associationProvider(performance,location1)
         // then: Verify that the correct provider is produced
         assertEquals(ProviderType.AMAZON, providerType)
         assertEquals(ProviderType.AMAZON, providerType1)
@@ -145,8 +138,6 @@ class PreferencesDomainTests {
     }
 
     companion object {
-        private val userId = Id(1).get()
-        private val prefId = Id(1).get()
 
     }
 }

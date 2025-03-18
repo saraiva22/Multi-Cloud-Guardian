@@ -14,8 +14,8 @@ fun Jdbi.configureWithAppRequirements(): Jdbi {
     installPlugin(KotlinPlugin())
     installPlugin(PostgresPlugin())
 
-    registerColumnMapper(pt.isel.leic.multicloudguardian.domain.user.PasswordValidationInfo::class.java, PasswordValidationInfoMapper())
-    registerColumnMapper(pt.isel.leic.multicloudguardian.domain.token.TokenValidationInfo::class.java, TokenValidationInfoMapper())
+    registerColumnMapper(PasswordValidationInfo::class.java, PasswordValidationInfoMapper())
+    registerColumnMapper(TokenValidationInfo::class.java, TokenValidationInfoMapper())
 
     registerColumnMapper(Instant::class.java, InstantMapper())
 

@@ -27,8 +27,10 @@ create table dbo.Preferences (
     user_id INT REFERENCES dbo.Users(id) ON DELETE CASCADE ON UPDATE CASCADE,
     location VARCHAR(15) NOT NULL,
     performance VARCHAR(10) NOT NULL,
+    storage_provider VARCHAR(25) not null,
     CONSTRAINT location_is_valid CHECK (location ~ '^(north-america|south-america|europe|others)$'),
-    CONSTRAINT performance_is_valid CHECK (performance ~ '^(low|medium|high)$')
+    CONSTRAINT performance_is_valid CHECK (performance ~ '^(low|medium|high)$'),
+    CONSTRAINT provider_is_valid CHECK (storage_provider ~ '^(aws-s3|azureblob|google-cloud-storage|b2)r$')
 );
 
 
@@ -55,9 +57,7 @@ create table dbo.Files(
     path VARCHAR(255) not null,
     size int not null,
     encryption BOOLEAN not null,
-    storage_provider VARCHAR(25) not null,
-    url VARCHAR(255) not null,
-    CONSTRAINT provider_is_valid CHECK (storage_provider ~ '^(aws-s3|azureblob|google-cloud-storage|b2)r$')
+    url VARCHAR(255) not null
 );
 
 create table dbo.Metadata(
@@ -71,16 +71,16 @@ create table dbo.Metadata(
     constraint created_before_indexed_at check (created_at <= indexed_at),
     constraint created_at_is_valid check (created_at > 0),
     constraint indexed_at_is_valid check (indexed_at > 0)
-)
+);
 
 
 -- Function to update folder size and number of files when a file is added, updated or deleted 
 
 create or replace function update_folder_stats()
-return trigger as $$
+returns trigger as $$
 begin
     -- If a file is inserted or moved to a different folder
-    if(TP_OP = 'INSERT' OR (TP_OP = 'UPDATE' AND NEW.folder_id IS DISTINCT FROM OLD.folder.id)) THEN
+    if (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND NEW.folder_id IS DISTINCT FROM OLD.folder_id)) THEN
         -- Increase folder size and file count
         UPDATE dbo.Folders
         SET 
@@ -90,32 +90,31 @@ begin
     end if;
 
     -- If a file is moved from one folder to another
-    if(TP_OP = 'UPDATE' AND OLD.folder_id IS DISTINCT FROM NEW.folder_id) THEN
+    if (TG_OP = 'UPDATE' AND OLD.folder_id IS DISTINCT FROM NEW.folder_id) THEN
         -- Decrease the previous folder's size and file count
         UPDATE dbo.Folders
         SET
-            size = size - OLD.SIZE,
+            size = size - OLD.size,
             number_files = number_files - 1
-            WHERE folder_id = OLD.folder_id;
+        WHERE folder_id = OLD.folder_id;
     end if;
 
-    -- if a file deleted
-    if(TP_OP = 'DELETE') THEN
+    -- If a file is deleted
+    if (TG_OP = 'DELETE') THEN
         -- Decrease folder size and file count
         UPDATE dbo.Folders
         SET 
-            size = sieze - OLD.size,
+            size = size - OLD.size,
             number_files = number_files - 1
-            WHERE folder_id = OLD.folder_is;
+        WHERE folder_id = OLD.folder_id;
     end if;
 
     return null;
 end;
-$$ LANGUAGE PLPGSQL;
-
+$$ LANGUAGE plpgsql;
 
 -- Create trigger to update folder statistics when a file is inserted, updated or deleted 
-create trigger trigger_update_folder_stats()
+create trigger trigger_update_folder_stats
 after insert or update or delete on dbo.Files
 for each row
 execute function update_folder_stats();

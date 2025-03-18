@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Success
 import pt.isel.leic.multicloudguardian.http.Uris
+import pt.isel.leic.multicloudguardian.http.media.Problem
 import pt.isel.leic.multicloudguardian.http.model.user.IdOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserCreateInputModel
 import pt.isel.leic.multicloudguardian.service.user.UserCreationError
@@ -30,7 +31,13 @@ class UsersController(
         @Validated @RequestBody input: UserCreateInputModel
     ): ResponseEntity<*> {
         val instance = Uris.Users.register()
-        val user = userService.createUser(input.username, input.email, input.password)
+        val user = userService.createUser(
+            input.username,
+            input.email,
+            input.password,
+            input.performanceType,
+            input.locationType
+        )
         return when (user) {
             is Success -> ResponseEntity.status(HttpStatus.CREATED)
                 .header(

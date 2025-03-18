@@ -3,6 +3,8 @@ package pt.isel.leic.multicloudguardian.http.media
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType.APPLICATION_PROBLEM_JSON_VALUE
 import org.springframework.http.ResponseEntity
+import pt.isel.leic.multicloudguardian.domain.user.components.Email
+import pt.isel.leic.multicloudguardian.domain.user.components.Username
 import java.net.URI
 
 /**
@@ -37,6 +39,11 @@ class Problem(
         private const val TOKEN_FOLDER = BASE_URL + "token/"
 
 
+        fun response(status: Int, problem: Problem) = ResponseEntity.status(status)
+            .header("Content-Type", MEDIA_TYPE)
+            .header("Content-Language", LANGUAGE)
+            .body<Any>(this)
+
         //Default
         val internalServerError = URI("${DEFAULT_FOLDER}internal-server-error")
         val badRequest = URI("${DEFAULT_FOLDER}bad-request")
@@ -68,6 +75,13 @@ class Problem(
             instance = instance
         ).toResponse()
 
+        fun invalidRequestContent(errors: List<String>? = null): Problem = Problem(
+            type = invalidRequestContent,
+            title = "Invalid request content",
+            status = HttpStatus.BAD_REQUEST.value(),
+            detail = errors?.joinToString(", ") ?: "Invalid request content",
+            instance = invalidRequestContent
+        )
 
         fun unauthorizedRequest(instance: URI?): ResponseEntity<*> = Problem(
             type = unauthorizedRequest,
@@ -77,6 +91,54 @@ class Problem(
             instance = instance
         ).toResponse()
 
+        fun insecurePassword(instance: URI?): ResponseEntity<*> = Problem(
+            type = insecurePassword,
+            title = "Insecure password",
+            status = HttpStatus.BAD_REQUEST.value(),
+            detail = "Password is insecure",
+            instance = instance
+        ).toResponse()
+
+        fun invalidToken(instance: URI?): ResponseEntity<*> = Problem(
+            type = invalidToken,
+            title = "Invalid token",
+            status = HttpStatus.BAD_REQUEST.value(),
+            detail = "Invalid token",
+            instance = instance
+        ).toResponse()
+
+        fun tokenNotRevoked(instance: URI?, token: String): ResponseEntity<*> = Problem(
+            type = tokenNotRevoked,
+            title = "Token not revoked",
+            status = HttpStatus.BAD_REQUEST.value(),
+            detail = "Token $token not revoked",
+            instance = instance
+        ).toResponse()
+
+        fun usernameAlreadyExists(username: Username, instance: URI?): ResponseEntity<*> = Problem(
+            type = usernameAlreadyExists,
+            title = "UserName already exists",
+            status = HttpStatus.BAD_REQUEST.value(),
+            detail = "Give username ${username.value} already exists",
+            instance = instance
+        ).toResponse()
+
+        fun emailAlreadyExists(email: Email, instance: URI?): ResponseEntity<*> = Problem(
+            type = emailAlreadyExists,
+            title = "Email already exists",
+            status = HttpStatus.BAD_REQUEST.value(),
+            detail = "Give emails ${email.value} already exists",
+            instance = instance
+        ).toResponse()
+
+
+        fun invalidEmail(email: Email, instance: URI?): ResponseEntity<*> = Problem(
+            type = invalidEmail,
+            title = "Invalid email",
+            status = HttpStatus.BAD_REQUEST.value(),
+            detail = "Email is invalid",
+            instance = instance
+        ).toResponse()
     }
 
 

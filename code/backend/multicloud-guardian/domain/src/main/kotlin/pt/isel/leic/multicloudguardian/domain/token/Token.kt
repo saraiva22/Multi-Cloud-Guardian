@@ -1,6 +1,7 @@
 package pt.isel.leic.multicloudguardian.domain.token
 
 import kotlinx.datetime.Instant
+import pt.isel.leic.multicloudguardian.domain.components.Id
 
 /**
  * Represents a token that can be used to authenticate a user.
@@ -13,7 +14,7 @@ import kotlinx.datetime.Instant
 
 class Token(
     val tokenValidationInfo: TokenValidationInfo,
-    val userId: Int,
+    val userId: Id,
     val userAgent: String,
     val createdAt: Instant,
     val lastUsedAt: Instant,
