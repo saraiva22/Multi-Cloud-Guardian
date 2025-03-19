@@ -17,6 +17,4 @@ jobs:
           java-version: 21
           distribution: temurin
       - name: Build with Gradle
-        env:
-          DB_URL: ${{ secrets.DB_URL }}
         run: ./code/backend/gradlew -p code/backend check --info
