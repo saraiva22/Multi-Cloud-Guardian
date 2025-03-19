@@ -1,9 +1,9 @@
 package pt.isel.leic.multicloudguardian.http.pipeline.interceptors
 
-import org.slf4j.LoggerFactory
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.HandlerInterceptor
@@ -12,16 +12,20 @@ import pt.isel.leic.multicloudguardian.http.media.Problem
 import pt.isel.leic.multicloudguardian.http.pipeline.processors.RequestTokenProcessor
 import pt.isel.leic.multicloudguardian.http.pipeline.resolvers.AuthenticatedUserArgumentResolver
 
-
 @Component
 class AuthenticationInterceptor(
     private val authorizationHeaderProcessor: RequestTokenProcessor,
 ) : HandlerInterceptor {
-
-    override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-        if (handler is HandlerMethod && handler.methodParameters.any {
+    override fun preHandle(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        handler: Any,
+    ): Boolean {
+        if (handler is HandlerMethod &&
+            handler.methodParameters.any {
                 it.parameterType == AuthenticatedUser::class.java
-            }) {
+            }
+        ) {
             logger.info("Intercepting request to enforce authentication")
             // process token in authentication schema
             val bearerToken = request.getHeader(NAME_AUTHORIZATION_HEADER)
@@ -48,7 +52,6 @@ class AuthenticationInterceptor(
                 logger.info("User authenticated")
                 true
             }
-
         }
 
         return true

@@ -13,7 +13,11 @@ import org.springframework.util.StopWatch
  */
 @Component
 class LoggingFilter : HttpFilter() {
-    override fun doFilter(request: HttpServletRequest, response: HttpServletResponse, chain: FilterChain) {
+    override fun doFilter(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        chain: FilterChain,
+    ) {
         val stopWatch = StopWatch().apply { start() }
         chain.doFilter(request, response)
         stopWatch.stop()
@@ -22,7 +26,7 @@ class LoggingFilter : HttpFilter() {
             request.method,
             request.requestURI,
             response.status,
-            stopWatch.totalTimeMillis
+            stopWatch.totalTimeMillis,
         )
     }
 

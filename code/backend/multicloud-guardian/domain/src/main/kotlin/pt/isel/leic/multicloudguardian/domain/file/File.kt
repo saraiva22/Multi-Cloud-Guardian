@@ -1,7 +1,7 @@
 package pt.isel.leic.multicloudguardian.domain.file
 
-import pt.isel.leic.multicloudguardian.domain.components.Id
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
+import pt.isel.leic.multicloudguardian.domain.utils.Id
 
 /** Represents a file in the cloud storage.
  * @property fileId The unique identifier for the file.
@@ -22,9 +22,9 @@ data class File(
     val folderId: Id,
     val name: String,
     val checksum: Long,
-    val path : String,
+    val path: String,
     val size: Int,
     val encryption: Boolean,
     val storageProvider: ProviderType,
-    val url: String
+    val url: String,
 )

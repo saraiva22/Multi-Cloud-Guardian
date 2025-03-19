@@ -1,7 +1,7 @@
 package pt.isel.leic.multicloudguardian.domain.folder
 
 import kotlinx.datetime.Instant
-import pt.isel.leic.multicloudguardian.domain.components.Id
+import pt.isel.leic.multicloudguardian.domain.utils.Id
 
 /** Represents a folder in the cloud storage.
  * @property folderId The unique identifier for the folder.
@@ -22,5 +22,5 @@ data class Folder(
     val size: Int,
     val numberFiles: Int,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant,
 )

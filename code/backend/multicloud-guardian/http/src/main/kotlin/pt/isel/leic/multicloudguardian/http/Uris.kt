@@ -15,11 +15,15 @@ object Uris {
         const val LOGOUT = "$PREFIX/logout"
         const val GET_BY_ID = "$PREFIX/users/{id}"
         const val HOME = "$PREFIX/me"
-        
+
         fun byId(id: Int): URI = UriTemplate(GET_BY_ID).expand(id)
+
         fun home(): URI = URI(HOME)
+
         fun login(): URI = URI(TOKEN)
+
         fun logout(): URI = URI(LOGOUT)
+
         fun register(): URI = URI(CREATE)
     }
 
@@ -32,9 +36,13 @@ object Uris {
         const val DELETE = "$PREFIX/files/{fileId}"
 
         fun register(): URI = URI(CREATE)
+
         fun byId(id: Int): URI = UriTemplate(GET_BY_ID).expand(id)
+
         fun updateFile(): URI = URI(UPLOAD_FILE)
+
         fun getFiles(): URI = URI(GET_FILES)
+
         fun downloadFile(id: Int): URI = UriTemplate(DOWNLOAD_FILE).expand(id)
     }
 
@@ -51,41 +59,34 @@ object Uris {
         const val DELETE_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}"
 
         fun register(): URI = URI(CREATE)
+
         fun folderById(id: Int): URI = UriTemplate(GET_FOLDERS).expand(id)
+
         fun getFolders(): URI = URI(GET_FOLDERS)
+
         fun filesInFolder(folderId: Int): URI = UriTemplate(GET_FILES_IN_FOLDER).expand(folderId)
-        fun fileInFolder(folderId: Int, fileId: Int): URI = UriTemplate(GET_FILE_IN_FOLDER).expand(folderId, fileId)
+
+        fun fileInFolder(
+            folderId: Int,
+            fileId: Int,
+        ): URI = UriTemplate(GET_FILE_IN_FOLDER).expand(folderId, fileId)
+
         fun fileInFolderById(id: Int): URI = UriTemplate(GET_FOLDER_BY_ID).expand(id)
+
         fun updateFileInFolder(id: Int): URI = UriTemplate(UPLOAD_FILE_IN_FOLDER).expand(id)
+
         fun downloadFolder(folderId: Int): URI = UriTemplate(DOWNLOAD_FOLDER).expand(folderId)
-        fun downloadFileInFolder(folderId: Int, fileId: Int): URI =
-            UriTemplate(DOWNLOAD_FILE_IN_FOLDER).expand(folderId, fileId)
+
+        fun downloadFileInFolder(
+            folderId: Int,
+            fileId: Int,
+        ): URI = UriTemplate(DOWNLOAD_FILE_IN_FOLDER).expand(folderId, fileId)
 
         fun deleteFolder(id: Int): URI = UriTemplate(DELETE_FOLDER).expand(id)
-        fun deleteFileInFolder(folderId: Int, fileId: Int): URI =
-            UriTemplate(DELETE_FILE_IN_FOLDER).expand(folderId, fileId)
+
+        fun deleteFileInFolder(
+            folderId: Int,
+            fileId: Int,
+        ): URI = UriTemplate(DELETE_FILE_IN_FOLDER).expand(folderId, fileId)
     }
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:filename")
+
 package pt.isel.leic.multicloudguardian.domain.user
 
 import kotlinx.datetime.Clock
@@ -9,7 +11,7 @@ import pt.isel.leic.multicloudguardian.domain.token.TokenEncoder
 import pt.isel.leic.multicloudguardian.domain.token.TokenValidationInfo
 import pt.isel.leic.multicloudguardian.domain.user.components.Password
 import java.security.SecureRandom
-import java.util.*
+import java.util.Base64
 
 @Component
 class UsersDomain(
@@ -23,14 +25,20 @@ class UsersDomain(
             Base64.getUrlEncoder().encodeToString(byteArray)
         }
 
-    fun canBeToken(token: String): Boolean = try {
-        Base64.getUrlDecoder()
-            .decode(token).size == config.tokenSizeInBytes
-    } catch (ex: IllegalArgumentException) {
-        false
-    }
+    fun canBeToken(token: String): Boolean =
+        try {
+            Base64
+                .getUrlDecoder()
+                .decode(token)
+                .size == config.tokenSizeInBytes
+        } catch (ex: IllegalArgumentException) {
+            false
+        }
 
-    fun validatePassword(password: String, validationInfo: PasswordValidationInfo) = passwordEncoder.matches(
+    fun validatePassword(
+        password: String,
+        validationInfo: PasswordValidationInfo,
+    ) = passwordEncoder.matches(
         password,
         validationInfo.validationInfo,
     )
@@ -46,8 +54,8 @@ class UsersDomain(
     ): Boolean {
         val now = clock.now()
         return token.createdAt <= now &&
-                (now - token.createdAt) <= config.tokenTtl &&
-                (now - token.lastUsedAt) <= config.tokenRollingTtl
+            (now - token.createdAt) <= config.tokenTtl &&
+            (now - token.lastUsedAt) <= config.tokenRollingTtl
     }
 
     fun getTokenExpiration(token: Token): Instant {
@@ -60,8 +68,7 @@ class UsersDomain(
         }
     }
 
-    fun createTokenValidationInformation(token: String): TokenValidationInfo =
-        tokenEncoder.createValidationInformation(token)
+    fun createTokenValidationInformation(token: String): TokenValidationInfo = tokenEncoder.createValidationInformation(token)
 
     fun isSafePassword(password: Password) = password.isSafe(password)
 

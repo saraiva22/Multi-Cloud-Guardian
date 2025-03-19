@@ -1,8 +1,8 @@
 package pt.isel.leic.multicloudguardian.domain.user
 
-import pt.isel.leic.multicloudguardian.domain.components.Id
 import pt.isel.leic.multicloudguardian.domain.user.components.Email
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
+import pt.isel.leic.multicloudguardian.domain.utils.Id
 
 /**
  * Represents a user.
@@ -11,5 +11,9 @@ import pt.isel.leic.multicloudguardian.domain.user.components.Username
  * @property email The email of the user.
  * @property passwordValidation The information that can be used to validate the password of the user.
  */
-data class User(val id: Id, val username: Username, val email: Email, val passwordValidation: PasswordValidationInfo)
-
+data class User(
+    val id: Id,
+    val username: Username,
+    val email: Email,
+    val passwordValidation: PasswordValidationInfo,
+)

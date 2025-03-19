@@ -1,10 +1,8 @@
 package pt.isel.leic.multicloudguardian.repository
 
 import kotlinx.datetime.Instant
-import pt.isel.leic.multicloudguardian.domain.components.Id
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
 import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
-import pt.isel.leic.multicloudguardian.domain.user.User
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.token.Token
 import pt.isel.leic.multicloudguardian.domain.token.TokenValidationInfo
@@ -12,12 +10,13 @@ import pt.isel.leic.multicloudguardian.domain.user.PasswordValidationInfo
 import pt.isel.leic.multicloudguardian.domain.user.UserAndToken
 import pt.isel.leic.multicloudguardian.domain.user.components.Email
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
+import pt.isel.leic.multicloudguardian.domain.utils.Id
 
 interface UsersRepository {
     fun storeUser(
         username: Username,
         email: Email,
-        passwordValidation: PasswordValidationInfo
+        passwordValidation: PasswordValidationInfo,
     ): Id
 
     fun isUserStoredByUsername(username: Username): Boolean
@@ -25,16 +24,23 @@ interface UsersRepository {
     fun isEmailStoredByEmail(email: Email): Boolean
 
     fun storagePreferences(
+        userId: Id,
         performanceType: PerformanceType,
         locationType: LocationType,
-        providerType: ProviderType
+        providerType: ProviderType,
     )
 
     fun getTokenByTokenValidationInfo(tokenValidationInfo: TokenValidationInfo): UserAndToken?
 
-    fun updateTokenLastUsed(token: Token, now: Instant)
+    fun updateTokenLastUsed(
+        token: Token,
+        now: Instant,
+    )
 
-    fun createToken(token: Token, maxTokens: Int)
+    fun createToken(
+        token: Token,
+        maxTokens: Int,
+    )
 
     fun removeTokenByValidationInfo(tokenValidationInfo: TokenValidationInfo): Int
 

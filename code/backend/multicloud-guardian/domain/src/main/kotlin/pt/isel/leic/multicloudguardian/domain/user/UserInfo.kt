@@ -1,10 +1,10 @@
 package pt.isel.leic.multicloudguardian.domain.user
 
-import pt.isel.leic.multicloudguardian.domain.components.Id
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
+import pt.isel.leic.multicloudguardian.domain.utils.Id
 
 data class UserInfo(
     val id: Id,
     val username: Username,
-    val email: String
+    val email: String,
 )

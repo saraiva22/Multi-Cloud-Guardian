@@ -2,10 +2,8 @@ package pt.isel.leic.multicloudguardian.service.user
 
 import jakarta.inject.Named
 import kotlinx.datetime.Clock
-import org.springframework.stereotype.Service
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
 import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
-import pt.isel.leic.multicloudguardian.domain.preferences.Preferences
 import pt.isel.leic.multicloudguardian.domain.preferences.PreferencesDomain
 import pt.isel.leic.multicloudguardian.domain.user.User
 import pt.isel.leic.multicloudguardian.domain.user.UsersDomain
@@ -21,43 +19,39 @@ class UsersService(
     private val transactionManager: TransactionManager,
     private val usersDomain: UsersDomain,
     private val preferencesDomain: PreferencesDomain,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun createUser(
-        username: Username,
-        email: Email,
-        password: Password,
+        username: String,
+        email: String,
+        password: String,
         performanceType: PerformanceType,
-        locationType: LocationType
+        locationType: LocationType,
     ): UserCreationResult {
-        if (!usersDomain.isSafePassword(password)) {
+        if (!usersDomain.isSafePassword(Password(password))) {
             return failure(UserCreationError.InsecurePassword)
         }
 
-        val passwordValidationInfo = usersDomain.createPasswordValidationInformation(password.value)
-
+        val passwordValidationInfo = usersDomain.createPasswordValidationInformation(password)
 
         val provider = preferencesDomain.associationProvider(performanceType, locationType)
 
         return transactionManager.run {
             val usersRepository = it.usersRepository
 
-            if (usersRepository.isUserStoredByUsername(username)) {
+            if (usersRepository.isUserStoredByUsername(Username(username))) {
                 failure(UserCreationError.UserNameAlreadyExists)
-            } else if (usersRepository.isEmailStoredByEmail(email)) {
+            } else if (usersRepository.isEmailStoredByEmail(Email(email))) {
                 failure(UserCreationError.EmailAlreadyExists)
             } else {
-                val id = usersRepository.storeUser(username, email, passwordValidationInfo)
-                usersRepository.storagePreferences(performanceType, locationType, provider)
+                val id = usersRepository.storeUser(Username(username), Email(email), passwordValidationInfo)
+                usersRepository.storagePreferences(id, performanceType, locationType, provider)
                 success(id)
             }
         }
     }
 
-
-    fun getUserByToken(
-        token: String
-    ): User? {
+    fun getUserByToken(token: String): User? {
         if (!usersDomain.canBeToken(token)) {
             return null
         }
@@ -74,19 +68,3 @@ class UsersService(
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

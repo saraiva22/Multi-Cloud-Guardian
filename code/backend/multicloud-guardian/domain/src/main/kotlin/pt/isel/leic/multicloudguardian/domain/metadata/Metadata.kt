@@ -1,8 +1,7 @@
 package pt.isel.leic.multicloudguardian.domain.metadata
 
-
 import kotlinx.datetime.Instant
-import pt.isel.leic.multicloudguardian.domain.components.Id
+import pt.isel.leic.multicloudguardian.domain.utils.Id
 
 /**
  * Represents the metadata of a file.

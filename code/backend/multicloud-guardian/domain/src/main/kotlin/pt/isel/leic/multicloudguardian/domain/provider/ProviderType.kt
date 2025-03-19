@@ -1,14 +1,26 @@
 package pt.isel.leic.multicloudguardian.domain.provider
 
-enum class ProviderType(val provider: String) {
-    AMAZON("aws-s3"),
-    AZURE("azureblob"),
-    GOOGLE("google-cloud-storage"),
-    BACKBLAZE("b2");
+enum class ProviderType {
+    AMAZON,
+    AZURE,
+    GOOGLE,
+    BACKBLAZE,
+    ;
 
     companion object {
-        fun fromString(value: String): ProviderType? = entries.find { it.provider == value }
-        fun isProviderType(value: String): Boolean = entries.any { it.provider == value }
+        private const val AMAZON_NAME = "aws-s3"
+        private const val AZURE_NAME = "azureblob"
+        private const val GOOGLE_NAME = "google-cloud-storage"
+        private const val BACKBLAZE_NAME = "b2"
+
+        fun fromInt(value: Int) = entries[value]
+
+        fun convertString(value: Int): String =
+            when (entries[value]) {
+                AMAZON -> AMAZON_NAME
+                AZURE -> AZURE_NAME
+                GOOGLE -> GOOGLE_NAME
+                BACKBLAZE -> BACKBLAZE_NAME
+            }
     }
 }
-

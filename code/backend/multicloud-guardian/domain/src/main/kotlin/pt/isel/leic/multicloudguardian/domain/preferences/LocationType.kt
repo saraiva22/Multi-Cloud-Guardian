@@ -4,16 +4,14 @@ package pt.isel.leic.multicloudguardian.domain.preferences
  * @property location The location preference of the user.w
  */
 
-enum class LocationType(val location: String) {
-    NORTH_AMERICA("north-america"),
-    SOUTH_AMERICA("south-america"),
-    EUROPE("europe"),
-    OTHERS("others");
+enum class LocationType {
+    NORTH_AMERICA,
+    SOUTH_AMERICA,
+    EUROPE,
+    OTHERS,
+    ;
 
     companion object {
-        fun fromString(value: String): LocationType? = entries.find { it.location == value }
-        fun isLocationType(value: String): Boolean = entries.any { it.location == value }
+        fun fromInt(value: Int) = entries[value]
     }
 }
-
-

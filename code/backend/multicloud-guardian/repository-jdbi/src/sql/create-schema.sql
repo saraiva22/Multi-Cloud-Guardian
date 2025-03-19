@@ -8,7 +8,7 @@ create table dbo.Users(
     password_validation VARCHAR(256) not null,
     constraint email_is_valid check (email ~ '^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+$'),
     constraint username_min_length check (char_length(username) >= 5),
-    constraint username_max_length check (char_length(username) <= 30)
+    constraint username_max_length check (char_length(username) <= 25)
 );
 
 create table dbo.Tokens(
@@ -25,12 +25,9 @@ create table dbo.Tokens(
 create table dbo.Preferences (
     preferences_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT REFERENCES dbo.Users(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    location VARCHAR(15) NOT NULL,
-    performance VARCHAR(10) NOT NULL,
-    storage_provider VARCHAR(25) not null,
-    CONSTRAINT location_is_valid CHECK (location ~ '^(north-america|south-america|europe|others)$'),
-    CONSTRAINT performance_is_valid CHECK (performance ~ '^(low|medium|high)$'),
-    CONSTRAINT provider_is_valid CHECK (storage_provider ~ '^(aws-s3|azureblob|google-cloud-storage|b2)r$')
+    location int NOT NULL check (location in (0,1,2,3)),
+    performance int NOT NULL check(performance in (0,1,2)),
+    storage_provider int not null check(storage_provider in (0,1,2,3))
 );
 
 

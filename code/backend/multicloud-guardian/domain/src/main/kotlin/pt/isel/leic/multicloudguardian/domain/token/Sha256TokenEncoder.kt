@@ -7,8 +7,7 @@ import java.util.Base64
 private const val ALGORITHM = "SHA256"
 
 class Sha256TokenEncoder : TokenEncoder {
-    override fun createValidationInformation(token: String): TokenValidationInfo =
-        TokenValidationInfo(hash(token))
+    override fun createValidationInformation(token: String): TokenValidationInfo = TokenValidationInfo(hash(token))
 
     private fun hash(input: String): String {
         val messageDigest = MessageDigest.getInstance(ALGORITHM)

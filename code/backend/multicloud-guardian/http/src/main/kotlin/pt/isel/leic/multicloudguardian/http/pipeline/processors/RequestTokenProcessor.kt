@@ -1,10 +1,8 @@
 package pt.isel.leic.multicloudguardian.http.pipeline.processors
 
-
 import org.springframework.stereotype.Component
 import pt.isel.leic.multicloudguardian.domain.user.AuthenticatedUser
 import pt.isel.leic.multicloudguardian.service.user.UsersService
-
 
 @Component
 class RequestTokenProcessor(

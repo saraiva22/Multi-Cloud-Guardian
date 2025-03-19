@@ -15,11 +15,13 @@ import kotlin.time.Duration.Companion.hours
 @SpringBootApplication
 class MultiCloudGuardianApplication {
     @Bean
-    fun jdbi() = Jdbi.create(
-        PGSimpleDataSource().apply {
-            setURL(Environment.getDbUrl())
-        },
-    ).configureWithAppRequirements()
+    fun jdbi() =
+        Jdbi
+            .create(
+                PGSimpleDataSource().apply {
+                    setURL(Environment.getDbUrl())
+                },
+            ).configureWithAppRequirements()
 
     @Bean
     fun passwordEncoder() = BCryptPasswordEncoder()
@@ -31,12 +33,13 @@ class MultiCloudGuardianApplication {
     fun clock() = Clock.System
 
     @Bean
-    fun usersDomainConfig() = UsersDomainConfig(
-        tokenSizeInBytes = 256 / 8,
-        tokenTtl = 24.hours,
-        tokenRollingTtl = 1.hours,
-        maxTokensPerUser = 3,
-    )
+    fun usersDomainConfig() =
+        UsersDomainConfig(
+            tokenSizeInBytes = 256 / 8,
+            tokenTtl = 24.hours,
+            tokenRollingTtl = 1.hours,
+            maxTokensPerUser = 3,
+        )
 }
 
 fun main(args: Array<String>) {

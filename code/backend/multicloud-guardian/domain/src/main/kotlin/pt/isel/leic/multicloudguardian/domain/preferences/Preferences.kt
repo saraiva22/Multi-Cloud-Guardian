@@ -1,6 +1,6 @@
 package pt.isel.leic.multicloudguardian.domain.preferences
 
-import pt.isel.leic.multicloudguardian.domain.components.Id
+import pt.isel.leic.multicloudguardian.domain.utils.Id
 
 /** Represents the preferences of a user.
  * @property preferencesId The unique identifier for the preferences.
@@ -13,8 +13,5 @@ data class Preferences(
     val preferencesId: Id,
     val userId: Id,
     val location: LocationType,
-    val performance: PerformanceType
+    val performance: PerformanceType,
 )
-
-
-

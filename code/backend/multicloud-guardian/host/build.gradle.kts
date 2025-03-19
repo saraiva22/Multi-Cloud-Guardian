@@ -6,10 +6,8 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
 }
 
-
 group = "pt.isel.leic.multicloudguardian"
 version = "1.0-SNAPSHOT"
-
 
 repositories {
     mavenCentral()

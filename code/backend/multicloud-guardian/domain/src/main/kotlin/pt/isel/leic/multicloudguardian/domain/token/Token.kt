@@ -1,7 +1,7 @@
 package pt.isel.leic.multicloudguardian.domain.token
 
 import kotlinx.datetime.Instant
-import pt.isel.leic.multicloudguardian.domain.components.Id
+import pt.isel.leic.multicloudguardian.domain.utils.Id
 
 /**
  * Represents a token that can be used to authenticate a user.

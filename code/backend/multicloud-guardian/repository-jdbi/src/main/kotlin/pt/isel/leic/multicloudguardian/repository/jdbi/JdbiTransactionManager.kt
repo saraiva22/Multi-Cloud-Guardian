@@ -7,11 +7,13 @@ import pt.isel.leic.multicloudguardian.repository.Transaction
 import pt.isel.leic.multicloudguardian.repository.TransactionManager
 
 @Named
-class JdbiTransactionManager(private val jdbi: Jdbi) : TransactionManager {
+class JdbiTransactionManager(
+    private val jdbi: Jdbi,
+) : TransactionManager {
     private val logger = LoggerFactory.getLogger(JdbiTransactionManager::class.java)
 
-    override fun <R> run(block: (Transaction) -> R): R {
-        return try {
+    override fun <R> run(block: (Transaction) -> R): R =
+        try {
             jdbi.inTransaction<R, Exception> { handle ->
                 val transaction = JdbiTransaction(handle)
                 block(transaction)
@@ -20,5 +22,4 @@ class JdbiTransactionManager(private val jdbi: Jdbi) : TransactionManager {
             logger.error("Transaction failed ", e)
             throw e
         }
-    }
 }

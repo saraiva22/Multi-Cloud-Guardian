@@ -20,13 +20,14 @@ class Problem(
     val title: String,
     val status: Int,
     val detail: String,
-    val instance: URI? = null
+    val instance: URI? = null,
 ) {
-
-    fun toResponse() = ResponseEntity.status(status)
-        .header("Content-Type", MEDIA_TYPE)
-        .header("Content-Language", LANGUAGE)
-        .body<Any>(this)
+    fun toResponse() =
+        ResponseEntity
+            .status(status)
+            .header("Content-Type", MEDIA_TYPE)
+            .header("Content-Language", LANGUAGE)
+            .body<Any>(this)
 
     companion object {
         const val MEDIA_TYPE = APPLICATION_PROBLEM_JSON_VALUE
@@ -38,13 +39,16 @@ class Problem(
         private const val USER_FOLDER = BASE_URL + "user/"
         private const val TOKEN_FOLDER = BASE_URL + "token/"
 
-
-        fun response(status: Int, problem: Problem) = ResponseEntity.status(status)
+        fun response(
+            status: Int,
+            problem: Problem,
+        ) = ResponseEntity
+            .status(status)
             .header("Content-Type", MEDIA_TYPE)
             .header("Content-Language", LANGUAGE)
-            .body<Any>(this)
+            .body<Any>(problem)
 
-        //Default
+        // Default
         val internalServerError = URI("${DEFAULT_FOLDER}internal-server-error")
         val badRequest = URI("${DEFAULT_FOLDER}bad-request")
         val invalidRequestContent = URI("${DEFAULT_FOLDER}invalid-request-content")
@@ -59,87 +63,102 @@ class Problem(
         private val insecurePassword = URI("${USER_FOLDER}insecure-password")
         private val userOrPasswordAreInvalid = URI("${USER_FOLDER}user-or-password-are-invalid")
 
-
-        //Token
+        // Token
         private val invalidToken = URI("${TOKEN_FOLDER}user-not-found")
         private val tokenNotRevoked = URI("${TOKEN_FOLDER}token-not-revoked")
         val unauthorizedRequest = URI("${TOKEN_FOLDER}unauthorized")
 
-        fun internalServerError(
-            instance: URI?
-        ): ResponseEntity<*> = Problem(
-            type = internalServerError,
-            title = "Internal server error",
-            status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            detail = "An intervale server error occured",
-            instance = instance
-        ).toResponse()
+        fun internalServerError(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = internalServerError,
+                title = "Internal server error",
+                status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                detail = "An intervale server error occured",
+                instance = instance,
+            ).toResponse()
 
-        fun invalidRequestContent(errors: List<String>? = null): Problem = Problem(
-            type = invalidRequestContent,
-            title = "Invalid request content",
-            status = HttpStatus.BAD_REQUEST.value(),
-            detail = errors?.joinToString(", ") ?: "Invalid request content",
-            instance = invalidRequestContent
-        )
+        fun invalidRequestContent(errors: List<String>? = null): Problem =
+            Problem(
+                type = invalidRequestContent,
+                title = "Invalid request content",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = errors?.joinToString(", ") ?: "Invalid request content",
+                instance = invalidRequestContent,
+            )
 
-        fun unauthorizedRequest(instance: URI?): ResponseEntity<*> = Problem(
-            type = unauthorizedRequest,
-            title = "Unauthorized Request",
-            status = HttpStatus.UNAUTHORIZED.value(),
-            detail = "The request has not been applied because it lacks valid authentication credentials for the target resource.",
-            instance = instance
-        ).toResponse()
+        fun unauthorizedRequest(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = unauthorizedRequest,
+                title = "Unauthorized Request",
+                status = HttpStatus.UNAUTHORIZED.value(),
+                detail = "The request has not been applied because it lacks valid authentication credentials for the target resource.",
+                instance = instance,
+            ).toResponse()
 
-        fun insecurePassword(instance: URI?): ResponseEntity<*> = Problem(
-            type = insecurePassword,
-            title = "Insecure password",
-            status = HttpStatus.BAD_REQUEST.value(),
-            detail = "Password is insecure",
-            instance = instance
-        ).toResponse()
+        fun insecurePassword(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = insecurePassword,
+                title = "Insecure password",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Password is insecure",
+                instance = instance,
+            ).toResponse()
 
-        fun invalidToken(instance: URI?): ResponseEntity<*> = Problem(
-            type = invalidToken,
-            title = "Invalid token",
-            status = HttpStatus.BAD_REQUEST.value(),
-            detail = "Invalid token",
-            instance = instance
-        ).toResponse()
+        fun invalidToken(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = invalidToken,
+                title = "Invalid token",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Invalid token",
+                instance = instance,
+            ).toResponse()
 
-        fun tokenNotRevoked(instance: URI?, token: String): ResponseEntity<*> = Problem(
-            type = tokenNotRevoked,
-            title = "Token not revoked",
-            status = HttpStatus.BAD_REQUEST.value(),
-            detail = "Token $token not revoked",
-            instance = instance
-        ).toResponse()
+        fun tokenNotRevoked(
+            instance: URI?,
+            token: String,
+        ): ResponseEntity<*> =
+            Problem(
+                type = tokenNotRevoked,
+                title = "Token not revoked",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Token $token not revoked",
+                instance = instance,
+            ).toResponse()
 
-        fun usernameAlreadyExists(username: Username, instance: URI?): ResponseEntity<*> = Problem(
-            type = usernameAlreadyExists,
-            title = "UserName already exists",
-            status = HttpStatus.BAD_REQUEST.value(),
-            detail = "Give username ${username.value} already exists",
-            instance = instance
-        ).toResponse()
+        fun usernameAlreadyExists(
+            username: Username,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = usernameAlreadyExists,
+                title = "UserName already exists",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Give username ${username.value} already exists",
+                instance = instance,
+            ).toResponse()
 
-        fun emailAlreadyExists(email: Email, instance: URI?): ResponseEntity<*> = Problem(
-            type = emailAlreadyExists,
-            title = "Email already exists",
-            status = HttpStatus.BAD_REQUEST.value(),
-            detail = "Give emails ${email.value} already exists",
-            instance = instance
-        ).toResponse()
+        fun emailAlreadyExists(
+            email: Email,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = emailAlreadyExists,
+                title = "Email already exists",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Give emails ${email.value} already exists",
+                instance = instance,
+            ).toResponse()
 
-
-        fun invalidEmail(email: Email, instance: URI?): ResponseEntity<*> = Problem(
-            type = invalidEmail,
-            title = "Invalid email",
-            status = HttpStatus.BAD_REQUEST.value(),
-            detail = "Email is invalid",
-            instance = instance
-        ).toResponse()
+        fun invalidEmail(
+            email: Email,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = invalidEmail,
+                title = "Invalid email",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Email is invalid",
+                instance = instance,
+            ).toResponse()
     }
-
-
 }
