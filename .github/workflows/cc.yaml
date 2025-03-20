@@ -17,4 +17,4 @@ jobs:
           java-version: 21
           distribution: temurin
       - name: Build with Gradle
-        run: ./code/backend/gradlew -p code/backend check --info
+        run: ./code/backend/gradlew -p ./ check --info
