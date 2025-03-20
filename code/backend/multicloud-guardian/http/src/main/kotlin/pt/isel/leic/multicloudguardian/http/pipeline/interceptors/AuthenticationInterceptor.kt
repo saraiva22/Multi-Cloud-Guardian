@@ -9,6 +9,7 @@ import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.HandlerInterceptor
 import pt.isel.leic.multicloudguardian.domain.user.AuthenticatedUser
 import pt.isel.leic.multicloudguardian.http.media.Problem
+import pt.isel.leic.multicloudguardian.http.media.Problem.Companion.unauthorizedRequest
 import pt.isel.leic.multicloudguardian.http.pipeline.processors.RequestTokenProcessor
 import pt.isel.leic.multicloudguardian.http.pipeline.resolvers.AuthenticatedUserArgumentResolver
 
@@ -39,7 +40,7 @@ class AuthenticationInterceptor(
                 // client is not authenticated
                 response.contentType = Problem.MEDIA_TYPE
                 val objectMapper = ObjectMapper()
-                val problem = Problem.unauthorizedRequest
+                val problem = unauthorizedRequest(unauthorizedRequest)
                 val json = objectMapper.writeValueAsString(problem)
                 response.writer.write(json)
                 response.status = 401

@@ -4,6 +4,8 @@ import kotlinx.datetime.Clock
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
@@ -18,6 +20,8 @@ import pt.isel.leic.multicloudguardian.http.media.Problem
 import pt.isel.leic.multicloudguardian.http.model.user.IdOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserCreateInputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserCreateTokenInputModel
+import pt.isel.leic.multicloudguardian.http.model.user.UserHomeOutputModel
+import pt.isel.leic.multicloudguardian.http.model.user.UserInfoOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserTokenCreateOutputModel
 import pt.isel.leic.multicloudguardian.service.user.TokenCreationError
 import pt.isel.leic.multicloudguardian.service.user.UserCreationError
@@ -115,21 +119,42 @@ class UsersController(
     }
 
     @PostMapping(Uris.Users.LOGOUT)
-    fun logout(auth: AuthenticatedUser): ResponseEntity<*> {
+    fun logout(authenticatedUser: AuthenticatedUser): ResponseEntity<*> {
         val instance = Uris.Users.logout()
-        return when (userService.revokeToken(auth.user.id, auth.token)) {
+        return when (userService.revokeToken(authenticatedUser.user.id, authenticatedUser.token)) {
             is Success ->
                 ResponseEntity
                     .status(HttpStatus.OK)
                     .header(
                         HEADER_SET_COOKIE_NAME,
-                        "$COOKIE_NAME_TOKEN=${auth.token};Max-age=0; HttpOnly; SameSite = Strict; Path=/",
+                        "$COOKIE_NAME_TOKEN=${authenticatedUser.token};Max-age=0; HttpOnly; SameSite = Strict; Path=/",
                     ).header(
                         HEADER_SET_COOKIE_NAME,
-                        "$COOKIE_NAME_LOGIN=${auth.user.username};Max-age=0; SameSite = Strict; Path=/",
-                    ).body(UserTokenCreateOutputModel("Token ${auth.token} removed successful"))
+                        "$COOKIE_NAME_LOGIN=${authenticatedUser.user.username};Max-age=0; SameSite = Strict; Path=/",
+                    ).body(UserTokenCreateOutputModel("Token ${authenticatedUser.token} removed successful"))
 
-            is Failure -> Problem.tokenNotRevoked(instance, auth.token)
+            is Failure -> Problem.tokenNotRevoked(instance, authenticatedUser.token)
         }
     }
+
+    @GetMapping(Uris.Users.GET_BY_ID)
+    fun getById(
+        @PathVariable id: Int,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Users.byId(id)
+        val user = userService.getUserById(id)
+        return when (user) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(UserInfoOutputModel(user.value.id.value, user.value.username.value, user.value.email.value))
+
+            is Failure -> Problem.userNotFound(id, instance)
+        }
+    }
+
+    @GetMapping(Uris.Users.HOME)
+    fun getUserHome(authenticatedUser: AuthenticatedUser): UserHomeOutputModel =
+        UserHomeOutputModel(authenticatedUser.user.id.value, authenticatedUser.user.username.value)
 }

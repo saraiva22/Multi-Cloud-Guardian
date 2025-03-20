@@ -46,7 +46,7 @@ interface UsersRepository {
 
     fun getUserByUsername(username: Username): User?
 
-    fun getUserById(id: Int): User?
+    fun getUserById(id: Id): User?
 
     fun getUserByEmail(email: Email): User?
 }

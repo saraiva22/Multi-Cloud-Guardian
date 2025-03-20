@@ -53,10 +53,10 @@ class JdbiUsersRepository(
             .mapTo<Int>()
             .single() == 1
 
-    override fun getUserById(id: Int): User? =
+    override fun getUserById(id: Id): User? =
         handle
             .createQuery("select * from dbo.Users where id = :id")
-            .bind("id", id)
+            .bind("id", id.value)
             .mapTo<User>()
             .singleOrNull()
 
@@ -109,7 +109,7 @@ class JdbiUsersRepository(
                 """
                 update dbo.Tokens
                 set last_used_at = :last_used_at
-                where token_validation = :validation_inform
+                where token_validation = :validation_information
                 """.trimIndent(),
             ).bind("last_used_at", now.epochSeconds)
             .bind("validation_information", token.tokenValidationInfo.validationInfo)

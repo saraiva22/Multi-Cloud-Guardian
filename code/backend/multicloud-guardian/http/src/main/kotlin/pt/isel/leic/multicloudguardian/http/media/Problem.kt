@@ -134,6 +134,18 @@ class Problem(
                 instance = instance,
             ).toResponse()
 
+        fun userNotFound(
+            id: Int,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = userNotFound,
+                title = "User not found",
+                status = HttpStatus.NOT_FOUND.value(),
+                detail = "User with given id: $id not found",
+                instance = instance,
+            ).toResponse()
+
         fun usernameAlreadyExists(
             username: Username,
             instance: URI?,

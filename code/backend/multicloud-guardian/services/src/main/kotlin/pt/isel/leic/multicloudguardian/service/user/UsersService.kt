@@ -54,6 +54,13 @@ class UsersService(
         }
     }
 
+    fun getUserById(id: Int): UserSearchResult =
+        transactionManager.run {
+            val usersRepository = it.usersRepository
+            val user = usersRepository.getUserById(Id(id)) ?: return@run failure(UserSearchError.UserNotFound)
+            success(user)
+        }
+
     fun createToken(
         username: String,
         password: String,
