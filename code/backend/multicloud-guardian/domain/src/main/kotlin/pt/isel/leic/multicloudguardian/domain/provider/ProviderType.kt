@@ -1,5 +1,14 @@
 package pt.isel.leic.multicloudguardian.domain.provider
 
+/**
+ * Enum class representing the different types of cloud storage providers.
+ *
+ * @property AMAZON Represents the Amazon S3 cloud storage provider.
+ * @property AZURE Represents the Azure Blob Storage cloud storage provider.
+ * @property GOOGLE Represents the Google Cloud Storage cloud storage provider.
+ * @property BACKBLAZE Represents the Backblaze B2 cloud storage provider.
+ */
+
 enum class ProviderType {
     AMAZON,
     AZURE,

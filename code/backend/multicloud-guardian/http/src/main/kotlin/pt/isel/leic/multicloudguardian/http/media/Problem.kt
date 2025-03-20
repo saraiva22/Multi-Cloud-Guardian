@@ -113,6 +113,15 @@ class Problem(
                 instance = instance,
             ).toResponse()
 
+        fun passwordDoesNotMatch(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = userOrPasswordAreInvalid,
+                title = "Password does not match",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Password supplied does not match the user's password",
+                instance = instance,
+            ).toResponse()
+
         fun tokenNotRevoked(
             instance: URI?,
             token: String,
@@ -134,6 +143,18 @@ class Problem(
                 title = "UserName already exists",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = "Give username ${username.value} already exists",
+                instance = instance,
+            ).toResponse()
+
+        fun usernameNotFound(
+            username: String,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = usernameNotFound,
+                title = "UserName not found",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Give username $username not found",
                 instance = instance,
             ).toResponse()
 

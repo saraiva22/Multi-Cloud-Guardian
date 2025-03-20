@@ -2,7 +2,7 @@ package pt.isel.leic.multicloudguardian.domain.user.components
 
 // Constants
 private const val MAX_PASSWORD_LENGTH = 45
-private const val MIN_PASSWORD_LENGTH = 10
+private const val MIN_PASSWORD_LENGTH = 8
 
 /**
  * Component that represents a password.
@@ -23,11 +23,9 @@ data class Password(
          */
         private fun isSafePassword(value: String) = value.matches(PASSWORD_FORMAT)
 
-        @Suppress("ktlint:standard:property-naming")
-        const val minLength = MIN_PASSWORD_LENGTH
+        const val MIN_LENGTH = MIN_PASSWORD_LENGTH
 
-        @Suppress("ktlint:standard:property-naming")
-        const val maxLength = MAX_PASSWORD_LENGTH
+        const val MAX_LENGTH = MAX_PASSWORD_LENGTH
     }
 
     fun isSafe(password: Password) = isSafePassword(password.value)

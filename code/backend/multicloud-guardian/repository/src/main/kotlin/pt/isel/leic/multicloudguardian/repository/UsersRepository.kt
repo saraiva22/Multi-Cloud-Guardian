@@ -7,7 +7,7 @@ import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.token.Token
 import pt.isel.leic.multicloudguardian.domain.token.TokenValidationInfo
 import pt.isel.leic.multicloudguardian.domain.user.PasswordValidationInfo
-import pt.isel.leic.multicloudguardian.domain.user.UserAndToken
+import pt.isel.leic.multicloudguardian.domain.user.User
 import pt.isel.leic.multicloudguardian.domain.user.components.Email
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
 import pt.isel.leic.multicloudguardian.domain.utils.Id
@@ -30,7 +30,7 @@ interface UsersRepository {
         providerType: ProviderType,
     )
 
-    fun getTokenByTokenValidationInfo(tokenValidationInfo: TokenValidationInfo): UserAndToken?
+    fun getTokenByTokenValidationInfo(tokenValidationInfo: TokenValidationInfo): Pair<User, Token>?
 
     fun updateTokenLastUsed(
         token: Token,
@@ -44,14 +44,9 @@ interface UsersRepository {
 
     fun removeTokenByValidationInfo(tokenValidationInfo: TokenValidationInfo): Int
 
-    /*
-
     fun getUserByUsername(username: Username): User?
 
     fun getUserById(id: Int): User?
 
     fun getUserByEmail(email: Email): User?
-
-
-     */
 }

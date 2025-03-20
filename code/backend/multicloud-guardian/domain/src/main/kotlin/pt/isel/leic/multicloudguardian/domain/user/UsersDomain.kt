@@ -1,5 +1,3 @@
-@file:Suppress("ktlint:standard:filename")
-
 package pt.isel.leic.multicloudguardian.domain.user
 
 import kotlinx.datetime.Clock

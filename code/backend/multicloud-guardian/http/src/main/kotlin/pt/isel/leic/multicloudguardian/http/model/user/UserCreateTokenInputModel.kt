@@ -1,6 +1,23 @@
 package pt.isel.leic.multicloudguardian.http.model.user
 
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
+import pt.isel.leic.multicloudguardian.domain.user.components.Password
+import pt.isel.leic.multicloudguardian.domain.user.components.Username
+
 data class UserCreateTokenInputModel(
+    @field:NotBlank(message = "Username must not be blank")
+    @field:Size(
+        min = Username.MIN_LENGTH,
+        max = Username.MAX_LENGTH,
+        message = "Username must have between ${Username.MIN_LENGTH} and ${Username.MAX_LENGTH} characters",
+    )
     val username: String,
+    @field:NotBlank(message = "Password must not be blank")
+    @field:Size(
+        min = Password.MIN_LENGTH,
+        max = Password.MAX_LENGTH,
+        message = "Password must have between 5 and 40 characters",
+    )
     val password: String,
 )

@@ -15,7 +15,7 @@ import pt.isel.leic.multicloudguardian.domain.utils.Id
 class Token(
     val tokenValidationInfo: TokenValidationInfo,
     val userId: Id,
-    val userAgent: String,
     val createdAt: Instant,
     val lastUsedAt: Instant,
+    val userAgent: String,
 )

@@ -9,7 +9,11 @@ data class TokenExternalInfo(
 )
 
 sealed class TokenCreationError {
-    data object UserOrPasswordAreInvalid : TokenCreationError()
+    data object InsecurePassword : TokenCreationError()
+
+    data object UsernameNotFound : TokenCreationError()
+
+    data object PasswordDoesNotMatch : TokenCreationError()
 
     data object InvalidToken : TokenCreationError()
 }

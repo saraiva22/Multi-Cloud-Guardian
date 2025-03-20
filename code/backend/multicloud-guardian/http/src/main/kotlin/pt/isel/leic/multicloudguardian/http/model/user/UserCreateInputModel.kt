@@ -10,9 +10,9 @@ import pt.isel.leic.multicloudguardian.domain.user.components.Username
 data class UserCreateInputModel(
     @field:NotBlank(message = "Username must not be blank")
     @field:Size(
-        min = Username.minLength,
-        max = Username.maxLength,
-        message = "Username must have between ${Username.minLength} and ${Username.maxLength} characters",
+        min = Username.MIN_LENGTH,
+        max = Username.MAX_LENGTH,
+        message = "Username must have between ${Username.MIN_LENGTH} and ${Username.MAX_LENGTH} characters",
     )
     val username: String,
     @field:NotBlank(message = "Email must not be blank")
@@ -20,8 +20,8 @@ data class UserCreateInputModel(
     val email: String,
     @field:NotBlank(message = "Password must not be blank")
     @field:Size(
-        min = Password.minLength,
-        max = Password.maxLength,
+        min = Password.MIN_LENGTH,
+        max = Password.MAX_LENGTH,
         message = "Password must have between 5 and 40 characters",
     )
     val password: String,
