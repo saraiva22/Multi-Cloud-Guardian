@@ -18,6 +18,34 @@ import java.nio.charset.StandardCharsets
 
 @Named
 class StorageFileJclouds {
+    fun createBucketIfNotExists(
+        context: BlobStoreContext,
+        bucketName: String,
+    ): CreateGlobalBucketResult {
+        val blobStore = context.blobStore
+
+        if (blobStore.containerExists(bucketName)) {
+            return success(false)
+        }
+
+        logger.info("Creating bucket: $bucketName")
+        return try {
+            val apiMetadata = context.unwrap<Context>().providerMetadata.apiMetadata
+            val location =
+                if (apiMetadata is SwiftApiMetadata) {
+                    blobStore.listAssignableLocations().firstOrNull()
+                } else {
+                    null
+                }
+
+            blobStore.createContainerInLocation(location, bucketName)
+            success(true)
+        } catch (e: Exception) {
+            logger.info("Failed to create bucket: $bucketName", e)
+            failure(CreateGlobalBucketError.ErrorCreatingGlobalBucket)
+        }
+    }
+
     fun initializeBlobStoreContext(
         credential: String,
         identity: String,
@@ -45,29 +73,6 @@ class StorageFileJclouds {
         }
     }
 
-    fun createContainer(
-        context: BlobStoreContext,
-        username: String,
-        bucketName: String,
-    ): CreateContainerResult {
-        logger.info("Context :{}", context)
-        return try {
-            val apiMetadata = context.unwrap<Context>().providerMetadata.apiMetadata
-            val blobStore = context.blobStore
-            val location =
-                if (apiMetadata is SwiftApiMetadata) {
-                    blobStore.listAssignableLocations().firstOrNull()
-                } else {
-                    null
-                }
-
-            blobStore.createContainerInLocation(location, bucketName + username)
-            success(Unit)
-        } catch (e: Exception) {
-            failure(CreateContainerError.ErrorCreatingContainer)
-        }
-    }
-
     fun uploadBlob(
         blobName: String,
         data: ByteArray,
@@ -85,7 +90,7 @@ class StorageFileJclouds {
                 .contentType(contentType)
                 .build()
 
-        blobStore.putBlob(bucketName + username, blob)
+        blobStore.putBlob(bucketName, blob)
         logger.info("Blob $blobName uploaded successfully")
     }
 
@@ -126,7 +131,7 @@ class StorageFileJclouds {
             val credentialSupplier = GoogleCredentialsFromJson(fileContents)
             credentialSupplier.get().credential
         } catch (e: Exception) {
-            logger.info("Exception reading private key from '$filename'")
+            logger.error("Exception reading private key from '$filename'")
             null
         }
 

@@ -38,6 +38,7 @@ class Problem(
         private const val DEFAULT_FOLDER = BASE_URL + "default/"
         private const val USER_FOLDER = BASE_URL + "user/"
         private const val TOKEN_FOLDER = BASE_URL + "token/"
+        private const val FILE_FOLDER = BASE_URL + "file/"
 
         fun response(
             status: Int,
@@ -67,6 +68,9 @@ class Problem(
         private val invalidToken = URI("${TOKEN_FOLDER}user-not-found")
         private val tokenNotRevoked = URI("${TOKEN_FOLDER}token-not-revoked")
         val unauthorizedRequest = URI("${TOKEN_FOLDER}unauthorized")
+
+        // File
+        private val invalidCreateFile = URI("${FILE_FOLDER}invalid-create-file")
 
         fun internalServerError(instance: URI?): ResponseEntity<*> =
             Problem(
@@ -191,6 +195,15 @@ class Problem(
                 title = "Invalid email",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = "Email is invalid",
+                instance = instance,
+            ).toResponse()
+
+        fun invalidFileCreation(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = invalidCreateFile,
+                title = "Invalid file creation",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Invalid file creation",
                 instance = instance,
             ).toResponse()
     }

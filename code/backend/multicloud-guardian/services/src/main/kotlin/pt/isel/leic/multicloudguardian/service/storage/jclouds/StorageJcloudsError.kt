@@ -3,6 +3,12 @@ package pt.isel.leic.multicloudguardian.service.storage.jclouds
 import org.jclouds.blobstore.BlobStoreContext
 import pt.isel.leic.multicloudguardian.domain.utils.Either
 
+sealed class CreateGlobalBucketError {
+    data object ErrorCreatingGlobalBucket : CreateGlobalBucketError()
+}
+
+typealias CreateGlobalBucketResult = Either<CreateGlobalBucketError, Boolean>
+
 sealed class CreateBlobStorageContext {
     data object InvalidCredential : CreateBlobStorageContext()
 
@@ -10,9 +16,3 @@ sealed class CreateBlobStorageContext {
 }
 
 typealias CreateBlobStorageContextResult = Either<CreateBlobStorageContext, BlobStoreContext>
-
-sealed class CreateContainerError {
-    data object ErrorCreatingContainer : CreateContainerError()
-}
-
-typealias CreateContainerResult = Either<CreateContainerError, Unit>

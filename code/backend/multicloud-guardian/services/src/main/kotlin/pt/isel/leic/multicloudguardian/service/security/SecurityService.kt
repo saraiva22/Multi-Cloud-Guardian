@@ -3,6 +3,7 @@ package pt.isel.leic.multicloudguardian.service.security
 import jakarta.inject.Named
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import pt.isel.leic.multicloudguardian.domain.user.UsersDomain
+import java.security.MessageDigest
 import java.security.SecureRandom
 import java.security.Security
 import javax.crypto.Cipher
@@ -26,8 +27,9 @@ private const val IV_SIZE = 12 // 12 bytes is the recommended size for AES-GCM
 private const val KEY_SIZE = 256
 private const val PROVIDER = "BC"
 private const val AES_ALGORITHM = "AES"
+private const val SHA_ALGORITHM = "SHA-256"
 
-private sealed class TypeCrypto {
+sealed class TypeCrypto {
     data object Encryption : TypeCrypto()
 
     data object Decryption : TypeCrypto()
@@ -71,7 +73,13 @@ class SecurityService(
         iv: ByteArray,
     ): ByteArray = fileCryptoHandler(data, key, iv, TypeCrypto.Decryption)
 
-    private fun fileCryptoHandler(
+    fun calculateChecksum(fileBytes: ByteArray): Long {
+        val digest = MessageDigest.getInstance(SHA_ALGORITHM)
+        val hash = digest.digest(fileBytes)
+        return hash.take(8).fold(0L) { acc, byte -> acc * 31 + byte.toLong() }
+    }
+
+    fun fileCryptoHandler(
         data: ByteArray,
         key: SecretKey,
         iv: ByteArray,
