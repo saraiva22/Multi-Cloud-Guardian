@@ -27,6 +27,12 @@ dependencies {
     testImplementation("org.jdbi:jdbi3-core:3.37.1")
     testImplementation("org.postgresql:postgresql:42.7.2")
 
+    // Dependency for Bouncy Castle
+    implementation("org.bouncycastle:bcprov-jdk15on:1.70")
+
+    // Dependency for jclouds
+    implementation("org.apache.jclouds:jclouds-all:2.7.0")
+
     testImplementation(kotlin("test"))
 }
 

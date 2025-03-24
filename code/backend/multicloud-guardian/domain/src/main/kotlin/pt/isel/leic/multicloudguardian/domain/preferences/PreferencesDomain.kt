@@ -10,7 +10,7 @@ class PreferencesDomain {
         location: LocationType,
     ): ProviderType =
         when (performance) {
-            PerformanceType.LOW -> ProviderType.BACKBLAZE
+            PerformanceType.LOW -> ProviderType.BACK_BLAZE
             PerformanceType.MEDIUM -> ProviderType.GOOGLE
             else ->
                 when (location) {

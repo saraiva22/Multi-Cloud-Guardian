@@ -14,6 +14,9 @@ import pt.isel.leic.multicloudguardian.domain.utils.Id
  * @property updatedAt The [Instant]  of the last folder update.
  * */
 
+private const val MAX_FOLDER_NAME_LENGTH = 25
+private const val MIN_FOLDER_NAME_LENGTH = 5
+
 data class Folder(
     val folderId: Id,
     val userId: Id,
@@ -23,4 +26,10 @@ data class Folder(
     val numberFiles: Int,
     val createdAt: Instant,
     val updatedAt: Instant,
-)
+) {
+    companion object {
+        const val MIN_LENGTH = MIN_FOLDER_NAME_LENGTH
+
+        const val MAX_LENGTH = MAX_FOLDER_NAME_LENGTH
+    }
+}

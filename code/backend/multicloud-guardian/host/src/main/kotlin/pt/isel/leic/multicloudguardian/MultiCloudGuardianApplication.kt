@@ -7,6 +7,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import pt.isel.leic.multicloudguardian.domain.provider.AmazonS3StorageConfig
+import pt.isel.leic.multicloudguardian.domain.provider.AzureStorageConfig
+import pt.isel.leic.multicloudguardian.domain.provider.BackBlazeStorageConfig
+import pt.isel.leic.multicloudguardian.domain.provider.GoogleCloudStorageConfig
 import pt.isel.leic.multicloudguardian.domain.token.Sha256TokenEncoder
 import pt.isel.leic.multicloudguardian.domain.user.UsersDomainConfig
 import pt.isel.leic.multicloudguardian.repository.jdbi.configureWithAppRequirements
@@ -22,6 +26,38 @@ class MultiCloudGuardianApplication {
                     setURL(Environment.getDbUrl())
                 },
             ).configureWithAppRequirements()
+
+    @Bean
+    fun googleCloudStorageConfig() =
+        GoogleCloudStorageConfig(
+            bucketName = Environment.getBucketName(),
+            identity = Environment.getGoogleIdentity(),
+            credential = Environment.getGoogleCredentials(),
+        )
+
+    @Bean
+    fun amazonS3Config() =
+        AmazonS3StorageConfig(
+            bucketName = Environment.getBucketName(),
+            identity = Environment.getAmazonIdentity(),
+            credential = Environment.getAmazonCredentials(),
+        )
+
+    @Bean
+    fun azureStorageConfig() =
+        AzureStorageConfig(
+            bucketName = Environment.getBucketName(),
+            identity = Environment.getAzureIdentity(),
+            credential = Environment.getAzureCredentials(),
+        )
+
+    @Bean
+    fun backBlazeStorageConfig() =
+        BackBlazeStorageConfig(
+            bucketName = Environment.getBucketName(),
+            identity = Environment.getBackBlazeIdentity(),
+            credential = Environment.getBackBlazeCredentials(),
+        )
 
     @Bean
     fun passwordEncoder() = BCryptPasswordEncoder()

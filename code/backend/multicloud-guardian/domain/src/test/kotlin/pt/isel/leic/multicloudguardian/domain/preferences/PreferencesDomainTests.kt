@@ -20,7 +20,7 @@ class PreferencesDomainTests {
         val providerType = prefDomain.associationProvider(performance, location)
 
         // then: Verify that the correct provider is produced
-        assertEquals(ProviderType.BACKBLAZE, providerType)
+        assertEquals(ProviderType.BACK_BLAZE, providerType)
     }
 
     @Test

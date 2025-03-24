@@ -24,4 +24,4 @@ data class File(
     val size: Int,
     val encryption: Boolean,
     val url: String,
-)
+) 

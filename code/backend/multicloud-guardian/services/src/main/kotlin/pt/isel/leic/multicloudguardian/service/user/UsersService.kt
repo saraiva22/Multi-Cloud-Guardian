@@ -1,8 +1,8 @@
 package pt.isel.leic.multicloudguardian.service.user
 
-import jakarta.inject.Named
 import kotlinx.datetime.Clock
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
 import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.preferences.PreferencesDomain
@@ -17,7 +17,7 @@ import pt.isel.leic.multicloudguardian.domain.utils.failure
 import pt.isel.leic.multicloudguardian.domain.utils.success
 import pt.isel.leic.multicloudguardian.repository.TransactionManager
 
-@Named
+@Service
 class UsersService(
     private val transactionManager: TransactionManager,
     private val usersDomain: UsersDomain,
