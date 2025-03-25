@@ -22,14 +22,14 @@ class StorageFileJclouds {
         context: BlobStoreContext,
         bucketName: String,
     ): CreateGlobalBucketResult {
-        val blobStore = context.blobStore
-
-        if (blobStore.containerExists(bucketName)) {
-            return success(false)
-        }
-
-        logger.info("Creating bucket: $bucketName")
         return try {
+            val blobStore = context.blobStore
+
+            if (blobStore.containerExists(bucketName)) {
+                return success(false)
+            }
+
+            logger.info("Creating bucket: $bucketName")
             val apiMetadata = context.unwrap<Context>().providerMetadata.apiMetadata
             val location =
                 if (apiMetadata is SwiftApiMetadata) {
@@ -61,37 +61,49 @@ class StorageFileJclouds {
             return failure(CreateBlobStorageContext.InvalidCredential)
         }
 
-        val context =
-            ContextBuilder
-                .newBuilder(ProviderType.convertString(providerType))
-                .credentials(identity, finalCredential)
-                .buildView(BlobStoreContext::class.java)
-
-        return when (context) {
-            is BlobStoreContext -> success(context)
-            else -> failure(CreateBlobStorageContext.ErrorCreatingContext)
+        try {
+            val context =
+                ContextBuilder
+                    .newBuilder(ProviderType.convertString(providerType))
+                    .credentials(identity, finalCredential)
+                    .buildView(BlobStoreContext::class.java)
+            return success(context)
+        } catch (e: Exception) {
+            logger.info("Failed to create blob store context", e)
+            return failure(CreateBlobStorageContext.ErrorCreatingContext)
         }
     }
 
     fun uploadBlob(
         blobName: String,
+        providerId: ProviderType,
         data: ByteArray,
         contentType: String,
         context: BlobStoreContext,
         bucketName: String,
         username: String,
-    ) {
-        val blobStore = context.blobStore
-        val blob =
-            blobStore
-                .blobBuilder(blobName)
-                .payload(data)
-                .contentLength(data.size.toLong())
-                .contentType(contentType)
-                .build()
+    ): UploadBlobResult {
+        try {
+            val blobStore = context.blobStore
+            val blob =
+                blobStore
+                    .blobBuilder("$username/$blobName")
+                    .payload(data)
+                    .contentLength(data.size.toLong())
+                    .contentType(contentType)
+                    .build()
 
-        blobStore.putBlob(bucketName, blob)
-        logger.info("Blob $blobName uploaded successfully")
+            blobStore.putBlob(bucketName, blob)
+
+            val publicUrl = generateBlobUrl(providerId, bucketName, "$username/$blobName")
+
+            logger.info("Blob $blobName uploaded successfully")
+            logger.info("Public URL: $publicUrl")
+            return success(publicUrl)
+        } catch (e: Exception) {
+            logger.info("Failed to upload blob: $blobName", e)
+            return failure(UploadBlobError.ErrorUploadingBlob)
+        }
     }
 
     fun downloadBlob(
@@ -133,6 +145,18 @@ class StorageFileJclouds {
         } catch (e: Exception) {
             logger.error("Exception reading private key from '$filename'")
             null
+        }
+
+    private fun generateBlobUrl(
+        providerId: ProviderType,
+        bucketName: String,
+        path: String,
+    ): String =
+        when (providerId) {
+            ProviderType.GOOGLE -> "https://storage.cloud.google.com/$bucketName/$path?authuser=3"
+            ProviderType.AMAZON -> "https://$bucketName.s3.amazonaws.com/$path"
+            ProviderType.AZURE -> "https://$bucketName.blob.core.windows.net/$bucketName/$path"
+            ProviderType.BACK_BLAZE -> "https://f000.backblazeb2.com/file/$bucketName/$path"
         }
 
     private val logger = LoggerFactory.getLogger(StorageFileJclouds::class.java)

@@ -76,7 +76,9 @@ class SecurityService(
     fun calculateChecksum(fileBytes: ByteArray): Long {
         val digest = MessageDigest.getInstance(SHA_ALGORITHM)
         val hash = digest.digest(fileBytes)
-        return hash.take(8).fold(0L) { acc, byte -> acc * 31 + byte.toLong() }
+        return hash.take(8).fold(0L) { acc, byte ->
+            acc * 31 + byte.toLong()
+        } and 0x7FFFFFFFFFFFFFFFL
     }
 
     fun fileCryptoHandler(

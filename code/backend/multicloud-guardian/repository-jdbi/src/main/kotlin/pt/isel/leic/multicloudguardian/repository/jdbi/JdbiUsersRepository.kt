@@ -171,6 +171,19 @@ class JdbiUsersRepository(
             .mapTo<User>()
             .singleOrNull()
 
+    override fun getProvider(userId: Id): ProviderType {
+        val provider =
+            handle
+                .createQuery(
+                    """
+                    select pref.storage_provider from dbo.Users join dbo.Preferences as pref on users.id = pref.user_id where users.id = :userId
+                    """.trimIndent(),
+                ).bind("userId", userId.value)
+                .mapTo<Int>()
+                .single()
+        return ProviderType.fromInt(provider)
+    }
+
     private data class UserAndTokenModel(
         val id: Int,
         val username: String,

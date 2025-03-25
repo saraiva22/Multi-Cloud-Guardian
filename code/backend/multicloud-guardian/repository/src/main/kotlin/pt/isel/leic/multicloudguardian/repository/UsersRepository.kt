@@ -49,4 +49,6 @@ interface UsersRepository {
     fun getUserById(id: Id): User?
 
     fun getUserByEmail(email: Email): User?
+
+    fun getProvider(userId: Id): ProviderType
 }

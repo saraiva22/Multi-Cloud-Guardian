@@ -71,6 +71,13 @@ class Problem(
 
         // File
         private val invalidCreateFile = URI("${FILE_FOLDER}invalid-create-file")
+        private val invalidFileCreation = URI("${FILE_FOLDER}invalid-file-creation")
+        private val invalidCreationGlobalBucket = URI("${FILE_FOLDER}invalid-creation-global-bucket")
+        private val invalidCreationStorage = URI("${FILE_FOLDER}invalid-creation-storage")
+        private val invalidErrorCreatingContext = URI("${FILE_FOLDER}invalid-error-creating-context")
+        private val invalidErrorUploadingBlob = URI("${FILE_FOLDER}invalid-error-uploading-blob")
+        private val invalidCreateContext = URI("${FILE_FOLDER}invalid-create-context")
+        private val invalidFileName = URI("${FILE_FOLDER}invalid-file-name")
 
         fun internalServerError(instance: URI?): ResponseEntity<*> =
             Problem(
@@ -204,6 +211,63 @@ class Problem(
                 title = "Invalid file creation",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = "Invalid file creation",
+                instance = instance,
+            ).toResponse()
+
+        fun invalidCreationGlobalBucket(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = invalidCreationGlobalBucket,
+                title = "Invalid creation global bucket",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Invalid creation global bucket",
+                instance = instance,
+            ).toResponse()
+
+        fun invalidCreationStorage(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = invalidCreationStorage,
+                title = "Invalid creation storage",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Invalid creation storage",
+                instance = instance,
+            ).toResponse()
+
+        fun invalidErrorCreatingContext(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = invalidErrorCreatingContext,
+                title = "Invalid error creating context",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Invalid error creating context",
+                instance = instance,
+            ).toResponse()
+
+        fun invalidErrorUploadingBlob(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = invalidErrorUploadingBlob,
+                title = "Invalid error uploading blob",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Invalid error uploading blob",
+                instance = instance,
+            ).toResponse()
+
+        fun invalidCreateContext(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = invalidCreateContext,
+                title = "Invalid create context",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Invalid create context",
+                instance = instance,
+            ).toResponse()
+
+        fun invalidFileName(
+            fileName: String,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = invalidFileName,
+                title = "Invalid file name",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Invalid file $fileName already exists",
                 instance = instance,
             ).toResponse()
     }

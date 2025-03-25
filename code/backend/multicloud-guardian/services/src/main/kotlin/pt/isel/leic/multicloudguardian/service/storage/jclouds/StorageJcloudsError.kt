@@ -16,3 +16,9 @@ sealed class CreateBlobStorageContext {
 }
 
 typealias CreateBlobStorageContextResult = Either<CreateBlobStorageContext, BlobStoreContext>
+
+sealed class UploadBlobError {
+    data object ErrorUploadingBlob : UploadBlobError()
+}
+
+typealias UploadBlobResult = Either<UploadBlobError, String>

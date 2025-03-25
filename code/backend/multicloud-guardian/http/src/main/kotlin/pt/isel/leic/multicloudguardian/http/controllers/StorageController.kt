@@ -46,10 +46,21 @@ class StorageController(
 
             is Failure ->
                 when (file.value) {
-                    FileCreationError.FileError ->
-                        Problem.invalidFileCreation(
+                    FileCreationError.FileStorageError ->
+                        Problem.invalidCreationStorage(
                             instance,
                         )
+
+                    FileCreationError.ErrorCreatingGlobalBucket ->
+                        Problem.invalidCreationGlobalBucket(
+                            instance,
+                        )
+
+                    FileCreationError.ErrorCreatingContext ->
+                        Problem.invalidCreateContext(instance)
+
+                    FileCreationError.FileNameAlreadyExists ->
+                        Problem.invalidFileName(fileDomain.fileName, instance)
                 }
         }
     }

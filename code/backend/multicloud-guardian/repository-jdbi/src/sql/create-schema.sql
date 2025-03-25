@@ -36,7 +36,7 @@ create table dbo.Folders(
     user_id int REFERENCES dbo.Users(id) on delete cascade on update cascade,
     parent_folder_id int REFERENCES dbo.Folders(folder_id) on delete cascade,
     name VARCHAR(30) not null,
-    size int not null,
+    size bigint not null,
     number_files int not null,
     created_at bigint not null,
     updated_at bigint not null,
@@ -50,9 +50,9 @@ create table dbo.Files(
     user_id INT REFERENCES dbo.Users(id) on delete cascade on update cascade,
     folder_id INT REFERENCES dbo.Folders(folder_id) on delete set null default null, 
     name VARCHAR(30) not null,
-    checksum VARCHAR(256) not null,
+    checksum bigint not null,
     path VARCHAR(255) not null,
-    size int not null,
+    size bigint not null,
     encryption BOOLEAN not null,
     url VARCHAR(255) not null
 );
@@ -61,7 +61,6 @@ create table dbo.Metadata(
     metadata_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     file_id int REFERENCES dbo.Files(file_id) on delete cascade on update cascade,
     content_type VARCHAR(200) not null,
-    access_count int not null default 0,
     tags TEXT[] not null,
     created_at bigint not null,
     indexed_at bigint not null,
