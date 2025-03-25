@@ -6,16 +6,16 @@ import pt.isel.leic.multicloudguardian.domain.provider.components.StorageConfig
 @Component
 class ProviderDomain(
     private val googleConfig: GoogleCloudStorageConfig,
-    //  private val amazonConfig: AmazonS3StorageConfig,
-    //  private val azureConfig: AzureStorageConfig,
-    // private val backBlazeConfig: BackBlazeStorageConfig,
+    private val amazonConfig: AmazonS3StorageConfig,
+    private val azureConfig: AzureStorageConfig,
+    private val backBlazeConfig: BackBlazeStorageConfig,
 ) {
     private val providerConfigs: Map<ProviderType, StorageConfig> =
         mapOf(
-            //    ProviderType.AMAZON to amazonConfig,
+            ProviderType.AMAZON to amazonConfig,
             ProviderType.GOOGLE to googleConfig,
-            //   ProviderType.AZURE to azureConfig,
-            //  ProviderType.BACK_BLAZE to backBlazeConfig,
+            ProviderType.AZURE to azureConfig,
+            ProviderType.BACK_BLAZE to backBlazeConfig,
         )
 
     private fun getConfig(providerType: ProviderType): StorageConfig? = providerConfigs[providerType]

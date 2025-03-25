@@ -66,6 +66,7 @@ class StorageService(
                                     file.contentType,
                                     contextStorage.value,
                                     bucketName,
+                                    identity,
                                     user.username.value,
                                 )
 

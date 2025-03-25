@@ -81,6 +81,7 @@ class StorageFileJclouds {
         contentType: String,
         context: BlobStoreContext,
         bucketName: String,
+        identity: String,
         username: String,
     ): UploadBlobResult {
         try {
@@ -95,7 +96,7 @@ class StorageFileJclouds {
 
             blobStore.putBlob(bucketName, blob)
 
-            val publicUrl = generateBlobUrl(providerId, bucketName, "$username/$blobName")
+            val publicUrl = generateBlobUrl(providerId, bucketName, identity, "$username/$blobName")
 
             logger.info("Blob $blobName uploaded successfully")
             logger.info("Public URL: $publicUrl")
@@ -150,12 +151,13 @@ class StorageFileJclouds {
     private fun generateBlobUrl(
         providerId: ProviderType,
         bucketName: String,
+        identity: String,
         path: String,
     ): String =
         when (providerId) {
             ProviderType.GOOGLE -> "https://storage.cloud.google.com/$bucketName/$path?authuser=3"
-            ProviderType.AMAZON -> "https://$bucketName.s3.amazonaws.com/$path"
-            ProviderType.AZURE -> "https://$bucketName.blob.core.windows.net/$bucketName/$path"
+            ProviderType.AMAZON -> "https://$bucketName.s3.us-east-1.amazonaws.com/$path"
+            ProviderType.AZURE -> "https://$identity.blob.core.windows.net/$bucketName/$path"
             ProviderType.BACK_BLAZE -> "https://f000.backblazeb2.com/file/$bucketName/$path"
         }
 

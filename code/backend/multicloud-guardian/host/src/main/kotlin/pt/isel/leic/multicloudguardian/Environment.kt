@@ -36,7 +36,7 @@ object Environment {
     private const val GOOGLE_IDENTITY = "GOOGLE_IDENTITY"
     private const val AZURE_CREDENTIALS = "AZURE_CREDENTIALS"
     private const val AZURE_IDENTITY = "AZURE_IDENTITY"
-    private const val AWS_CREDENTIALS = "AWS_CREDENTIALS "
+    private const val AWS_CREDENTIALS = "AWS_CREDENTIALS"
     private const val AWS_IDENTITY = "AWS_IDENTITY"
     private const val BACK_BLAZE_CREDENTIALS = "BACK_BLAZE_CREDENTIALS"
     private const val BACK_BLAZE_IDENTITY = "BACK_BLAZE_IDENTITY"
