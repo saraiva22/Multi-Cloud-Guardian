@@ -11,13 +11,16 @@ import org.slf4j.LoggerFactory
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.utils.failure
 import pt.isel.leic.multicloudguardian.domain.utils.success
+import pt.isel.leic.multicloudguardian.service.storage.apis.AzureApi
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
 
 @Named
-class StorageFileJclouds {
+class StorageFileJclouds(
+    private val azureApi: AzureApi,
+) {
     fun createBucketIfNotExists(
         context: BlobStoreContext,
         bucketName: String,
@@ -81,6 +84,7 @@ class StorageFileJclouds {
         contentType: String,
         context: BlobStoreContext,
         bucketName: String,
+        credential: String,
         identity: String,
         username: String,
     ): UploadBlobResult {
@@ -96,7 +100,7 @@ class StorageFileJclouds {
 
             blobStore.putBlob(bucketName, blob)
 
-            val publicUrl = generateBlobUrl(providerId, bucketName, identity, "$username/$blobName")
+            val publicUrl = generateBlobUrl(providerId, bucketName, credential, identity, "$username/$blobName")
 
             logger.info("Blob $blobName uploaded successfully")
             logger.info("Public URL: $publicUrl")
@@ -151,14 +155,15 @@ class StorageFileJclouds {
     private fun generateBlobUrl(
         providerId: ProviderType,
         bucketName: String,
+        credential: String,
         identity: String,
-        path: String,
+        blobPath: String,
     ): String =
         when (providerId) {
-            ProviderType.GOOGLE -> "https://storage.cloud.google.com/$bucketName/$path?authuser=3"
-            ProviderType.AMAZON -> "https://$bucketName.s3.us-east-1.amazonaws.com/$path"
-            ProviderType.AZURE -> "https://$identity.blob.core.windows.net/$bucketName/$path"
-            ProviderType.BACK_BLAZE -> "https://f000.backblazeb2.com/file/$bucketName/$path"
+            ProviderType.GOOGLE -> ""
+            ProviderType.AMAZON -> "https://$bucketName.s3.us-east-1.amazonaws.com/$blobPath"
+            ProviderType.AZURE -> azureApi.generateAzureSignedUrl(credential, identity, bucketName, blobPath)
+            ProviderType.BACK_BLAZE -> "https://f000.backblazeb2.com/file/$bucketName/$blobPath"
         }
 
     private val logger = LoggerFactory.getLogger(StorageFileJclouds::class.java)

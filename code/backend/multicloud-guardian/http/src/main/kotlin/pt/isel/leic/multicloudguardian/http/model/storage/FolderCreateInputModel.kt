@@ -11,5 +11,5 @@ data class FolderCreateInputModel(
         max = Folder.MAX_LENGTH,
         message = "Folder must have between ${Folder.MIN_LENGTH} and ${Folder.MAX_LENGTH} characters",
     )
-    val name: String
+    val name: String,
 )

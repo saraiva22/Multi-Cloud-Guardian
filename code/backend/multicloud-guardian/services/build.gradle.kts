@@ -33,6 +33,18 @@ dependencies {
     // Dependency for jclouds
     implementation("org.apache.jclouds:jclouds-all:2.7.0")
 
+    // AWS S3 - SDK to generate Signed URLs
+    implementation("software.amazon.awssdk:s3:2.20.143")
+
+    // Google Cloud Storage - SDK to generate Signed URLs
+    implementation("com.google.cloud:google-cloud-storage:2.27.0")
+
+    // Azure Blob Storage - SDK to generate Signed URLs
+    implementation("com.azure:azure-storage-blob:12.19.1")
+
+    // BackBlaze B2 - HTTP ClientSDK to generate Signed URLs
+    implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
+
     testImplementation(kotlin("test"))
 }
 
