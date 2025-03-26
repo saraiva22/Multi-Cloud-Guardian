@@ -33,6 +33,7 @@ class MultiCloudGuardianApplication {
             bucketName = Environment.getBucketName(),
             identity = Environment.getGoogleIdentity(),
             credential = Environment.getGoogleCredentials(),
+            location = Environment.getGoogleLocation(),
         )
 
     @Bean
@@ -41,6 +42,7 @@ class MultiCloudGuardianApplication {
             bucketName = Environment.getBucketName(),
             identity = Environment.getAzureIdentity(),
             credential = Environment.getAzureCredentials(),
+            location = Environment.getAzureLocation(),
         )
 
     @Bean
@@ -49,6 +51,7 @@ class MultiCloudGuardianApplication {
             bucketName = Environment.getBucketName(),
             identity = Environment.getBackBlazeIdentity(),
             credential = Environment.getBackBlazeCredentials(),
+            location = Environment.getBackBlazeLocation(),
         )
 
     @Bean
@@ -57,6 +60,7 @@ class MultiCloudGuardianApplication {
             bucketName = Environment.getBucketName(),
             identity = Environment.getAmazonIdentity(),
             credential = Environment.getAmazonCredentials(),
+            location = Environment.getAmazonLocation(),
         )
 
     @Bean

@@ -37,6 +37,7 @@ class StorageService(
             val credential = providerDomain.getCredential(provider) ?: ""
             val identity = providerDomain.getIdentity(provider) ?: ""
             val checkSum = securityService.calculateChecksum(file.fileContent)
+            val location = providerDomain.getLocation(provider) ?: ""
             when (val contextStorage = jcloudsStorage.initializeBlobStoreContext(credential, identity, provider)) {
                 is Failure ->
                     failure(
@@ -69,6 +70,7 @@ class StorageService(
                                     credential,
                                     identity,
                                     user.username.value,
+                                    location,
                                 )
 
                             val path = folderOrigin + "/" + file.fileName
@@ -84,7 +86,7 @@ class StorageService(
                                             file,
                                             path,
                                             checkSum,
-                                            publicUrl.value,
+                                            "TESTING",
                                             user.id,
                                             false,
                                             clock.now(),

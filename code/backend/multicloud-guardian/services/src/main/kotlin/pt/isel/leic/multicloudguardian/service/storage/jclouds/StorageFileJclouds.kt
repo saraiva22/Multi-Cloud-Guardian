@@ -1,17 +1,17 @@
 package pt.isel.leic.multicloudguardian.service.storage.jclouds
 
 import jakarta.inject.Named
-import org.jclouds.Context
 import org.jclouds.ContextBuilder
 import org.jclouds.blobstore.BlobStoreContext
 import org.jclouds.blobstore.options.ListContainerOptions
 import org.jclouds.googlecloud.GoogleCredentialsFromJson
-import org.jclouds.openstack.swift.v1.SwiftApiMetadata
 import org.slf4j.LoggerFactory
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.utils.failure
 import pt.isel.leic.multicloudguardian.domain.utils.success
+import pt.isel.leic.multicloudguardian.service.storage.apis.AmazonApi
 import pt.isel.leic.multicloudguardian.service.storage.apis.AzureApi
+import pt.isel.leic.multicloudguardian.service.storage.apis.GoogleApi
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -20,6 +20,8 @@ import java.nio.charset.StandardCharsets
 @Named
 class StorageFileJclouds(
     private val azureApi: AzureApi,
+    private val googleApi: GoogleApi,
+    private val amazonApi: AmazonApi,
 ) {
     fun createBucketIfNotExists(
         context: BlobStoreContext,
@@ -27,21 +29,12 @@ class StorageFileJclouds(
     ): CreateGlobalBucketResult {
         return try {
             val blobStore = context.blobStore
-
             if (blobStore.containerExists(bucketName)) {
                 return success(false)
             }
-
+            blobStore.createContainerInLocation(null, bucketName)
             logger.info("Creating bucket: $bucketName")
-            val apiMetadata = context.unwrap<Context>().providerMetadata.apiMetadata
-            val location =
-                if (apiMetadata is SwiftApiMetadata) {
-                    blobStore.listAssignableLocations().firstOrNull()
-                } else {
-                    null
-                }
 
-            blobStore.createContainerInLocation(location, bucketName)
             success(true)
         } catch (e: Exception) {
             logger.info("Failed to create bucket: $bucketName", e)
@@ -87,6 +80,7 @@ class StorageFileJclouds(
         credential: String,
         identity: String,
         username: String,
+        location: String,
     ): UploadBlobResult {
         try {
             val blobStore = context.blobStore
@@ -100,7 +94,8 @@ class StorageFileJclouds(
 
             blobStore.putBlob(bucketName, blob)
 
-            val publicUrl = generateBlobUrl(providerId, bucketName, credential, identity, "$username/$blobName")
+            val publicUrl =
+                generateBlobUrl(providerId, bucketName, credential, identity, "$username/$blobName", location)
 
             logger.info("Blob $blobName uploaded successfully")
             logger.info("Public URL: $publicUrl")
@@ -158,11 +153,12 @@ class StorageFileJclouds(
         credential: String,
         identity: String,
         blobPath: String,
+        location: String,
     ): String =
         when (providerId) {
-            ProviderType.GOOGLE -> ""
-            ProviderType.AMAZON -> "https://$bucketName.s3.us-east-1.amazonaws.com/$blobPath"
-            ProviderType.AZURE -> azureApi.generateAzureSignedUrl(credential, identity, bucketName, blobPath)
+            ProviderType.GOOGLE -> googleApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
+            ProviderType.AMAZON -> amazonApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
+            ProviderType.AZURE -> azureApi.generateSignedUrl(credential, identity, bucketName, blobPath, location)
             ProviderType.BACK_BLAZE -> "https://f000.backblazeb2.com/file/$bucketName/$blobPath"
         }
 

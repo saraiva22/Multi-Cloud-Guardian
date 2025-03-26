@@ -8,17 +8,18 @@ import jakarta.inject.Named
 import java.time.OffsetDateTime
 
 @Named
-class AzureApi {
+class AzureApi : ApiConfig {
     private val endPointFormat = "https://%s.blob.core.windows.net/"
 
-    fun generateAzureSignedUrl(
-        accountKey: String,
-        accountName: String,
+    override fun generateSignedUrl(
+        credentials: String,
         bucketName: String,
         blobPath: String,
+        identity: String,
+        location: String,
     ): String {
-        val credential = StorageSharedKeyCredential(accountName, accountKey)
-        val endpointFormatUrl = String.format(endPointFormat, accountName)
+        val credential = StorageSharedKeyCredential(credentials, identity)
+        val endpointFormatUrl = String.format(endPointFormat, credential)
         val blobServiceClient =
             BlobServiceClientBuilder()
                 .endpoint(endpointFormatUrl) // Troubleshooting version conflicts: https://aka.ms/azsdk/java/dependency/troubleshoot

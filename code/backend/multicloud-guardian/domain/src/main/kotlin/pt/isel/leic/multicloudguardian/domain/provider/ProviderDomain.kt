@@ -25,4 +25,6 @@ class ProviderDomain(
     fun getBucketName(providerType: ProviderType): String? = getConfig(providerType)?.bucketName
 
     fun getIdentity(providerType: ProviderType): String? = getConfig(providerType)?.identity
+
+    fun getLocation(providerType: ProviderType): String? = getConfig(providerType)?.location
 }
