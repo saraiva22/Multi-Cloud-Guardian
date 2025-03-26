@@ -57,7 +57,7 @@ class MultiCloudGuardianApplication {
     @Bean
     fun amazonS3Config() =
         AmazonS3StorageConfig(
-            bucketName = Environment.getBucketName(),
+            bucketName = "${Environment.getBucketName()}1",
             identity = Environment.getAmazonIdentity(),
             credential = Environment.getAmazonCredentials(),
             location = Environment.getAmazonLocation(),

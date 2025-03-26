@@ -158,7 +158,7 @@ class StorageFileJclouds(
         when (providerId) {
             ProviderType.GOOGLE -> googleApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
             ProviderType.AMAZON -> amazonApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
-            ProviderType.AZURE -> azureApi.generateSignedUrl(credential, identity, bucketName, blobPath, location)
+            ProviderType.AZURE -> azureApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
             ProviderType.BACK_BLAZE -> "https://f000.backblazeb2.com/file/$bucketName/$blobPath"
         }
 

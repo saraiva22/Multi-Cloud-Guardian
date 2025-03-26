@@ -33,7 +33,6 @@ class StorageService(
 
             val provider = usersRepository.getProvider(user.id)
             val bucketName = providerDomain.getBucketName(provider) ?: ""
-            val folderOrigin = "$bucketName/${user.username.value}"
             val credential = providerDomain.getCredential(provider) ?: ""
             val identity = providerDomain.getIdentity(provider) ?: ""
             val checkSum = securityService.calculateChecksum(file.fileContent)
@@ -73,7 +72,7 @@ class StorageService(
                                     location,
                                 )
 
-                            val path = folderOrigin + "/" + file.fileName
+                            val path = "${user.username.value}/${file.fileName}"
                             when (publicUrl) {
                                 is Failure -> {
                                     contextStorage.value.close()
