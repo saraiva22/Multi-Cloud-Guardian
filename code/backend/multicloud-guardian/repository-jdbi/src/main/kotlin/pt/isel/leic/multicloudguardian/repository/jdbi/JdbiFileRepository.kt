@@ -37,7 +37,7 @@ class JdbiFileRepository(
                 .mapTo<Int>()
                 .one()
 
-        logger.info("{} file stored in the database", fileId)
+        logger.info("{} file stored in the database", file.fileName)
 
         handle
             .createUpdate(
