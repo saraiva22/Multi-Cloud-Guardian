@@ -20,18 +20,25 @@ class GoogleApi : ApiConfig {
         blobPath: String,
         identity: String,
         location: String,
+        validDurationInMinutes: Long,
     ): String {
         try {
-            val storage =
-                StorageOptions
-                    .newBuilder()
-                    .setCredentials(ServiceAccountCredentials.fromStream(FileInputStream(credentials)))
-                    .build()
-                    .service
-
-            val blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, blobPath)).build()
-            val url: URL = storage.signUrl(blobInfo, 15, TimeUnit.MINUTES, Storage.SignUrlOption.withV4Signature())
-            return url.toString()
+            StorageOptions
+                .newBuilder()
+                .setCredentials(ServiceAccountCredentials.fromStream(FileInputStream(credentials)))
+                .build()
+                .service
+                .use { storage ->
+                    val blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, blobPath)).build()
+                    val url: URL =
+                        storage.signUrl(
+                            blobInfo,
+                            validDurationInMinutes,
+                            TimeUnit.MINUTES,
+                            Storage.SignUrlOption.withV4Signature(),
+                        )
+                    return url.toString()
+                }
         } catch (error: StorageException) {
             logger.info("Info error $error")
             return ""

@@ -18,6 +18,7 @@ class AzureApi : ApiConfig {
         blobPath: String,
         identity: String,
         location: String,
+        validDurationInMinutes: Long,
     ): String {
         try {
             val credential = StorageSharedKeyCredential(identity, credentials)
@@ -28,18 +29,16 @@ class AzureApi : ApiConfig {
                     .credential(credential)
                     .buildClient()
 
-            // Create a SAS token
             val blobClient =
                 blobServiceClient
                     .getBlobContainerClient(bucketName)
                     .getBlobClient(blobPath)
 
-            // Create a SAS token that's valid for 15 minutes
-            val expiryTime = OffsetDateTime.now().plusMinutes(15)
+            val expiryTime = OffsetDateTime.now().plusMinutes(validDurationInMinutes)
             val sasPermission = BlobSasPermission().setReadPermission(true)
             val sasSignatureValues =
                 BlobServiceSasSignatureValues(expiryTime, sasPermission)
-                    .setStartTime(OffsetDateTime.now().plusSeconds(2))
+                    .setStartTime(OffsetDateTime.now())
             val sasToken = blobClient.generateSas(sasSignatureValues)
             return "$endpointFormatUrl$bucketName/$blobPath?$sasToken"
         } catch (error: Exception) {

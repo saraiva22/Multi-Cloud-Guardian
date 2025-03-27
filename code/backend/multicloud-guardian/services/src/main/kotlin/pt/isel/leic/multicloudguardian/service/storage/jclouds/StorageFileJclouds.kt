@@ -11,6 +11,7 @@ import pt.isel.leic.multicloudguardian.domain.utils.failure
 import pt.isel.leic.multicloudguardian.domain.utils.success
 import pt.isel.leic.multicloudguardian.service.storage.apis.AmazonApi
 import pt.isel.leic.multicloudguardian.service.storage.apis.AzureApi
+import pt.isel.leic.multicloudguardian.service.storage.apis.BackBlazeApi
 import pt.isel.leic.multicloudguardian.service.storage.apis.GoogleApi
 import java.io.File
 import java.io.FileOutputStream
@@ -22,6 +23,7 @@ class StorageFileJclouds(
     private val azureApi: AzureApi,
     private val googleApi: GoogleApi,
     private val amazonApi: AmazonApi,
+    private val blazeApi: BackBlazeApi,
 ) {
     fun createBucketIfNotExists(
         context: BlobStoreContext,
@@ -159,7 +161,7 @@ class StorageFileJclouds(
             ProviderType.GOOGLE -> googleApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
             ProviderType.AMAZON -> amazonApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
             ProviderType.AZURE -> azureApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
-            ProviderType.BACK_BLAZE -> "https://f000.backblazeb2.com/file/$bucketName/$blobPath"
+            ProviderType.BACK_BLAZE -> blazeApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
         }
 
     private val logger = LoggerFactory.getLogger(StorageFileJclouds::class.java)

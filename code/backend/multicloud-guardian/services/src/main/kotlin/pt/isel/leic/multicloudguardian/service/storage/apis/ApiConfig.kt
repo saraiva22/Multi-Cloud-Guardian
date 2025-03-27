@@ -7,5 +7,6 @@ interface ApiConfig {
         blobPath: String,
         identity: String,
         location: String,
+        validDurationInMinutes: Long = 15,
     ): String
 }

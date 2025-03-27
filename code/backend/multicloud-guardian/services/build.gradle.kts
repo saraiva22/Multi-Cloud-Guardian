@@ -43,7 +43,8 @@ dependencies {
     implementation("com.azure:azure-storage-blob:12.19.1")
 
     // BackBlaze B2 - HTTP ClientSDK to generate Signed URLs
-    implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
+    implementation("com.backblaze.b2:b2-sdk-httpclient:6.3.0")
+    implementation("com.backblaze.b2:b2-sdk-core:6.3.0")
 
     testImplementation(kotlin("test"))
 }

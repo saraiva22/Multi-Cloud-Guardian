@@ -18,16 +18,16 @@ class AmazonApi : ApiConfig {
         blobPath: String,
         identity: String,
         location: String,
+        validDurationInMinutes: Long,
     ): String {
-        val credentialsProvider =
-            StaticCredentialsProvider.create(
-                AwsBasicCredentials.create(
-                    identity,
-                    credentials,
-                ),
-            )
-
         try {
+            val credentialsProvider =
+                StaticCredentialsProvider.create(
+                    AwsBasicCredentials.create(
+                        identity,
+                        credentials,
+                    ),
+                )
             S3Presigner
                 .builder()
                 .region(Region.of(location))
@@ -43,7 +43,7 @@ class AmazonApi : ApiConfig {
                     val preSignerRequest =
                         GetObjectPresignRequest
                             .builder()
-                            .signatureDuration(Duration.ofMinutes(15))
+                            .signatureDuration(Duration.ofMinutes(validDurationInMinutes))
                             .getObjectRequest(objectRequest)
                             .build()
                     val preSignedRequest = preSigner.presignGetObject(preSignerRequest)
