@@ -78,6 +78,8 @@ class Problem(
         private val invalidErrorUploadingBlob = URI("${FILE_FOLDER}invalid-error-uploading-blob")
         private val invalidCreateContext = URI("${FILE_FOLDER}invalid-create-context")
         private val invalidFileName = URI("${FILE_FOLDER}invalid-file-name")
+        private val invalidCredential = URI("${FILE_FOLDER}invalid-credential")
+        private val fileNotFound = URI("${FILE_FOLDER}file-not-found")
 
         fun internalServerError(instance: URI?): ResponseEntity<*> =
             Problem(
@@ -268,6 +270,27 @@ class Problem(
                 title = "Invalid file name",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = "Invalid file $fileName already exists",
+                instance = instance,
+            ).toResponse()
+
+        fun invalidCredential(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = invalidCredential,
+                title = "Invalid credential",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Invalid credential",
+                instance = instance,
+            ).toResponse()
+
+        fun fileNotFound(
+            id: Int,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = fileNotFound,
+                title = "File not found",
+                status = HttpStatus.NOT_FOUND.value(),
+                detail = "File $id not found",
                 instance = instance,
             ).toResponse()
     }

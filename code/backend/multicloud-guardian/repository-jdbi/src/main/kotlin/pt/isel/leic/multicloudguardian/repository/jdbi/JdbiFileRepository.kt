@@ -4,6 +4,7 @@ import kotlinx.datetime.Instant
 import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.kotlin.mapTo
 import org.slf4j.LoggerFactory
+import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 import pt.isel.leic.multicloudguardian.repository.FileRepository
@@ -63,6 +64,20 @@ class JdbiFileRepository(
             ).bind("user_id", userId.value)
             .mapTo<String>()
             .list()
+
+    override fun getFileById(
+        userId: Id,
+        fileId: Id,
+    ): File? =
+        handle
+            .createQuery(
+                """
+                select file.*  from dbo.Files file inner join dbo.Users on file.user_id = id where file.file_id = :fileId and file.user_id = :userId
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .bind("fileId", fileId.value)
+            .mapTo<File>()
+            .singleOrNull()
 
     companion object {
         private val logger = LoggerFactory.getLogger(JdbiFileRepository::class.java)

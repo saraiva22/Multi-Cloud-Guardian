@@ -56,7 +56,7 @@ class StorageFileJclouds(
                 credential
             }
         if (finalCredential == null) {
-            return failure(CreateBlobStorageContext.InvalidCredential)
+            return failure(CreateBlobStorageContextError.InvalidCredential)
         }
 
         try {
@@ -68,21 +68,17 @@ class StorageFileJclouds(
             return success(context)
         } catch (e: Exception) {
             logger.info("Failed to create blob store context", e)
-            return failure(CreateBlobStorageContext.ErrorCreatingContext)
+            return failure(CreateBlobStorageContextError.ErrorCreatingContext)
         }
     }
 
     fun uploadBlob(
         blobName: String,
-        providerId: ProviderType,
         data: ByteArray,
         contentType: String,
         context: BlobStoreContext,
         bucketName: String,
-        credential: String,
-        identity: String,
         username: String,
-        location: String,
     ): UploadBlobResult {
         try {
             val blobStore = context.blobStore
@@ -95,13 +91,7 @@ class StorageFileJclouds(
                     .build()
 
             blobStore.putBlob(bucketName, blob)
-
-            val publicUrl =
-                generateBlobUrl(providerId, bucketName, credential, identity, "$username/$blobName", location)
-
-            logger.info("Blob $blobName uploaded successfully")
-            logger.info("Public URL: $publicUrl")
-            return success(publicUrl)
+            return success(true)
         } catch (e: Exception) {
             logger.info("Failed to upload blob: $blobName", e)
             return failure(UploadBlobError.ErrorUploadingBlob)
@@ -139,17 +129,7 @@ class StorageFileJclouds(
         return blobs.map { blob -> blob.name }
     }
 
-    private fun getCredentialFromJsonKeyFile(filename: String): String? =
-        try {
-            val fileContents = File(filename).readText(StandardCharsets.UTF_8)
-            val credentialSupplier = GoogleCredentialsFromJson(fileContents)
-            credentialSupplier.get().credential
-        } catch (e: Exception) {
-            logger.error("Exception reading private key from '$filename'")
-            null
-        }
-
-    private fun generateBlobUrl(
+    fun generateBlobUrl(
         providerId: ProviderType,
         bucketName: String,
         credential: String,
@@ -162,6 +142,16 @@ class StorageFileJclouds(
             ProviderType.AMAZON -> amazonApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
             ProviderType.AZURE -> azureApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
             ProviderType.BACK_BLAZE -> blazeApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
+        }
+
+    private fun getCredentialFromJsonKeyFile(filename: String): String? =
+        try {
+            val fileContents = File(filename).readText(StandardCharsets.UTF_8)
+            val credentialSupplier = GoogleCredentialsFromJson(fileContents)
+            credentialSupplier.get().credential
+        } catch (e: Exception) {
+            logger.error("Exception reading private key from '$filename'")
+            null
         }
 
     private val logger = LoggerFactory.getLogger(StorageFileJclouds::class.java)

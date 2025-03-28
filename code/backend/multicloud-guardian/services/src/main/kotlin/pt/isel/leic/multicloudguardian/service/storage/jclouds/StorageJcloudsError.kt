@@ -9,16 +9,16 @@ sealed class CreateGlobalBucketError {
 
 typealias CreateGlobalBucketResult = Either<CreateGlobalBucketError, Boolean>
 
-sealed class CreateBlobStorageContext {
-    data object InvalidCredential : CreateBlobStorageContext()
+sealed class CreateBlobStorageContextError {
+    data object InvalidCredential : CreateBlobStorageContextError()
 
-    data object ErrorCreatingContext : CreateBlobStorageContext()
+    data object ErrorCreatingContext : CreateBlobStorageContextError()
 }
 
-typealias CreateBlobStorageContextResult = Either<CreateBlobStorageContext, BlobStoreContext>
+typealias CreateBlobStorageContextResult = Either<CreateBlobStorageContextError, BlobStoreContext>
 
 sealed class UploadBlobError {
     data object ErrorUploadingBlob : UploadBlobError()
 }
 
-typealias UploadBlobResult = Either<UploadBlobError, String>
+typealias UploadBlobResult = Either<UploadBlobError, Boolean>

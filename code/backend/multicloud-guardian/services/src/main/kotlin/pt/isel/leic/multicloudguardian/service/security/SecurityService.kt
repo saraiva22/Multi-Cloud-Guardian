@@ -81,7 +81,7 @@ class SecurityService(
         } and 0x7FFFFFFFFFFFFFFFL
     }
 
-    fun fileCryptoHandler(
+    private fun fileCryptoHandler(
         data: ByteArray,
         key: SecretKey,
         iv: ByteArray,

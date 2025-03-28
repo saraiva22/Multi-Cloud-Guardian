@@ -17,12 +17,12 @@ import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Success
 import pt.isel.leic.multicloudguardian.http.Uris
 import pt.isel.leic.multicloudguardian.http.media.Problem
-import pt.isel.leic.multicloudguardian.http.model.user.IdOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserCreateInputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserCreateTokenInputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserHomeOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserInfoOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserTokenCreateOutputModel
+import pt.isel.leic.multicloudguardian.http.model.utils.IdOutputModel
 import pt.isel.leic.multicloudguardian.service.user.TokenCreationError
 import pt.isel.leic.multicloudguardian.service.user.UserCreationError
 import pt.isel.leic.multicloudguardian.service.user.UsersService
