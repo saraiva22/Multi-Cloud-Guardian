@@ -2,14 +2,17 @@ package pt.isel.leic.multicloudguardian.service.security
 
 import jakarta.inject.Named
 import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.slf4j.LoggerFactory
 import pt.isel.leic.multicloudguardian.domain.user.UsersDomain
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.security.Security
+import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 /**
  * Contains the logic for encrypting and decrypting data.
@@ -64,14 +67,28 @@ class SecurityService(
         data: ByteArray,
         key: SecretKey,
         iv: ByteArray,
-    ): ByteArray = fileCryptoHandler(data, key, iv, TypeCrypto.Encryption)
+    ): ByteArray? {
+        try {
+            return fileCryptoHandler(data, key, iv, TypeCrypto.Encryption)
+        } catch (error: Exception) {
+            logger.info("Failed to encrypt data", error)
+            return null
+        }
+    }
 
     // Decrypt an encrypted data
     fun decrypt(
         data: ByteArray,
         key: SecretKey,
         iv: ByteArray,
-    ): ByteArray = fileCryptoHandler(data, key, iv, TypeCrypto.Decryption)
+    ): ByteArray? {
+        try {
+            return fileCryptoHandler(data, key, iv, TypeCrypto.Decryption)
+        } catch (error: Exception) {
+            logger.info("Failed to decrypt data", error)
+            return null
+        }
+    }
 
     fun calculateChecksum(fileBytes: ByteArray): Long {
         val digest = MessageDigest.getInstance(SHA_ALGORITHM)
@@ -81,20 +98,39 @@ class SecurityService(
         } and 0x7FFFFFFFFFFFFFFFL
     }
 
+    fun secretKeyToString(secretKey: SecretKey): String = Base64.getEncoder().encodeToString(secretKey.encoded)
+
+    fun convertStringToSecretKey(encodedKey: String): SecretKey? {
+        try {
+            val decodedKey = Base64.getDecoder().decode(encodedKey)
+            return SecretKeySpec(decodedKey, 0, decodedKey.size, AES_ALGORITHM)
+        } catch (error: IllegalArgumentException) {
+            logger.info("Failed to convert string to secret key", error)
+            return null
+        }
+    }
+
     private fun fileCryptoHandler(
         data: ByteArray,
         key: SecretKey,
         iv: ByteArray,
         type: TypeCrypto,
     ): ByteArray {
-        val cipher = Cipher.getInstance(ALGORITHM, PROVIDER)
-        val gcmSpec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
-        val cipherType =
-            when (type) {
-                is TypeCrypto.Encryption -> Cipher.ENCRYPT_MODE
-                is TypeCrypto.Decryption -> Cipher.DECRYPT_MODE
-            }
-        cipher.init(cipherType, key, gcmSpec)
-        return cipher.doFinal(data)
+        try {
+            val cipher = Cipher.getInstance(ALGORITHM, PROVIDER)
+            val gcmSpec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
+            val cipherType =
+                when (type) {
+                    is TypeCrypto.Encryption -> Cipher.ENCRYPT_MODE
+                    is TypeCrypto.Decryption -> Cipher.DECRYPT_MODE
+                }
+            cipher.init(cipherType, key, gcmSpec)
+            return cipher.doFinal(data)
+        } catch (error: Exception) {
+            logger.info("Failed to handle file crypto", error)
+            throw error
+        }
     }
+
+    private val logger = LoggerFactory.getLogger(SecurityService::class.java)
 }

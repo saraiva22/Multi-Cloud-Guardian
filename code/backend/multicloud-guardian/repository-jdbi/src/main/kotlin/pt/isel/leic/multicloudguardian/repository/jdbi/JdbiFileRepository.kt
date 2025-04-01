@@ -79,6 +79,30 @@ class JdbiFileRepository(
             .mapTo<File>()
             .singleOrNull()
 
+    override fun getPathById(
+        userId: Id,
+        fileId: Id,
+    ): String? =
+        handle
+            .createQuery(
+                """
+                select path from dbo.Files where file_id = :fileId and user_id = :userId
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .bind("fileId", fileId.value)
+            .mapTo<String>()
+            .singleOrNull()
+
+    override fun deleteFile(file: File) {
+        handle
+            .createUpdate(
+                """
+                delete from dbo.Files where file_id = :fileId
+                """.trimIndent(),
+            ).bind("fileId", file.fileId.value)
+            .execute()
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(JdbiFileRepository::class.java)
     }

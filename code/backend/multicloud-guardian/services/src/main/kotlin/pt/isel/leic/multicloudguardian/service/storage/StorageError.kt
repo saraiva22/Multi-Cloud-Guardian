@@ -15,12 +15,16 @@ sealed class CreateContextJCloudError {
 
 typealias CreateContextJCloudResult = Either<CreateContextJCloudError, BlobStoreContext>
 
-sealed class FileCreationError {
+sealed class
+
+FileCreationError {
     data object ErrorCreatingGlobalBucket : FileCreationError()
 
     data object FileStorageError : FileCreationError()
 
     data object ErrorCreatingContext : FileCreationError()
+
+    data object ErrorEncryptingFile : FileCreationError()
 
     data object FileNameAlreadyExists : FileCreationError()
 
@@ -40,3 +44,32 @@ sealed class GetFileByIdError {
 }
 
 typealias GetFileResult = Either<GetFileByIdError, File>
+
+sealed class DownloadFileError {
+    data object FileNotFound : DownloadFileError()
+
+    data object InvalidCredential : DownloadFileError()
+
+    data object ErrorCreatingContext : DownloadFileError()
+
+    data object ErrorCreatingGlobalBucket : DownloadFileError()
+
+    data object ErrorDownloadingFile : DownloadFileError()
+
+    data object ErrorDecryptingFile : DownloadFileError()
+}
+typealias DownloadFileResult = Either<DownloadFileError, Boolean>
+
+sealed class DeleteFileError {
+    data object FileNotFound : DeleteFileError()
+
+    data object InvalidCredential : DeleteFileError()
+
+    data object ErrorCreatingContext : DeleteFileError()
+
+    data object ErrorCreatingGlobalBucket : DeleteFileError()
+
+    data object ErrorDeletingFile : DeleteFileError()
+}
+
+typealias DeleteFileResult = Either<DeleteFileError, Boolean>

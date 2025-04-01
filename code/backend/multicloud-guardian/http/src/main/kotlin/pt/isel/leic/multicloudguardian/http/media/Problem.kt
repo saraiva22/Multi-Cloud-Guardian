@@ -80,6 +80,10 @@ class Problem(
         private val invalidFileName = URI("${FILE_FOLDER}invalid-file-name")
         private val invalidCredential = URI("${FILE_FOLDER}invalid-credential")
         private val fileNotFound = URI("${FILE_FOLDER}file-not-found")
+        private val invalidDownloadFile = URI("${FILE_FOLDER}invalid-download-file")
+        private val invalidDecryptFile = URI("${FILE_FOLDER}invalid-decrypt-file")
+        private val invalidEncryptFile = URI("${FILE_FOLDER}invalid-encrypt-file")
+        private val invalidDeleteFile = URI("${FILE_FOLDER}invalid-delete-file")
 
         fun internalServerError(instance: URI?): ResponseEntity<*> =
             Problem(
@@ -291,6 +295,42 @@ class Problem(
                 title = "File not found",
                 status = HttpStatus.NOT_FOUND.value(),
                 detail = "File $id not found",
+                instance = instance,
+            ).toResponse()
+
+        fun invalidDownloadFile(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = invalidDownloadFile,
+                title = "Invalid download file",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Invalid download file",
+                instance = instance,
+            ).toResponse()
+
+        fun invalidDecryptFile(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = invalidDecryptFile,
+                title = "Invalid decrypt file",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Invalid decrypt file",
+                instance = instance,
+            ).toResponse()
+
+        fun invalidEncryptFile(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = invalidEncryptFile,
+                title = "Invalid encrypt file",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Invalid encrypt file",
+                instance = instance,
+            ).toResponse()
+
+        fun invalidDeleteFile(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = invalidDeleteFile,
+                title = "Invalid delete file",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Invalid delete file",
                 instance = instance,
             ).toResponse()
     }

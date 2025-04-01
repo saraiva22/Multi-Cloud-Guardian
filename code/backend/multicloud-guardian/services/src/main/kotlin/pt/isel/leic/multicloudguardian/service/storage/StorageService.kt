@@ -16,6 +16,10 @@ import pt.isel.leic.multicloudguardian.repository.TransactionManager
 import pt.isel.leic.multicloudguardian.service.security.SecurityService
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.CreateBlobStorageContextError
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.StorageFileJclouds
+import java.io.File
+import java.io.FileOutputStream
+import java.nio.file.Files
+import java.util.Arrays
 
 @Service
 class StorageService(
@@ -37,6 +41,12 @@ class StorageService(
             val bucketName = providerDomain.getBucketName(provider)
             val checkSum = securityService.calculateChecksum(file.fileContent)
 
+            val isFileNameAlreadyExists =
+                fileRepository.getFileNames(user.id).find { fileName -> fileName == file.fileName }
+            if (isFileNameAlreadyExists != null) {
+                return@run failure(FileCreationError.FileNameAlreadyExists)
+            }
+
             when (val contextStorage = createContextStorage(provider, bucketName)) {
                 is Failure ->
                     when (contextStorage.value) {
@@ -48,17 +58,24 @@ class StorageService(
                     }
 
                 is Success -> {
-                    val isFileNameAlreadyExists =
-                        fileRepository.getFileNames(user.id).find { fileName -> fileName == file.fileName }
-                    if (isFileNameAlreadyExists != null) {
-                        contextStorage.value.close()
-                        return@run failure(FileCreationError.FileNameAlreadyExists)
-                    }
+                    val secretKey = securityService.generationKeyAES()
+                    val iv = securityService.generationIV()
+
+                    val fileContentData =
+                        if (encryption) {
+                            val encryptedData =
+                                securityService.encrypt(file.fileContent, secretKey, iv) ?: return@run failure(
+                                    FileCreationError.ErrorEncryptingFile,
+                                )
+                            iv + encryptedData // Prepend IV to the encrypted data
+                        } else {
+                            file.fileContent
+                        }
 
                     val isUploadFile =
                         jcloudsStorage.uploadBlob(
                             file.fileName,
-                            file.fileContent,
+                            fileContentData,
                             file.contentType,
                             contextStorage.value,
                             bucketName,
@@ -78,13 +95,20 @@ class StorageService(
                                     file,
                                     path,
                                     checkSum,
-                                    "TESTING",
+                                    path,
                                     user.id,
                                     false,
                                     clock.now(),
                                 )
                             contextStorage.value.close()
-                            return@run success(Pair(fileId, "VALUE"))
+                            val key =
+                                if (encryption) {
+                                    securityService.secretKeyToString(secretKey)
+                                } else {
+                                    ""
+                                }
+
+                            success(Pair(fileId, key))
                         }
                     }
                 }
@@ -120,7 +144,115 @@ class StorageService(
                     val generatedUrl =
                         jcloudsStorage.generateBlobUrl(provider, bucketName, credential, identity, file.path, location)
                     contextStorage.value.close()
-                    return@run success(file.copy(url = generatedUrl))
+                    success(file.copy(url = generatedUrl))
+                }
+            }
+        }
+
+    fun downloadFile(
+        fileId: Id,
+        encryption: Boolean,
+        encryptionKey: String,
+        pathSaveFile: String,
+        user: User,
+    ): DownloadFileResult =
+        transactionManager.run {
+            val usersRepository = it.usersRepository
+            val fileRepository = it.fileRepository
+            val file =
+                fileRepository.getFileById(user.id, fileId) ?: return@run failure(DownloadFileError.FileNotFound)
+
+            val provider = usersRepository.getProvider(user.id)
+            val bucketName = providerDomain.getBucketName(provider)
+
+            when (val contextStorage = createContextStorage(provider, bucketName)) {
+                is Failure ->
+                    when (contextStorage.value) {
+                        CreateContextJCloudError.ErrorCreatingContext -> return@run failure(DownloadFileError.ErrorCreatingContext)
+                        CreateContextJCloudError.ErrorCreatingGlobalBucket -> return@run failure(
+                            DownloadFileError.ErrorCreatingGlobalBucket,
+                        )
+
+                        CreateContextJCloudError.InvalidCredential -> return@run failure(DownloadFileError.InvalidCredential)
+                    }
+
+                is Success -> {
+                    val pathFile = "$pathSaveFile/${file.name}"
+
+                    val downloadFile =
+                        jcloudsStorage.downloadBlob(bucketName, file.path, pathFile, contextStorage.value)
+
+                    when (downloadFile) {
+                        is Failure -> {
+                            contextStorage.value.close()
+                            return@run failure(DownloadFileError.ErrorDownloadingFile)
+                        }
+
+                        is Success -> {
+                            // Read the encrypted file
+                            val encryptedFile = File(pathFile)
+                            val downloadedBytes: ByteArray = Files.readAllBytes(encryptedFile.toPath())
+
+                            // Extract IV and encrypted data
+                            val iv: ByteArray =
+                                Arrays.copyOfRange(downloadedBytes, 0, 12) // The first 12 bytes are the IV
+                            val encryptedData: ByteArray =
+                                Arrays.copyOfRange(downloadedBytes, 12, downloadedBytes.size)
+
+                            val key =
+                                securityService.convertStringToSecretKey(encryptionKey) ?: return@run failure(
+                                    DownloadFileError.ErrorDecryptingFile,
+                                )
+
+                            val decryptedData: ByteArray =
+                                securityService.decrypt(encryptedData, key, iv) ?: return@run failure(
+                                    DownloadFileError.ErrorDecryptingFile,
+                                )
+
+                            FileOutputStream(pathFile).use { outputStream ->
+                                outputStream.write(decryptedData)
+                            }
+
+                            success(true)
+                        }
+                    }
+                }
+            }
+        }
+
+    fun deleteFile(
+        user: User,
+        fileId: Id,
+    ): DeleteFileResult =
+        transactionManager.run {
+            val usersRepository = it.usersRepository
+            val fileRepository = it.fileRepository
+
+            val file = fileRepository.getFileById(user.id, fileId) ?: return@run failure(DeleteFileError.FileNotFound)
+
+            val provider = usersRepository.getProvider(user.id)
+            val bucketName = providerDomain.getBucketName(provider)
+
+            when (val contextStorage = createContextStorage(provider, bucketName)) {
+                is Failure ->
+                    when (contextStorage.value) {
+                        CreateContextJCloudError.ErrorCreatingContext -> return@run failure(DeleteFileError.ErrorCreatingContext)
+                        CreateContextJCloudError.ErrorCreatingGlobalBucket -> return@run failure(
+                            DeleteFileError.ErrorCreatingGlobalBucket,
+                        )
+
+                        CreateContextJCloudError.InvalidCredential -> return@run failure(DeleteFileError.InvalidCredential)
+                    }
+
+                is Success -> {
+                    when (jcloudsStorage.deleteBlob(contextStorage.value, bucketName, file.path)) {
+                        is Failure -> return@run failure(DeleteFileError.ErrorDeletingFile)
+
+                        is Success -> {
+                            fileRepository.deleteFile(file)
+                            success(true)
+                        }
+                    }
                 }
             }
         }

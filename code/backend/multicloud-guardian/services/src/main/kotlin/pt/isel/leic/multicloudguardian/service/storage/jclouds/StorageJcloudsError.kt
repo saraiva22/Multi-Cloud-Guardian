@@ -22,3 +22,14 @@ sealed class UploadBlobError {
 }
 
 typealias UploadBlobResult = Either<UploadBlobError, Boolean>
+
+sealed class DownloadBlobError {
+    data object ErrorDownloadingBlob : DownloadBlobError()
+}
+
+typealias DownloadBlobResult = Either<DownloadBlobError, Boolean>
+
+sealed class DeleteBlobError {
+    data object ErrorDeletingBlob : DeleteBlobError()
+}
+typealias DeleteBlobResult = Either<DeleteBlobError, Unit>

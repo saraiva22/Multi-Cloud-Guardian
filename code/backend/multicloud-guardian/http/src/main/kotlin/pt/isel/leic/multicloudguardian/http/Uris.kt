@@ -44,6 +44,8 @@ object Uris {
         fun getFiles(): URI = URI(GET_FILES)
 
         fun downloadFile(id: Int): URI = UriTemplate(DOWNLOAD_FILE).expand(id)
+
+        fun deleteFile(id: Int): URI = UriTemplate(DELETE).expand(id)
     }
 
     object Folders {

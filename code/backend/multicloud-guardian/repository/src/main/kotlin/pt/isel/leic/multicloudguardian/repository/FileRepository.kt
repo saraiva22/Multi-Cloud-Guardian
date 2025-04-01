@@ -22,4 +22,11 @@ interface FileRepository {
         userId: Id,
         fileId: Id,
     ): File?
+
+    fun getPathById(
+        userId: Id,
+        fileId: Id,
+    ): String?
+
+    fun deleteFile(file: File)
 }
