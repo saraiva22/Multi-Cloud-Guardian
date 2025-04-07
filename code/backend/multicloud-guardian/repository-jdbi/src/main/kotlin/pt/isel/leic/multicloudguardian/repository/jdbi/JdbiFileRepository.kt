@@ -6,6 +6,7 @@ import org.jdbi.v3.core.kotlin.mapTo
 import org.slf4j.LoggerFactory
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
+import pt.isel.leic.multicloudguardian.domain.folder.Folder
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 import pt.isel.leic.multicloudguardian.repository.FileRepository
 
@@ -78,6 +79,38 @@ class JdbiFileRepository(
             .mapTo<File>()
             .singleOrNull()
 
+    override fun getFolderByName(
+        userId: Id,
+        parentFolderId: Id?,
+        folderName: String,
+    ): Folder? =
+        handle
+            .createQuery(
+                """
+                select folder.* from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.folder_name = :folderName and folder.user_id = :userId
+                and ((:parentFolderId IS NULL AND folder.parent_folder_id IS NULL) 
+                OR folder.parent_folder_id = :parentFolderId)
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .bind("parentFolderId", parentFolderId?.value)
+            .bind("folderName", folderName)
+            .mapTo<Folder>()
+            .singleOrNull()
+
+    override fun getFolderById(
+        userId: Id,
+        folderId: Id,
+    ): Folder? =
+        handle
+            .createQuery(
+                """
+                select folder.* from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.folder_id = :folderId and folder.user_id = :userId
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .bind("folderId", folderId.value)
+            .mapTo<Folder>()
+            .singleOrNull()
+
     override fun getFiles(userId: Id): List<File> =
         handle
             .createQuery(
@@ -110,6 +143,31 @@ class JdbiFileRepository(
                 """.trimIndent(),
             ).bind("fileId", file.fileId.value)
             .execute()
+    }
+
+    override fun createFolder(
+        userId: Id,
+        folderName: String,
+        parentFolderId: Id?,
+        path: String,
+        createdAt: Instant,
+    ): Id {
+        val id =
+            handle
+                .createUpdate(
+                    """
+                    insert into dbo.Folders (user_id, parent_folder_id, folder_name, size, 
+                    number_files, created_at, updated_at, path) values (:user_id, :parent_folder_id, :folder_name, 0, 0, :created_at,:created_at, :path)
+                    """.trimIndent(),
+                ).bind("user_id", userId.value)
+                .bind("parent_folder_id", parentFolderId?.value)
+                .bind("folder_name", folderName)
+                .bind("created_at", createdAt.epochSeconds)
+                .bind("path", path)
+                .executeAndReturnGeneratedKeys()
+                .mapTo<Int>()
+                .one()
+        return Id(id)
     }
 
     companion object {

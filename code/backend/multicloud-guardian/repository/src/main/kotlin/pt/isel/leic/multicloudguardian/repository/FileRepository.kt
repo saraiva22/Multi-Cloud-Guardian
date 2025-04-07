@@ -3,6 +3,7 @@ package pt.isel.leic.multicloudguardian.repository
 import kotlinx.datetime.Instant
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
+import pt.isel.leic.multicloudguardian.domain.folder.Folder
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 
 interface FileRepository {
@@ -23,6 +24,17 @@ interface FileRepository {
         fileId: Id,
     ): File?
 
+    fun getFolderByName(
+        userId: Id,
+        parentFolderId: Id?,
+        folderName: String,
+    ): Folder?
+
+    fun getFolderById(
+        userId: Id,
+        folderId: Id,
+    ): Folder?
+
     fun getFiles(userId: Id): List<File>
 
     fun getPathById(
@@ -31,4 +43,12 @@ interface FileRepository {
     ): String?
 
     fun deleteFile(file: File)
+
+    fun createFolder(
+        userId: Id,
+        folderName: String,
+        parentFolderId: Id?,
+        path: String,
+        createdAt: Instant,
+    ): Id
 }

@@ -46,13 +46,16 @@ object Uris {
     object Folders {
         const val CREATE = "$PREFIX/folders"
         const val GET_FOLDERS = "$PREFIX/folders"
-        const val GET_FOLDER_BY_ID = "$PREFIX/folders/{folderId}"
+        const val CREATE_FOLDER_IN_FOLDER = "$PREFIX/folders/{folderId}"
+
+        //  const val GET_FOLDER_BY_ID = "$PREFIX/folders/{folderId}"
         const val GET_FILES_IN_FOLDER = "$PREFIX/folders/{folderId}/files"
         const val GET_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}"
         const val UPLOAD_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files"
-        const val DOWNLOAD_FOLDER = "$PREFIX/folders/{folderId}"
+        const val DOWNLOAD_FOLDER = "$PREFIX/folders/{folderId}/download"
         const val DOWNLOAD_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}"
-        const val DELETE_FOLDER = "$PREFIX/folders/{folderId}"
+
+        //  const val DELETE_FOLDER = "$PREFIX/folders/{folderId}"
         const val DELETE_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}"
 
         fun register(): URI = URI(CREATE)
@@ -63,12 +66,14 @@ object Uris {
 
         fun filesInFolder(folderId: Int): URI = UriTemplate(GET_FILES_IN_FOLDER).expand(folderId)
 
+        fun createFolderInFolder(folderId: Int): URI = UriTemplate(CREATE_FOLDER_IN_FOLDER).expand(folderId)
+
         fun fileInFolder(
             folderId: Int,
             fileId: Int,
         ): URI = UriTemplate(GET_FILE_IN_FOLDER).expand(folderId, fileId)
 
-        fun fileInFolderById(id: Int): URI = UriTemplate(GET_FOLDER_BY_ID).expand(id)
+        // fun fileInFolderById(id: Int): URI = UriTemplate(GET_FOLDER_BY_ID).expand(id)
 
         fun updateFileInFolder(id: Int): URI = UriTemplate(UPLOAD_FILE_IN_FOLDER).expand(id)
 
@@ -79,7 +84,7 @@ object Uris {
             fileId: Int,
         ): URI = UriTemplate(DOWNLOAD_FILE_IN_FOLDER).expand(folderId, fileId)
 
-        fun deleteFolder(id: Int): URI = UriTemplate(DELETE_FOLDER).expand(id)
+        //   fun deleteFolder(id: Int): URI = UriTemplate(DELETE_FOLDER).expand(id)
 
         fun deleteFileInFolder(
             folderId: Int,

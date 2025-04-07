@@ -21,7 +21,11 @@ import pt.isel.leic.multicloudguardian.http.model.storage.DownloadFileInputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FileCreateInputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FileInfoOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FilesListOutputModel
+import pt.isel.leic.multicloudguardian.http.model.storage.FolderCreateInputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.UploadFileOutputModel
+import pt.isel.leic.multicloudguardian.http.model.utils.IdOutputModel
+import pt.isel.leic.multicloudguardian.service.storage.CreationFolderInRootError
+import pt.isel.leic.multicloudguardian.service.storage.CreationFolderInSubFolderError
 import pt.isel.leic.multicloudguardian.service.storage.DeleteFileError
 import pt.isel.leic.multicloudguardian.service.storage.DownloadFileError
 import pt.isel.leic.multicloudguardian.service.storage.FileCreationError
@@ -166,10 +170,73 @@ class StorageController(
         val res = storageService.getFiles(authenticatedUser.user)
         return ResponseEntity.status(HttpStatus.OK).body(
             FilesListOutputModel(
-                res.map {
-                    (FileInfoOutputModel.fromDomain(it))
-                },
+                res.map { (FileInfoOutputModel.fromDomain(it)) },
             ),
         )
+    }
+
+    @PostMapping(Uris.Folders.CREATE)
+    fun createFolder(
+        @Validated @RequestBody input: FolderCreateInputModel,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Folders.register()
+        return when (val res = storageService.createFolder(input.folderName, authenticatedUser.user)) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .header(
+                        "Location",
+                        Uris.Folders.folderById(res.value.value).toASCIIString(),
+                    ).body(IdOutputModel(res.value.value))
+
+            is Failure ->
+                when (res.value) {
+                    CreationFolderInRootError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
+                    CreationFolderInRootError.ErrorCreatingGlobalBucket -> Problem.invalidCreateContext(instance)
+                    CreationFolderInRootError.InvalidCredential -> Problem.invalidCredential(instance)
+                    CreationFolderInRootError.ErrorCreatingFolder -> Problem.invalidFolderCreation(instance)
+                    CreationFolderInRootError.FolderNameAlreadyExists ->
+                        Problem.folderNameAlreadyExists(input.folderName, instance)
+                }
+        }
+    }
+
+    @PostMapping(Uris.Folders.CREATE_FOLDER_IN_FOLDER)
+    fun createFolderInFolder(
+        @Validated @RequestBody input: FolderCreateInputModel,
+        @PathVariable folderId: Int,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Folders.createFolderInFolder(folderId)
+        return when (
+            val res =
+                storageService.createFolderInFolder(
+                    input.folderName,
+                    Id(folderId),
+                    authenticatedUser.user.id,
+                )
+        ) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .header(
+                        "Location",
+                        Uris.Folders.createFolderInFolder(res.value.value).toASCIIString(),
+                    ).body(IdOutputModel(res.value.value))
+
+            is Failure ->
+                when (res.value) {
+                    CreationFolderInSubFolderError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
+                    CreationFolderInSubFolderError.ErrorCreatingGlobalBucket -> Problem.invalidCreateContext(instance)
+                    CreationFolderInSubFolderError.InvalidCredential -> Problem.invalidCredential(instance)
+                    CreationFolderInSubFolderError.ErrorCreatingFolder -> Problem.invalidFolderCreation(instance)
+                    CreationFolderInSubFolderError.FolderNameAlreadyExists ->
+                        Problem.folderNameAlreadyExists(input.folderName, instance)
+
+                    CreationFolderInSubFolderError.ParentFolderNotFound ->
+                        Problem.parentFolderNotFound(folderId, instance)
+                }
+        }
     }
 }

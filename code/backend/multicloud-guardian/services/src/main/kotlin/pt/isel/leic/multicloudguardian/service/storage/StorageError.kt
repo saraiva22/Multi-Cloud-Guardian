@@ -73,3 +73,33 @@ sealed class DeleteFileError {
 }
 
 typealias DeleteFileResult = Either<DeleteFileError, Boolean>
+
+sealed class CreationFolderInRootError {
+    data object FolderNameAlreadyExists : CreationFolderInRootError()
+
+    data object ErrorCreatingGlobalBucket : CreationFolderInRootError()
+
+    data object ErrorCreatingContext : CreationFolderInRootError()
+
+    data object InvalidCredential : CreationFolderInRootError()
+
+    data object ErrorCreatingFolder : CreationFolderInRootError()
+}
+
+typealias CreationFolderInRootResult = Either<CreationFolderInRootError, Id>
+
+sealed class CreationFolderInSubFolderError {
+    data object FolderNameAlreadyExists : CreationFolderInSubFolderError()
+
+    data object ErrorCreatingGlobalBucket : CreationFolderInSubFolderError()
+
+    data object ErrorCreatingContext : CreationFolderInSubFolderError()
+
+    data object InvalidCredential : CreationFolderInSubFolderError()
+
+    data object ErrorCreatingFolder : CreationFolderInSubFolderError()
+
+    data object ParentFolderNotFound : CreationFolderInSubFolderError()
+}
+
+typealias CreationFolderInSubFolderResult = Either<CreationFolderInSubFolderError, Id>

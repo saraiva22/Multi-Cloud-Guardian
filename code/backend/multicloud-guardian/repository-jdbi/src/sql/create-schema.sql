@@ -35,14 +35,17 @@ create table dbo.Folders(
     folder_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id int REFERENCES dbo.Users(id) on delete cascade on update cascade,
     parent_folder_id int REFERENCES dbo.Folders(folder_id) on delete cascade,
-    name VARCHAR(30) not null,
+    folder_name VARCHAR(25) not null,
     size bigint not null,
     number_files int not null,
     created_at bigint not null,
     updated_at bigint not null,
+    path VARCHAR(255) not null,
     constraint created_before_updated_at check (created_at <= updated_at),
     constraint created_at_is_valid check (created_at > 0),
-    constraint updated_at_is_valid check (updated_at > 0)
+    constraint updated_at_is_valid check (updated_at > 0),
+    constraint folder_name_min_length check (char_length(folder_name) >= 5),
+    constraint folder_name_max_length check (char_length(folder_name) <= 25)
 );
 
 create table dbo.Files(

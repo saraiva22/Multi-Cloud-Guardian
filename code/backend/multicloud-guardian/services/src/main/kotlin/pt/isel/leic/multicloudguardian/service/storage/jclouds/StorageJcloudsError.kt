@@ -33,3 +33,8 @@ sealed class DeleteBlobError {
     data object ErrorDeletingBlob : DeleteBlobError()
 }
 typealias DeleteBlobResult = Either<DeleteBlobError, Unit>
+
+sealed class CreateFolderError {
+    data object ErrorCreatingFolder : CreateFolderError()
+}
+typealias CreateFolderResult = Either<CreateFolderError, Boolean>

@@ -272,6 +272,109 @@ class StorageService(
             it.fileRepository.getFiles(user.id)
         }
 
+    fun createFolder(
+        folderName: String,
+        user: User,
+    ): CreationFolderInRootResult =
+        transactionManager.run {
+            val usersRepository = it.usersRepository
+            val fileRepository = it.fileRepository
+
+            if (fileRepository.getFolderByName(
+                    user.id,
+                    null,
+                    folderName,
+                ) != null
+            ) {
+                return@run failure(CreationFolderInRootError.FolderNameAlreadyExists)
+            }
+
+            val provider = usersRepository.getProvider(user.id)
+            val bucketName = providerDomain.getBucketName(provider)
+
+            when (val contextStorage = createContextStorage(provider, bucketName)) {
+                is Failure ->
+                    when (contextStorage.value) {
+                        CreateContextJCloudError.ErrorCreatingContext -> return@run failure(CreationFolderInRootError.ErrorCreatingContext)
+                        CreateContextJCloudError.ErrorCreatingGlobalBucket -> return@run failure(
+                            CreationFolderInRootError.ErrorCreatingGlobalBucket,
+                        )
+
+                        CreateContextJCloudError.InvalidCredential -> return@run failure(CreationFolderInRootError.InvalidCredential)
+                    }
+
+                is Success -> {
+                    val path = "${user.username.value}/$folderName/"
+                    val folderJclouds =
+                        jcloudsStorage.createFolder(contextStorage.value, path, bucketName, folderName)
+
+                    when (folderJclouds) {
+                        is Failure -> return@run failure(CreationFolderInRootError.ErrorCreatingFolder)
+
+                        is Success -> {
+                            val folder = fileRepository.createFolder(user.id, folderName, null, path, clock.now())
+                            success(folder)
+                        }
+                    }
+                }
+            }
+        }
+
+    fun createFolderInFolder(
+        folderName: String,
+        folderId: Id,
+        userId: Id,
+    ): CreationFolderInSubFolderResult =
+        transactionManager.run {
+            val usersRepository = it.usersRepository
+            val fileRepository = it.fileRepository
+
+            val folder =
+                fileRepository.getFolderById(userId, folderId)
+                    ?: return@run failure(CreationFolderInSubFolderError.ParentFolderNotFound)
+
+            if (fileRepository.getFolderByName(
+                    userId,
+                    folderId,
+                    folderName,
+                ) != null
+            ) {
+                return@run failure(CreationFolderInSubFolderError.FolderNameAlreadyExists)
+            }
+
+            val provider = usersRepository.getProvider(userId)
+            val bucketName = providerDomain.getBucketName(provider)
+
+            when (val contextStorage = createContextStorage(provider, bucketName)) {
+                is Failure ->
+                    when (contextStorage.value) {
+                        CreateContextJCloudError.ErrorCreatingContext -> return@run failure(
+                            CreationFolderInSubFolderError.ErrorCreatingContext,
+                        )
+
+                        CreateContextJCloudError.ErrorCreatingGlobalBucket -> return@run failure(
+                            CreationFolderInSubFolderError.ErrorCreatingGlobalBucket,
+                        )
+
+                        CreateContextJCloudError.InvalidCredential -> return@run failure(CreationFolderInSubFolderError.InvalidCredential)
+                    }
+
+                is Success -> {
+                    val path = "${folder.path}$folderName/"
+                    val folderJclouds =
+                        jcloudsStorage.createFolder(contextStorage.value, path, bucketName, folderName)
+                    when (folderJclouds) {
+                        is Failure -> return@run failure(CreationFolderInSubFolderError.ErrorCreatingFolder)
+
+                        is Success -> {
+                            val newFolderId = fileRepository.createFolder(userId, folderName, folderId, path, clock.now())
+                            success(newFolderId)
+                        }
+                    }
+                }
+            }
+        }
+
     private fun createContextStorage(
         provider: ProviderType,
         bucketName: String,

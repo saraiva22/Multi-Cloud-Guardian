@@ -131,6 +131,30 @@ class StorageFileJclouds(
         }
     }
 
+    fun createFolder(
+        context: BlobStoreContext,
+        path: String,
+        bucketName: String,
+        folderName: String,
+    ): CreateFolderResult {
+        try {
+            val blobStore = context.blobStore
+
+            val blob =
+                blobStore
+                    .blobBuilder(path)
+                    .payload(ByteArray(0))
+                    .contentLength(0)
+                    .build()
+
+            blobStore.putBlob(bucketName, blob)
+            return success(true)
+        } catch (e: Exception) {
+            logger.info("Failed to create folder: $folderName", e)
+            return failure(CreateFolderError.ErrorCreatingFolder)
+        }
+    }
+
     fun listBlobs(
         context: BlobStoreContext,
         folderName: String?,

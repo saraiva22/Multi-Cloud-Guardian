@@ -85,6 +85,14 @@ class Problem(
         private val invalidEncryptFile = URI("${FILE_FOLDER}invalid-encrypt-file")
         private val invalidDeleteFile = URI("${FILE_FOLDER}invalid-delete-file")
 
+        // Folder
+        private val invalidFolderName = URI("${FILE_FOLDER}invalid-folder-name")
+        private val invalidFolderCreation = URI("${FILE_FOLDER}invalid-folder-creation")
+        private val folderNotFound = URI("${FILE_FOLDER}folder-not-found")
+        private val folderNameAlreadyExists = URI("${FILE_FOLDER}folder-name-already-exists")
+        private val invalidParentFolder = URI("${FILE_FOLDER}invalid-parent-folder")
+        private val parentFolderNotFound = URI("${FILE_FOLDER}parent-folder-not-found")
+
         fun internalServerError(instance: URI?): ResponseEntity<*> =
             Problem(
                 type = internalServerError,
@@ -331,6 +339,39 @@ class Problem(
                 title = "Invalid delete file",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = "Invalid delete file",
+                instance = instance,
+            ).toResponse()
+
+        fun folderNameAlreadyExists(
+            folderName: String,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = folderNameAlreadyExists,
+                title = "Folder name already exists",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Folder name $folderName already exists",
+                instance = instance,
+            ).toResponse()
+
+        fun invalidFolderCreation(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = invalidFolderCreation,
+                title = "Invalid folder creation",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Invalid folder creation",
+                instance = instance,
+            ).toResponse()
+
+        fun parentFolderNotFound(
+            id: Int,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = parentFolderNotFound,
+                title = "Parent folder not found",
+                status = HttpStatus.NOT_FOUND.value(),
+                detail = "Parent folder $id not found",
                 instance = instance,
             ).toResponse()
     }
