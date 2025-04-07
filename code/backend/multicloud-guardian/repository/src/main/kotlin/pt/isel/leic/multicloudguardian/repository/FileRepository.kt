@@ -23,6 +23,8 @@ interface FileRepository {
         fileId: Id,
     ): File?
 
+    fun getFiles(userId: Id): List<File>
+
     fun getPathById(
         userId: Id,
         fileId: Id,

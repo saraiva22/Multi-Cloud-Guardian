@@ -82,16 +82,21 @@ class StorageFileJclouds(
         context: BlobStoreContext,
         bucketName: String,
         username: String,
+        encryption: Boolean,
     ): UploadBlobResult {
         try {
             val blobStore = context.blobStore
-            val blob =
+            val builder =
                 blobStore
                     .blobBuilder("$username/$blobName")
                     .payload(data)
                     .contentLength(data.size.toLong())
-                    // .contentType(contentType)
-                    .build()
+
+            if (!encryption) {
+                builder.contentType(contentType)
+            }
+
+            val blob = builder.build()
 
             blobStore.putBlob(bucketName, blob)
             return success(true)

@@ -10,7 +10,7 @@ data class FileCreateInputModel(
 ) {
     fun toDomain(): FileCreate =
         FileCreate(
-            fileName = safeFileName(file.originalFilename),
+            blobName = safeFileName(file.originalFilename),
             fileContent = file.bytes,
             contentType = file.contentType ?: "application/unknown",
             size = file.size,

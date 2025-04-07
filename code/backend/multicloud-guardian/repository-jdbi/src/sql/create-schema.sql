@@ -49,12 +49,11 @@ create table dbo.Files(
     file_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT REFERENCES dbo.Users(id) on delete cascade on update cascade,
     folder_id INT REFERENCES dbo.Folders(folder_id) on delete set null default null, 
-    name VARCHAR(30) not null,
+    file_name VARCHAR(30) not null,
     checksum bigint not null,
     path VARCHAR(255) not null,
     size bigint not null,
-    encryption BOOLEAN not null,
-    url VARCHAR(255) not null
+    encryption BOOLEAN not null
 );
 
 create table dbo.Metadata(

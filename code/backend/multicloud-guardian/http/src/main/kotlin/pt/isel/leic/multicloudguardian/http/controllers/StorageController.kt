@@ -19,7 +19,8 @@ import pt.isel.leic.multicloudguardian.http.Uris
 import pt.isel.leic.multicloudguardian.http.media.Problem
 import pt.isel.leic.multicloudguardian.http.model.storage.DownloadFileInputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FileCreateInputModel
-import pt.isel.leic.multicloudguardian.http.model.storage.FileOutputModel
+import pt.isel.leic.multicloudguardian.http.model.storage.FileInfoOutputModel
+import pt.isel.leic.multicloudguardian.http.model.storage.FilesListOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.UploadFileOutputModel
 import pt.isel.leic.multicloudguardian.service.storage.DeleteFileError
 import pt.isel.leic.multicloudguardian.service.storage.DownloadFileError
@@ -31,17 +32,17 @@ import pt.isel.leic.multicloudguardian.service.storage.StorageService
 class StorageController(
     private val storageService: StorageService,
 ) {
-    @PostMapping(Uris.Files.CREATE)
-    fun createFile(
+    @PostMapping(Uris.Files.UPLOAD)
+    fun uploadFile(
         @RequestParam("file") fileMultiPart: MultipartFile,
         @RequestParam("encryption") encryption: Boolean,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val fileCreateInputModel = FileCreateInputModel(fileMultiPart, encryption)
-        val instance = Uris.Files.register()
+        val instance = Uris.Files.uploadFile()
         val fileDomain = fileCreateInputModel.toDomain()
         val file =
-            storageService.createFile(
+            storageService.uploadFile(
                 fileDomain,
                 encryption,
                 authenticatedUser.user,
@@ -71,7 +72,7 @@ class StorageController(
                         Problem.invalidCreateContext(instance)
 
                     FileCreationError.FileNameAlreadyExists ->
-                        Problem.invalidFileName(fileDomain.fileName, instance)
+                        Problem.invalidFileName(fileDomain.blobName, instance)
 
                     FileCreationError.FileStorageError ->
                         Problem.invalidCreationStorage(instance)
@@ -97,7 +98,7 @@ class StorageController(
                 ResponseEntity
                     .status(HttpStatus.OK)
                     .body(
-                        FileOutputModel.fromDomain(res.value),
+                        FileInfoOutputModel.fromDomain(res.value.first, res.value.second),
                     )
 
             is Failure ->
@@ -158,5 +159,17 @@ class StorageController(
                     DeleteFileError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
                 }
         }
+    }
+
+    @GetMapping(Uris.Files.GET_FILES)
+    fun getFiles(authenticatedUser: AuthenticatedUser): ResponseEntity<*> {
+        val res = storageService.getFiles(authenticatedUser.user)
+        return ResponseEntity.status(HttpStatus.OK).body(
+            FilesListOutputModel(
+                res.map {
+                    (FileInfoOutputModel.fromDomain(it))
+                },
+            ),
+        )
     }
 }

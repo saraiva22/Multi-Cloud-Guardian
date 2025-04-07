@@ -28,20 +28,15 @@ object Uris {
     }
 
     object Files {
-        const val CREATE = "$PREFIX/files"
+        const val UPLOAD = "$PREFIX/files"
         const val GET_FILES = "$PREFIX/files"
         const val GET_BY_ID = "$PREFIX/files/{fileId}"
-        const val UPLOAD_FILE = "$PREFIX/files/upload"
         const val DOWNLOAD_FILE = "$PREFIX/files/{fileId}/download"
         const val DELETE = "$PREFIX/files/{fileId}"
 
-        fun register(): URI = URI(CREATE)
+        fun uploadFile(): URI = URI(UPLOAD)
 
         fun byId(id: Int): URI = UriTemplate(GET_BY_ID).expand(id)
-
-        fun updateFile(): URI = URI(UPLOAD_FILE)
-
-        fun getFiles(): URI = URI(GET_FILES)
 
         fun downloadFile(id: Int): URI = UriTemplate(DOWNLOAD_FILE).expand(id)
 
@@ -54,9 +49,9 @@ object Uris {
         const val GET_FOLDER_BY_ID = "$PREFIX/folders/{folderId}"
         const val GET_FILES_IN_FOLDER = "$PREFIX/folders/{folderId}/files"
         const val GET_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}"
-        const val UPLOAD_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/upload"
-        const val DOWNLOAD_FOLDER = "$PREFIX/folders/{folderId}/download"
-        const val DOWNLOAD_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}/download"
+        const val UPLOAD_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files"
+        const val DOWNLOAD_FOLDER = "$PREFIX/folders/{folderId}"
+        const val DOWNLOAD_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}"
         const val DELETE_FOLDER = "$PREFIX/folders/{folderId}"
         const val DELETE_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}"
 

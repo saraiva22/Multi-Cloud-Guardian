@@ -25,20 +25,19 @@ class JdbiFileRepository(
             handle
                 .createUpdate(
                     """
-                    insert into dbo.Files (user_id, name, checksum, path, size, encryption, url) values (:user_id, :name, :checksum, :path, :size, :encryption, :url)
+                    insert into dbo.Files (user_id, file_name, checksum, path, size, encryption) values (:user_id, :name, :checksum, :path, :size, :encryption)
                     """.trimIndent(),
                 ).bind("user_id", userId.value)
-                .bind("name", file.fileName)
+                .bind("name", file.blobName)
                 .bind("checksum", checkSum)
                 .bind("path", path)
                 .bind("size", file.size)
                 .bind("encryption", encryption)
-                .bind("url", url)
                 .executeAndReturnGeneratedKeys()
                 .mapTo<Int>()
                 .one()
 
-        logger.info("{} file stored in the database", file.fileName)
+        logger.info("{} file stored in the database", file.blobName)
 
         handle
             .createUpdate(
@@ -47,7 +46,7 @@ class JdbiFileRepository(
                 """.trimIndent(),
             ).bind("file_id", fileId)
             .bind("content_type", file.contentType)
-            .bindArray("tags", file.fileName, file.contentType, file.size.toString())
+            .bindArray("tags", file.blobName, file.contentType, file.size.toString())
             .bind("created_at", createdAt.epochSeconds)
             .bind("indexed_at", createdAt.epochSeconds)
             .execute()
@@ -59,7 +58,7 @@ class JdbiFileRepository(
         handle
             .createQuery(
                 """
-                select name from dbo.Files where user_id = :user_id
+                select file_name from dbo.Files where user_id = :user_id
                 """.trimIndent(),
             ).bind("user_id", userId.value)
             .mapTo<String>()
@@ -78,6 +77,16 @@ class JdbiFileRepository(
             .bind("fileId", fileId.value)
             .mapTo<File>()
             .singleOrNull()
+
+    override fun getFiles(userId: Id): List<File> =
+        handle
+            .createQuery(
+                """
+                select file.*  from dbo.Files file inner join dbo.Users on file.user_id = id where file.user_id = :userId
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .mapTo<File>()
+            .toList()
 
     override fun getPathById(
         userId: Id,

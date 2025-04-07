@@ -3,6 +3,7 @@ package pt.isel.leic.multicloudguardian.service.storage
 import kotlinx.datetime.Clock
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderDomainConfig
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
@@ -16,7 +17,6 @@ import pt.isel.leic.multicloudguardian.repository.TransactionManager
 import pt.isel.leic.multicloudguardian.service.security.SecurityService
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.CreateBlobStorageContextError
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.StorageFileJclouds
-import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.util.Arrays
@@ -29,7 +29,7 @@ class StorageService(
     private val providerDomain: ProviderDomainConfig,
     private val clock: Clock,
 ) {
-    fun createFile(
+    fun uploadFile(
         file: FileCreate,
         encryption: Boolean,
         user: User,
@@ -42,7 +42,7 @@ class StorageService(
             val checkSum = securityService.calculateChecksum(file.fileContent)
 
             val isFileNameAlreadyExists =
-                fileRepository.getFileNames(user.id).find { fileName -> fileName == file.fileName }
+                fileRepository.getFileNames(user.id).find { fileName -> fileName == file.blobName }
             if (isFileNameAlreadyExists != null) {
                 return@run failure(FileCreationError.FileNameAlreadyExists)
             }
@@ -74,15 +74,16 @@ class StorageService(
 
                     val isUploadFile =
                         jcloudsStorage.uploadBlob(
-                            file.fileName,
+                            file.blobName,
                             fileContentData,
                             file.contentType,
                             contextStorage.value,
                             bucketName,
                             user.username.value,
+                            encryption,
                         )
 
-                    val path = "${user.username.value}/${file.fileName}"
+                    val path = "${user.username.value}/${file.blobName}"
                     when (isUploadFile) {
                         is Failure -> {
                             contextStorage.value.close()
@@ -97,7 +98,7 @@ class StorageService(
                                     checkSum,
                                     path,
                                     user.id,
-                                    false,
+                                    encryption,
                                     clock.now(),
                                 )
                             contextStorage.value.close()
@@ -144,7 +145,9 @@ class StorageService(
                     val generatedUrl =
                         jcloudsStorage.generateBlobUrl(provider, bucketName, credential, identity, file.path, location)
                     contextStorage.value.close()
-                    success(file.copy(url = generatedUrl))
+                    success(
+                        Pair(file, generatedUrl),
+                    )
                 }
             }
         }
@@ -177,7 +180,7 @@ class StorageService(
                     }
 
                 is Success -> {
-                    val pathFile = "$pathSaveFile/${file.name}"
+                    val pathFile = "$pathSaveFile/${file.fileName}"
 
                     val downloadFile =
                         jcloudsStorage.downloadBlob(bucketName, file.path, pathFile, contextStorage.value)
@@ -190,8 +193,15 @@ class StorageService(
 
                         is Success -> {
                             // Read the encrypted file
-                            val encryptedFile = File(pathFile)
-                            val downloadedBytes: ByteArray = Files.readAllBytes(encryptedFile.toPath())
+                            val downloadedFile = java.io.File(pathFile)
+                            val downloadedBytes: ByteArray = Files.readAllBytes(downloadedFile.toPath())
+
+                            if (!encryption) {
+                                FileOutputStream(pathFile).use { outputStream ->
+                                    outputStream.write(downloadedBytes)
+                                }
+                                return@run success(true)
+                            }
 
                             // Extract IV and encrypted data
                             val iv: ByteArray =
@@ -255,6 +265,11 @@ class StorageService(
                     }
                 }
             }
+        }
+
+    fun getFiles(user: User): List<File> =
+        transactionManager.run {
+            it.fileRepository.getFiles(user.id)
         }
 
     private fun createContextStorage(

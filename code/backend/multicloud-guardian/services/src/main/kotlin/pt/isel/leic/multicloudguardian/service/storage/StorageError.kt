@@ -43,7 +43,7 @@ sealed class GetFileByIdError {
     data object ErrorCreatingGlobalBucket : GetFileByIdError()
 }
 
-typealias GetFileResult = Either<GetFileByIdError, File>
+typealias GetFileResult = Either<GetFileByIdError, Pair<File, String>>
 
 sealed class DownloadFileError {
     data object FileNotFound : DownloadFileError()
