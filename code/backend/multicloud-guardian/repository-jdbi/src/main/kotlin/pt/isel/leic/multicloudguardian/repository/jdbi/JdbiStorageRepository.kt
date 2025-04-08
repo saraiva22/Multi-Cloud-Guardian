@@ -8,17 +8,18 @@ import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
 import pt.isel.leic.multicloudguardian.domain.utils.Id
-import pt.isel.leic.multicloudguardian.repository.FileRepository
+import pt.isel.leic.multicloudguardian.repository.StorageRepository
 
-class JdbiFileRepository(
+class JdbiStorageRepository(
     private val handle: Handle,
-) : FileRepository {
+) : StorageRepository {
     override fun storeFile(
         file: FileCreate,
         path: String,
         checkSum: Long,
         url: String,
         userId: Id,
+        folderId: Id?,
         encryption: Boolean,
         createdAt: Instant,
     ): Id {
@@ -26,9 +27,10 @@ class JdbiFileRepository(
             handle
                 .createUpdate(
                     """
-                    insert into dbo.Files (user_id, file_name, checksum, path, size, encryption) values (:user_id, :name, :checksum, :path, :size, :encryption)
+                    insert into dbo.Files (user_id, folder_id, file_name,checksum, path, size, encryption) values (:user_id,:folderId, :name, :checksum, :path, :size, :encryption)
                     """.trimIndent(),
                 ).bind("user_id", userId.value)
+                .bind("folderId", folderId?.value)
                 .bind("name", file.blobName)
                 .bind("checksum", checkSum)
                 .bind("path", path)
@@ -55,15 +57,39 @@ class JdbiFileRepository(
         return Id(fileId)
     }
 
-    override fun getFileNames(userId: Id): List<String> =
+    override fun getFileNamesInFolder(
+        userId: Id,
+        folderId: Id?,
+    ): List<String> =
         handle
             .createQuery(
                 """
-                select file_name from dbo.Files where user_id = :user_id
+                select file_name from dbo.Files where user_id = :user_id and ((:folderId IS NULL AND folder_id IS NULL) 
+                OR folder_id = :folderId)
                 """.trimIndent(),
             ).bind("user_id", userId.value)
+            .bind("folderId", folderId)
             .mapTo<String>()
             .list()
+
+    override fun isFileNameInFolder(
+        userId: Id,
+        folderId: Id?,
+        fileName: String,
+    ): Boolean =
+        handle
+            .createQuery(
+                """
+                select count(*) from dbo.Files 
+                where user_id = :userId 
+                  and file_name = :fileName 
+                  and folder_id IS NOT DISTINCT FROM :folderId
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .bind("fileName", fileName)
+            .bind("folderId", folderId?.value)
+            .mapTo<Int>()
+            .single() == 1
 
     override fun getFileById(
         userId: Id,
@@ -96,6 +122,25 @@ class JdbiFileRepository(
             .bind("folderName", folderName)
             .mapTo<Folder>()
             .singleOrNull()
+
+    override fun isFolderNameExists(
+        userId: Id,
+        parentFolderId: Id?,
+        folderName: String,
+    ): Boolean =
+        handle
+            .createQuery(
+                """
+                select count(*) from dbo.Folders 
+                where user_id = :userId
+                  and folder_name = :folderName
+                  and parent_folder_id IS NOT DISTINCT FROM :parentFolderId
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .bind("folderName", folderName)
+            .bind("parentFolderId", parentFolderId?.value)
+            .mapTo<Int>()
+            .single() == 1
 
     override fun getFolderById(
         userId: Id,
@@ -171,6 +216,6 @@ class JdbiFileRepository(
     }
 
     companion object {
-        private val logger = LoggerFactory.getLogger(JdbiFileRepository::class.java)
+        private val logger = LoggerFactory.getLogger(JdbiStorageRepository::class.java)
     }
 }

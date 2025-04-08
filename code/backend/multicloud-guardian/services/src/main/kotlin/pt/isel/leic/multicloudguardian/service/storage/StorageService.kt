@@ -33,27 +33,45 @@ class StorageService(
         file: FileCreate,
         encryption: Boolean,
         user: User,
-    ): FileCreationResult {
-        return transactionManager.run {
+    ): UploadFileResult = handleFileUpload(file, encryption, user)
+
+    fun uploadFileInFolder(
+        file: FileCreate,
+        encryption: Boolean,
+        user: User,
+        folderId: Id,
+    ): UploadFileResult = handleFileUpload(file, encryption, user, folderId)
+
+    private fun handleFileUpload(
+        file: FileCreate,
+        encryption: Boolean,
+        user: User,
+        folderId: Id? = null,
+    ): UploadFileResult =
+        transactionManager.run {
             val usersRepository = it.usersRepository
-            val fileRepository = it.fileRepository
+            val fileRepository = it.storageRepository
+
+            if (fileRepository.isFileNameInFolder(user.id, folderId, file.blobName)) {
+                return@run failure(UploadFileError.FileNameAlreadyExists)
+            }
+
+            val folder =
+                folderId?.let {
+                    fileRepository.getFolderById(user.id, folderId)
+                        ?: return@run failure(UploadFileError.ParentFolderNotFound)
+                }
+
             val provider = usersRepository.getProvider(user.id)
             val bucketName = providerDomain.getBucketName(provider)
             val checkSum = securityService.calculateChecksum(file.fileContent)
-
-            val isFileNameAlreadyExists =
-                fileRepository.getFileNames(user.id).find { fileName -> fileName == file.blobName }
-            if (isFileNameAlreadyExists != null) {
-                return@run failure(FileCreationError.FileNameAlreadyExists)
-            }
-
             when (val contextStorage = createContextStorage(provider, bucketName)) {
                 is Failure ->
                     when (contextStorage.value) {
-                        CreateContextJCloudError.InvalidCredential -> return@run failure(FileCreationError.InvalidCredential)
-                        CreateContextJCloudError.ErrorCreatingContext -> return@run failure(FileCreationError.ErrorCreatingContext)
+                        CreateContextJCloudError.InvalidCredential -> return@run failure(UploadFileError.InvalidCredential)
+                        CreateContextJCloudError.ErrorCreatingContext -> return@run failure(UploadFileError.ErrorCreatingContextUpload)
                         CreateContextJCloudError.ErrorCreatingGlobalBucket -> return@run failure(
-                            FileCreationError.ErrorCreatingGlobalBucket,
+                            UploadFileError.ErrorCreatingGlobalBucketUpload,
                         )
                     }
 
@@ -65,29 +83,31 @@ class StorageService(
                         if (encryption) {
                             val encryptedData =
                                 securityService.encrypt(file.fileContent, secretKey, iv) ?: return@run failure(
-                                    FileCreationError.ErrorEncryptingFile,
+                                    UploadFileError.ErrorEncryptingUploadFile,
                                 )
                             iv + encryptedData // Prepend IV to the encrypted data
                         } else {
                             file.fileContent
                         }
 
+                    val basePath =
+                        folderId?.let { folder?.path } ?: "${user.username.value}/"
+                    val path = "$basePath${file.blobName}"
+
                     val isUploadFile =
                         jcloudsStorage.uploadBlob(
-                            file.blobName,
+                            path,
                             fileContentData,
                             file.contentType,
                             contextStorage.value,
                             bucketName,
-                            user.username.value,
                             encryption,
                         )
 
-                    val path = "${user.username.value}/${file.blobName}"
                     when (isUploadFile) {
                         is Failure -> {
                             contextStorage.value.close()
-                            return@run failure(FileCreationError.FileStorageError)
+                            return@run failure(UploadFileError.FileStorageError)
                         }
 
                         is Success -> {
@@ -98,6 +118,7 @@ class StorageService(
                                     checkSum,
                                     path,
                                     user.id,
+                                    folderId,
                                     encryption,
                                     clock.now(),
                                 )
@@ -115,7 +136,6 @@ class StorageService(
                 }
             }
         }
-    }
 
     fun getFileById(
         user: User,
@@ -123,9 +143,13 @@ class StorageService(
     ): GetFileResult =
         transactionManager.run {
             val usersRepository = it.usersRepository
-            val fileRepository = it.fileRepository
+            val fileRepository = it.storageRepository
             val file =
                 fileRepository.getFileById(user.id, fileId) ?: return@run failure(GetFileByIdError.FileNotFound)
+
+            if (file.encryption) {
+                return@run failure(GetFileByIdError.FileIsEncrypted)
+            }
 
             val provider = usersRepository.getProvider(user.id)
             val bucketName = providerDomain.getBucketName(provider)
@@ -153,17 +177,43 @@ class StorageService(
         }
 
     fun downloadFile(
-        fileId: Id,
-        encryption: Boolean,
-        encryptionKey: String,
-        pathSaveFile: String,
         user: User,
+        fileId: Id,
+        pathSaveFile: String,
+        encryptionKey: String?,
+    ): DownloadFileResult = handleFileDownload(user, fileId, pathSaveFile, encryptionKey)
+
+    fun downloadFileInFolder(
+        user: User,
+        folderId: Id,
+        fileId: Id,
+        pathSaveFile: String,
+        encryptionKey: String?,
+    ): DownloadFileResult = handleFileDownload(user, fileId, pathSaveFile, encryptionKey, folderId)
+
+    private fun handleFileDownload(
+        user: User,
+        fileId: Id,
+        pathSaveFile: String,
+        encryptionKey: String? = null,
+        folderId: Id? = null,
     ): DownloadFileResult =
         transactionManager.run {
             val usersRepository = it.usersRepository
-            val fileRepository = it.fileRepository
+            val fileRepository = it.storageRepository
+
+            val folder =
+                folderId?.let {
+                    fileRepository.getFolderById(user.id, folderId)
+                        ?: return@run failure(DownloadFileError.ParentFolderNotFound)
+                }
+
             val file =
                 fileRepository.getFileById(user.id, fileId) ?: return@run failure(DownloadFileError.FileNotFound)
+
+            if (folder != null && folder.folderId != file.folderId) {
+                return@run failure(DownloadFileError.FileNotFound)
+            }
 
             val provider = usersRepository.getProvider(user.id)
             val bucketName = providerDomain.getBucketName(provider)
@@ -180,10 +230,9 @@ class StorageService(
                     }
 
                 is Success -> {
-                    val pathFile = "$pathSaveFile/${file.fileName}"
-
+                    val saveFilePath = "$pathSaveFile/${file.fileName}"
                     val downloadFile =
-                        jcloudsStorage.downloadBlob(bucketName, file.path, pathFile, contextStorage.value)
+                        jcloudsStorage.downloadBlob(bucketName, file.path, saveFilePath, contextStorage.value)
 
                     when (downloadFile) {
                         is Failure -> {
@@ -193,33 +242,35 @@ class StorageService(
 
                         is Success -> {
                             // Read the encrypted file
-                            val downloadedFile = java.io.File(pathFile)
+                            val downloadedFile = java.io.File(saveFilePath)
                             val downloadedBytes: ByteArray = Files.readAllBytes(downloadedFile.toPath())
 
-                            if (!encryption) {
-                                FileOutputStream(pathFile).use { outputStream ->
+                            if (!file.encryption) {
+                                FileOutputStream(saveFilePath).use { outputStream ->
                                     outputStream.write(downloadedBytes)
                                 }
                                 return@run success(true)
                             }
 
-                            // Extract IV and encrypted data
-                            val iv: ByteArray =
-                                Arrays.copyOfRange(downloadedBytes, 0, 12) // The first 12 bytes are the IV
-                            val encryptedData: ByteArray =
-                                Arrays.copyOfRange(downloadedBytes, 12, downloadedBytes.size)
-
+                            if (encryptionKey == null) return@run failure(DownloadFileError.InvalidKey)
                             val key =
                                 securityService.convertStringToSecretKey(encryptionKey) ?: return@run failure(
                                     DownloadFileError.ErrorDecryptingFile,
                                 )
+
+                            // Extract IV and encrypted
+
+                            val iv: ByteArray =
+                                Arrays.copyOfRange(downloadedBytes, 0, 12) // The first 12 bytes are the IV
+                            val encryptedData: ByteArray =
+                                Arrays.copyOfRange(downloadedBytes, 12, downloadedBytes.size)
 
                             val decryptedData: ByteArray =
                                 securityService.decrypt(encryptedData, key, iv) ?: return@run failure(
                                     DownloadFileError.ErrorDecryptingFile,
                                 )
 
-                            FileOutputStream(pathFile).use { outputStream ->
+                            FileOutputStream(saveFilePath).use { outputStream ->
                                 outputStream.write(decryptedData)
                             }
 
@@ -236,7 +287,7 @@ class StorageService(
     ): DeleteFileResult =
         transactionManager.run {
             val usersRepository = it.usersRepository
-            val fileRepository = it.fileRepository
+            val fileRepository = it.storageRepository
 
             val file = fileRepository.getFileById(user.id, fileId) ?: return@run failure(DeleteFileError.FileNotFound)
 
@@ -269,24 +320,37 @@ class StorageService(
 
     fun getFiles(user: User): List<File> =
         transactionManager.run {
-            it.fileRepository.getFiles(user.id)
+            it.storageRepository.getFiles(user.id)
         }
 
     fun createFolder(
         folderName: String,
         user: User,
-    ): CreationFolderInRootResult =
+    ): CreationFolderResult = createFolderGeneric(folderName, user)
+
+    fun createFolderInFolder(
+        folderName: String,
+        user: User,
+        folderId: Id,
+    ): CreationFolderResult = createFolderGeneric(folderName, user, folderId)
+
+    private fun createFolderGeneric(
+        folderName: String,
+        user: User,
+        folderId: Id? = null,
+    ): CreationFolderResult =
         transactionManager.run {
             val usersRepository = it.usersRepository
-            val fileRepository = it.fileRepository
+            val fileRepository = it.storageRepository
 
-            if (fileRepository.getFolderByName(
-                    user.id,
-                    null,
-                    folderName,
-                ) != null
-            ) {
-                return@run failure(CreationFolderInRootError.FolderNameAlreadyExists)
+            val folder =
+                folderId?.let {
+                    fileRepository.getFolderById(user.id, folderId)
+                        ?: return@run failure(CreationFolderError.ParentFolderNotFound)
+                }
+
+            if (fileRepository.isFolderNameExists(user.id, folderId, folderName)) {
+                return@run failure(CreationFolderError.FolderNameAlreadyExists)
             }
 
             val provider = usersRepository.getProvider(user.id)
@@ -295,79 +359,27 @@ class StorageService(
             when (val contextStorage = createContextStorage(provider, bucketName)) {
                 is Failure ->
                     when (contextStorage.value) {
-                        CreateContextJCloudError.ErrorCreatingContext -> return@run failure(CreationFolderInRootError.ErrorCreatingContext)
+                        CreateContextJCloudError.ErrorCreatingContext -> return@run failure(CreationFolderError.ErrorCreatingContext)
                         CreateContextJCloudError.ErrorCreatingGlobalBucket -> return@run failure(
-                            CreationFolderInRootError.ErrorCreatingGlobalBucket,
+                            CreationFolderError.ErrorCreatingGlobalBucket,
                         )
 
-                        CreateContextJCloudError.InvalidCredential -> return@run failure(CreationFolderInRootError.InvalidCredential)
+                        CreateContextJCloudError.InvalidCredential -> return@run failure(CreationFolderError.InvalidCredential)
                     }
 
                 is Success -> {
-                    val path = "${user.username.value}/$folderName/"
+                    val basePath =
+                        folderId?.let { folder?.path } ?: "${user.username.value}/"
+                    val path = "$basePath$folderName/"
                     val folderJclouds =
                         jcloudsStorage.createFolder(contextStorage.value, path, bucketName, folderName)
 
                     when (folderJclouds) {
-                        is Failure -> return@run failure(CreationFolderInRootError.ErrorCreatingFolder)
+                        is Failure -> return@run failure(CreationFolderError.ErrorCreatingFolder)
 
                         is Success -> {
-                            val folder = fileRepository.createFolder(user.id, folderName, null, path, clock.now())
-                            success(folder)
-                        }
-                    }
-                }
-            }
-        }
-
-    fun createFolderInFolder(
-        folderName: String,
-        folderId: Id,
-        userId: Id,
-    ): CreationFolderInSubFolderResult =
-        transactionManager.run {
-            val usersRepository = it.usersRepository
-            val fileRepository = it.fileRepository
-
-            val folder =
-                fileRepository.getFolderById(userId, folderId)
-                    ?: return@run failure(CreationFolderInSubFolderError.ParentFolderNotFound)
-
-            if (fileRepository.getFolderByName(
-                    userId,
-                    folderId,
-                    folderName,
-                ) != null
-            ) {
-                return@run failure(CreationFolderInSubFolderError.FolderNameAlreadyExists)
-            }
-
-            val provider = usersRepository.getProvider(userId)
-            val bucketName = providerDomain.getBucketName(provider)
-
-            when (val contextStorage = createContextStorage(provider, bucketName)) {
-                is Failure ->
-                    when (contextStorage.value) {
-                        CreateContextJCloudError.ErrorCreatingContext -> return@run failure(
-                            CreationFolderInSubFolderError.ErrorCreatingContext,
-                        )
-
-                        CreateContextJCloudError.ErrorCreatingGlobalBucket -> return@run failure(
-                            CreationFolderInSubFolderError.ErrorCreatingGlobalBucket,
-                        )
-
-                        CreateContextJCloudError.InvalidCredential -> return@run failure(CreationFolderInSubFolderError.InvalidCredential)
-                    }
-
-                is Success -> {
-                    val path = "${folder.path}$folderName/"
-                    val folderJclouds =
-                        jcloudsStorage.createFolder(contextStorage.value, path, bucketName, folderName)
-                    when (folderJclouds) {
-                        is Failure -> return@run failure(CreationFolderInSubFolderError.ErrorCreatingFolder)
-
-                        is Success -> {
-                            val newFolderId = fileRepository.createFolder(userId, folderName, folderId, path, clock.now())
+                            val newFolderId =
+                                fileRepository.createFolder(user.id, folderName, folderId, path, clock.now())
                             success(newFolderId)
                         }
                     }

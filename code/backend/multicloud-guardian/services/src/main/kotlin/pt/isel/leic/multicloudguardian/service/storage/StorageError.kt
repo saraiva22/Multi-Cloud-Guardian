@@ -15,26 +15,28 @@ sealed class CreateContextJCloudError {
 
 typealias CreateContextJCloudResult = Either<CreateContextJCloudError, BlobStoreContext>
 
-sealed class
+sealed class UploadFileError {
+    data object ErrorCreatingGlobalBucketUpload : UploadFileError()
 
-FileCreationError {
-    data object ErrorCreatingGlobalBucket : FileCreationError()
+    data object FileStorageError : UploadFileError()
 
-    data object FileStorageError : FileCreationError()
+    data object ErrorCreatingContextUpload : UploadFileError()
 
-    data object ErrorCreatingContext : FileCreationError()
+    data object ErrorEncryptingUploadFile : UploadFileError()
 
-    data object ErrorEncryptingFile : FileCreationError()
+    data object FileNameAlreadyExists : UploadFileError()
 
-    data object FileNameAlreadyExists : FileCreationError()
+    data object InvalidCredential : UploadFileError()
 
-    data object InvalidCredential : FileCreationError()
+    data object ParentFolderNotFound : UploadFileError()
 }
 
-typealias FileCreationResult = Either<FileCreationError, Pair<Id, String>>
+typealias UploadFileResult = Either<UploadFileError, Pair<Id, String>>
 
 sealed class GetFileByIdError {
     data object FileNotFound : GetFileByIdError()
+
+    data object FileIsEncrypted : GetFileByIdError()
 
     data object InvalidCredential : GetFileByIdError()
 
@@ -57,6 +59,10 @@ sealed class DownloadFileError {
     data object ErrorDownloadingFile : DownloadFileError()
 
     data object ErrorDecryptingFile : DownloadFileError()
+
+    data object InvalidKey : DownloadFileError()
+
+    data object ParentFolderNotFound : DownloadFileError()
 }
 typealias DownloadFileResult = Either<DownloadFileError, Boolean>
 
@@ -74,32 +80,18 @@ sealed class DeleteFileError {
 
 typealias DeleteFileResult = Either<DeleteFileError, Boolean>
 
-sealed class CreationFolderInRootError {
-    data object FolderNameAlreadyExists : CreationFolderInRootError()
+sealed class CreationFolderError {
+    data object FolderNameAlreadyExists : CreationFolderError()
 
-    data object ErrorCreatingGlobalBucket : CreationFolderInRootError()
+    data object ErrorCreatingGlobalBucket : CreationFolderError()
 
-    data object ErrorCreatingContext : CreationFolderInRootError()
+    data object ErrorCreatingContext : CreationFolderError()
 
-    data object InvalidCredential : CreationFolderInRootError()
+    data object InvalidCredential : CreationFolderError()
 
-    data object ErrorCreatingFolder : CreationFolderInRootError()
+    data object ErrorCreatingFolder : CreationFolderError()
+
+    data object ParentFolderNotFound : CreationFolderError()
 }
 
-typealias CreationFolderInRootResult = Either<CreationFolderInRootError, Id>
-
-sealed class CreationFolderInSubFolderError {
-    data object FolderNameAlreadyExists : CreationFolderInSubFolderError()
-
-    data object ErrorCreatingGlobalBucket : CreationFolderInSubFolderError()
-
-    data object ErrorCreatingContext : CreationFolderInSubFolderError()
-
-    data object InvalidCredential : CreationFolderInSubFolderError()
-
-    data object ErrorCreatingFolder : CreationFolderInSubFolderError()
-
-    data object ParentFolderNotFound : CreationFolderInSubFolderError()
-}
-
-typealias CreationFolderInSubFolderResult = Either<CreationFolderInSubFolderError, Id>
+typealias CreationFolderResult = Either<CreationFolderError, Id>

@@ -76,19 +76,18 @@ class StorageFileJclouds(
     }
 
     fun uploadBlob(
-        blobName: String,
+        path: String,
         data: ByteArray,
         contentType: String,
         context: BlobStoreContext,
         bucketName: String,
-        username: String,
         encryption: Boolean,
     ): UploadBlobResult {
         try {
             val blobStore = context.blobStore
             val builder =
                 blobStore
-                    .blobBuilder("$username/$blobName")
+                    .blobBuilder(path)
                     .payload(data)
                     .contentLength(data.size.toLong())
 
@@ -101,20 +100,20 @@ class StorageFileJclouds(
             blobStore.putBlob(bucketName, blob)
             return success(true)
         } catch (e: Exception) {
-            logger.info("Failed to upload blob: $blobName", e)
+            logger.info("Failed to upload blob: $path", e)
             return failure(UploadBlobError.ErrorUploadingBlob)
         }
     }
 
     fun downloadBlob(
         bucketName: String,
-        blobName: String,
+        path: String,
         outputFilePath: String,
         context: BlobStoreContext,
     ): DownloadBlobResult {
         try {
             val blobStore = context.blobStore
-            val downloadedBlob = blobStore.getBlob(bucketName, blobName)
+            val downloadedBlob = blobStore.getBlob(bucketName, path)
             val inputStream: InputStream = downloadedBlob.payload.openStream()
             val fileOutput = File(outputFilePath)
 
@@ -122,11 +121,11 @@ class StorageFileJclouds(
                 inputStream.copyTo(outputStream)
             }
 
-            logger.info("Blob $blobName downloaded successfully to $outputFilePath")
+            logger.info("Blob $path downloaded successfully to $outputFilePath")
 
             return success(true)
         } catch (e: Exception) {
-            logger.info("Failed to upload blob: $blobName", e)
+            logger.info("Failed to upload blob: $path", e)
             return failure(DownloadBlobError.ErrorDownloadingBlob)
         }
     }

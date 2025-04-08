@@ -84,6 +84,7 @@ class Problem(
         private val invalidDecryptFile = URI("${FILE_FOLDER}invalid-decrypt-file")
         private val invalidEncryptFile = URI("${FILE_FOLDER}invalid-encrypt-file")
         private val invalidDeleteFile = URI("${FILE_FOLDER}invalid-delete-file")
+        private val fileIsEncrypted = URI("${FILE_FOLDER}file-is-encrypted")
 
         // Folder
         private val invalidFolderName = URI("${FILE_FOLDER}invalid-folder-name")
@@ -92,6 +93,7 @@ class Problem(
         private val folderNameAlreadyExists = URI("${FILE_FOLDER}folder-name-already-exists")
         private val invalidParentFolder = URI("${FILE_FOLDER}invalid-parent-folder")
         private val parentFolderNotFound = URI("${FILE_FOLDER}parent-folder-not-found")
+        private val invalidKey = URI("${FILE_FOLDER}invalid-key")
 
         fun internalServerError(instance: URI?): ResponseEntity<*> =
             Problem(
@@ -372,6 +374,27 @@ class Problem(
                 title = "Parent folder not found",
                 status = HttpStatus.NOT_FOUND.value(),
                 detail = "Parent folder $id not found",
+                instance = instance,
+            ).toResponse()
+
+        fun invalidKey(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = invalidKey,
+                title = "Invalid key",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Key is invalid, please check the key, and try again",
+                instance = instance,
+            ).toResponse()
+
+        fun fileIsEncrypted(
+            id: Int,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = fileIsEncrypted,
+                title = "File is encrypted",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "File $id is encrypted, so it can only be downloaded with the key",
                 instance = instance,
             ).toResponse()
     }

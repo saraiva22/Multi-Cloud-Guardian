@@ -24,13 +24,12 @@ import pt.isel.leic.multicloudguardian.http.model.storage.FilesListOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FolderCreateInputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.UploadFileOutputModel
 import pt.isel.leic.multicloudguardian.http.model.utils.IdOutputModel
-import pt.isel.leic.multicloudguardian.service.storage.CreationFolderInRootError
-import pt.isel.leic.multicloudguardian.service.storage.CreationFolderInSubFolderError
+import pt.isel.leic.multicloudguardian.service.storage.CreationFolderError
 import pt.isel.leic.multicloudguardian.service.storage.DeleteFileError
 import pt.isel.leic.multicloudguardian.service.storage.DownloadFileError
-import pt.isel.leic.multicloudguardian.service.storage.FileCreationError
 import pt.isel.leic.multicloudguardian.service.storage.GetFileByIdError
 import pt.isel.leic.multicloudguardian.service.storage.StorageService
+import pt.isel.leic.multicloudguardian.service.storage.UploadFileError
 
 @RestController
 class StorageController(
@@ -62,30 +61,32 @@ class StorageController(
 
             is Failure ->
                 when (file.value) {
-                    FileCreationError.FileStorageError ->
+                    UploadFileError.FileStorageError ->
                         Problem.invalidCreationStorage(
                             instance,
                         )
 
-                    FileCreationError.ErrorCreatingGlobalBucket ->
+                    UploadFileError.ErrorCreatingGlobalBucketUpload ->
                         Problem.invalidCreationGlobalBucket(
                             instance,
                         )
 
-                    FileCreationError.ErrorCreatingContext ->
+                    UploadFileError.ErrorCreatingContextUpload ->
                         Problem.invalidCreateContext(instance)
 
-                    FileCreationError.FileNameAlreadyExists ->
+                    UploadFileError.FileNameAlreadyExists ->
                         Problem.invalidFileName(fileDomain.blobName, instance)
 
-                    FileCreationError.FileStorageError ->
+                    UploadFileError.FileStorageError ->
                         Problem.invalidCreationStorage(instance)
 
-                    FileCreationError.InvalidCredential ->
+                    UploadFileError.InvalidCredential ->
                         Problem.invalidCredential(instance)
 
-                    FileCreationError.ErrorEncryptingFile ->
+                    UploadFileError.ErrorEncryptingUploadFile ->
                         Problem.invalidEncryptFile(instance)
+
+                    UploadFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(0, instance)
                 }
         }
     }
@@ -111,6 +112,7 @@ class StorageController(
                     GetFileByIdError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
                     GetFileByIdError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
                     GetFileByIdError.InvalidCredential -> Problem.invalidCredential(instance)
+                    GetFileByIdError.FileIsEncrypted -> Problem.fileIsEncrypted(fileId, instance)
                 }
         }
     }
@@ -125,7 +127,12 @@ class StorageController(
         val user = authenticatedUser.user
         return when (
             val res =
-                storageService.downloadFile(Id(fileId), input.encryption, input.encryptedKey, input.pathSaveFile, user)
+                storageService.downloadFile(
+                    user,
+                    Id(fileId),
+                    input.pathSaveFile,
+                    input.encryptedKey,
+                )
         ) {
             is Success ->
                 ResponseEntity
@@ -141,6 +148,8 @@ class StorageController(
                     DownloadFileError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
                     DownloadFileError.InvalidCredential -> Problem.invalidCredential(instance)
                     DownloadFileError.ErrorDecryptingFile -> Problem.invalidDecryptFile(instance)
+                    DownloadFileError.InvalidKey -> Problem.invalidKey(instance)
+                    DownloadFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(0, instance)
                 }
         }
     }
@@ -192,12 +201,15 @@ class StorageController(
 
             is Failure ->
                 when (res.value) {
-                    CreationFolderInRootError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
-                    CreationFolderInRootError.ErrorCreatingGlobalBucket -> Problem.invalidCreateContext(instance)
-                    CreationFolderInRootError.InvalidCredential -> Problem.invalidCredential(instance)
-                    CreationFolderInRootError.ErrorCreatingFolder -> Problem.invalidFolderCreation(instance)
-                    CreationFolderInRootError.FolderNameAlreadyExists ->
+                    CreationFolderError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
+                    CreationFolderError.ErrorCreatingGlobalBucket -> Problem.invalidCreateContext(instance)
+                    CreationFolderError.InvalidCredential -> Problem.invalidCredential(instance)
+                    CreationFolderError.ErrorCreatingFolder -> Problem.invalidFolderCreation(instance)
+                    CreationFolderError.FolderNameAlreadyExists ->
                         Problem.folderNameAlreadyExists(input.folderName, instance)
+
+                    CreationFolderError.ParentFolderNotFound ->
+                        Problem.parentFolderNotFound(0, instance)
                 }
         }
     }
@@ -213,8 +225,8 @@ class StorageController(
             val res =
                 storageService.createFolderInFolder(
                     input.folderName,
+                    authenticatedUser.user,
                     Id(folderId),
-                    authenticatedUser.user.id,
                 )
         ) {
             is Success ->
@@ -227,15 +239,112 @@ class StorageController(
 
             is Failure ->
                 when (res.value) {
-                    CreationFolderInSubFolderError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
-                    CreationFolderInSubFolderError.ErrorCreatingGlobalBucket -> Problem.invalidCreateContext(instance)
-                    CreationFolderInSubFolderError.InvalidCredential -> Problem.invalidCredential(instance)
-                    CreationFolderInSubFolderError.ErrorCreatingFolder -> Problem.invalidFolderCreation(instance)
-                    CreationFolderInSubFolderError.FolderNameAlreadyExists ->
+                    CreationFolderError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
+                    CreationFolderError.ErrorCreatingGlobalBucket -> Problem.invalidCreateContext(instance)
+                    CreationFolderError.InvalidCredential -> Problem.invalidCredential(instance)
+                    CreationFolderError.ErrorCreatingFolder -> Problem.invalidFolderCreation(instance)
+                    CreationFolderError.FolderNameAlreadyExists ->
                         Problem.folderNameAlreadyExists(input.folderName, instance)
 
-                    CreationFolderInSubFolderError.ParentFolderNotFound ->
+                    CreationFolderError.ParentFolderNotFound ->
                         Problem.parentFolderNotFound(folderId, instance)
+                }
+        }
+    }
+
+    @PostMapping(Uris.Folders.UPLOAD_FILE_IN_FOLDER)
+    fun uploadFileInFolder(
+        @RequestParam("file") fileMultiPart: MultipartFile,
+        @RequestParam("encryption") encryption: Boolean,
+        @Validated @PathVariable folderId: Int,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Folders.uploadFileInFolder(folderId)
+        val fileCreateInputModel = FileCreateInputModel(fileMultiPart, encryption)
+        val fileDomain = fileCreateInputModel.toDomain()
+        val file =
+            storageService.uploadFileInFolder(
+                fileDomain,
+                encryption,
+                authenticatedUser.user,
+                Id(folderId),
+            )
+        return when (file) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .header(
+                        "Location",
+                        Uris.Files.byId(file.value.first.value).toASCIIString(),
+                    ).body(UploadFileOutputModel(file.value.first.value, file.value.second))
+
+            is Failure ->
+                when (file.value) {
+                    UploadFileError.FileStorageError ->
+                        Problem.invalidCreationStorage(
+                            instance,
+                        )
+
+                    UploadFileError.ErrorCreatingGlobalBucketUpload ->
+                        Problem.invalidCreationGlobalBucket(
+                            instance,
+                        )
+
+                    UploadFileError.ErrorCreatingContextUpload ->
+                        Problem.invalidCreateContext(instance)
+
+                    UploadFileError.FileNameAlreadyExists ->
+                        Problem.invalidFileName(fileDomain.blobName, instance)
+
+                    UploadFileError.FileStorageError ->
+                        Problem.invalidCreationStorage(instance)
+
+                    UploadFileError.InvalidCredential ->
+                        Problem.invalidCredential(instance)
+
+                    UploadFileError.ErrorEncryptingUploadFile ->
+                        Problem.invalidEncryptFile(instance)
+
+                    UploadFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(folderId, instance)
+                }
+        }
+    }
+
+    @PostMapping(Uris.Folders.DOWNLOAD_FILE_IN_FOLDER)
+    fun downloadFileInFolder(
+        @RequestBody input: DownloadFileInputModel,
+        @Validated @PathVariable folderId: Int,
+        @Validated @PathVariable fileId: Int,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Folders.downloadFileInFolder(folderId, fileId)
+        val user = authenticatedUser.user
+        return when (
+            val res =
+                storageService.downloadFileInFolder(
+                    user,
+                    Id(folderId),
+                    Id(fileId),
+                    input.pathSaveFile,
+                    input.encryptedKey,
+                )
+        ) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.OK)
+                    .header("Location", Uris.Files.downloadFile(fileId).toASCIIString())
+                    .build<Unit>()
+
+            is Failure ->
+                when (res.value) {
+                    DownloadFileError.ErrorDownloadingFile -> Problem.invalidDownloadFile(instance)
+                    DownloadFileError.FileNotFound -> Problem.fileNotFound(fileId, instance)
+                    DownloadFileError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
+                    DownloadFileError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
+                    DownloadFileError.InvalidCredential -> Problem.invalidCredential(instance)
+                    DownloadFileError.ErrorDecryptingFile -> Problem.invalidDecryptFile(instance)
+                    DownloadFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(folderId, instance)
+                    DownloadFileError.InvalidKey -> Problem.invalidKey(instance)
                 }
         }
     }

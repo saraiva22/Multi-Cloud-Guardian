@@ -2,7 +2,7 @@ package pt.isel.leic.multicloudguardian.repository
 
 interface Transaction {
     val usersRepository: UsersRepository
-    val fileRepository: FileRepository
+    val storageRepository: StorageRepository
 
     fun rollback()
 }

@@ -6,18 +6,28 @@ import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 
-interface FileRepository {
+interface StorageRepository {
     fun storeFile(
         file: FileCreate,
         path: String,
         checkSum: Long,
         url: String,
         userId: Id,
+        folderId: Id?,
         encryption: Boolean,
         createdAt: Instant,
     ): Id
 
-    fun getFileNames(userId: Id): List<String>
+    fun getFileNamesInFolder(
+        userId: Id,
+        folderId: Id?,
+    ): List<String>
+
+    fun isFileNameInFolder(
+        userId: Id,
+        folderId: Id?,
+        fileName: String,
+    ): Boolean
 
     fun getFileById(
         userId: Id,
@@ -29,6 +39,12 @@ interface FileRepository {
         parentFolderId: Id?,
         folderName: String,
     ): Folder?
+
+    fun isFolderNameExists(
+        userId: Id,
+        parentFolderId: Id?,
+        folderName: String,
+    ): Boolean
 
     fun getFolderById(
         userId: Id,
