@@ -14,7 +14,6 @@ import pt.isel.leic.multicloudguardian.service.storage.apis.AzureApi
 import pt.isel.leic.multicloudguardian.service.storage.apis.BackBlazeApi
 import pt.isel.leic.multicloudguardian.service.storage.apis.GoogleApi
 import java.io.File
-import java.io.FileOutputStream
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
 
@@ -108,22 +107,22 @@ class StorageFileJclouds(
     fun downloadBlob(
         bucketName: String,
         path: String,
-        outputFilePath: String,
         context: BlobStoreContext,
     ): DownloadBlobResult {
         try {
             val blobStore = context.blobStore
             val downloadedBlob = blobStore.getBlob(bucketName, path)
             val inputStream: InputStream = downloadedBlob.payload.openStream()
-            val fileOutput = File(outputFilePath)
 
-            FileOutputStream(fileOutput).use { outputStream ->
-                inputStream.copyTo(outputStream)
+            val byteArrayOutputStream = java.io.ByteArrayOutputStream()
+            inputStream.use { input ->
+                byteArrayOutputStream.use { output ->
+                    input.copyTo(output)
+                }
             }
 
-            logger.info("Blob $path downloaded successfully to $outputFilePath")
-
-            return success(true)
+            logger.info("Blob $path downloaded successfully as ByteArray")
+            return success(byteArrayOutputStream.toByteArray())
         } catch (e: Exception) {
             logger.info("Failed to upload blob: $path", e)
             return failure(DownloadBlobError.ErrorDownloadingBlob)

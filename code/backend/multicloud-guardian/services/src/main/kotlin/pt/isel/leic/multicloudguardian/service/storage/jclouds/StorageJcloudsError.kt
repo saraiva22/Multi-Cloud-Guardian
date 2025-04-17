@@ -27,7 +27,7 @@ sealed class DownloadBlobError {
     data object ErrorDownloadingBlob : DownloadBlobError()
 }
 
-typealias DownloadBlobResult = Either<DownloadBlobError, Boolean>
+typealias DownloadBlobResult = Either<DownloadBlobError, ByteArray>
 
 sealed class DeleteBlobError {
     data object ErrorDeletingBlob : DeleteBlobError()

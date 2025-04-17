@@ -18,11 +18,11 @@ import pt.isel.leic.multicloudguardian.domain.utils.Success
 import pt.isel.leic.multicloudguardian.http.Uris
 import pt.isel.leic.multicloudguardian.http.media.Problem
 import pt.isel.leic.multicloudguardian.http.model.storage.DownloadFileInputModel
+import pt.isel.leic.multicloudguardian.http.model.storage.DownloadFileOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FileCreateInputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FileInfoOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FilesListOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FolderCreateInputModel
-import pt.isel.leic.multicloudguardian.http.model.storage.UploadFileOutputModel
 import pt.isel.leic.multicloudguardian.http.model.utils.IdOutputModel
 import pt.isel.leic.multicloudguardian.service.storage.CreationFolderError
 import pt.isel.leic.multicloudguardian.service.storage.DeleteFileError
@@ -38,10 +38,11 @@ class StorageController(
     @PostMapping(Uris.Files.UPLOAD)
     fun uploadFile(
         @RequestParam("file") fileMultiPart: MultipartFile,
+        @RequestParam("encryptedKey") encryptedKey: String,
         @RequestParam("encryption") encryption: Boolean,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
-        val fileCreateInputModel = FileCreateInputModel(fileMultiPart, encryption)
+        val fileCreateInputModel = FileCreateInputModel(fileMultiPart, encryptedKey, encryption)
         val instance = Uris.Files.uploadFile()
         val fileDomain = fileCreateInputModel.toDomain()
         val file =
@@ -56,8 +57,8 @@ class StorageController(
                     .status(HttpStatus.CREATED)
                     .header(
                         "Location",
-                        Uris.Files.byId(file.value.first.value).toASCIIString(),
-                    ).body(UploadFileOutputModel(file.value.first.value, file.value.second))
+                        Uris.Files.byId(file.value.value).toASCIIString(),
+                    ).body(IdOutputModel(file.value.value))
 
             is Failure ->
                 when (file.value) {
@@ -82,9 +83,6 @@ class StorageController(
 
                     UploadFileError.InvalidCredential ->
                         Problem.invalidCredential(instance)
-
-                    UploadFileError.ErrorEncryptingUploadFile ->
-                        Problem.invalidEncryptFile(instance)
 
                     UploadFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(0, instance)
                 }
@@ -117,9 +115,8 @@ class StorageController(
         }
     }
 
-    @PostMapping(Uris.Files.DOWNLOAD_FILE)
+    @GetMapping(Uris.Files.DOWNLOAD_FILE)
     fun downloadFile(
-        @RequestBody input: DownloadFileInputModel,
         @Validated @PathVariable fileId: Int,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
@@ -130,15 +127,12 @@ class StorageController(
                 storageService.downloadFile(
                     user,
                     Id(fileId),
-                    input.pathSaveFile,
-                    input.encryptedKey,
                 )
         ) {
             is Success ->
                 ResponseEntity
                     .status(HttpStatus.OK)
-                    .header("Location", Uris.Files.downloadFile(fileId).toASCIIString())
-                    .build<Unit>()
+                    .body(res.value.second?.let { DownloadFileOutputModel(res.value.first, it) })
 
             is Failure ->
                 when (res.value) {
@@ -255,12 +249,13 @@ class StorageController(
     @PostMapping(Uris.Folders.UPLOAD_FILE_IN_FOLDER)
     fun uploadFileInFolder(
         @RequestParam("file") fileMultiPart: MultipartFile,
+        @RequestParam("encryptedKey") encryptedKey: String,
         @RequestParam("encryption") encryption: Boolean,
         @Validated @PathVariable folderId: Int,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Folders.uploadFileInFolder(folderId)
-        val fileCreateInputModel = FileCreateInputModel(fileMultiPart, encryption)
+        val fileCreateInputModel = FileCreateInputModel(fileMultiPart, encryptedKey, encryption)
         val fileDomain = fileCreateInputModel.toDomain()
         val file =
             storageService.uploadFileInFolder(
@@ -275,8 +270,8 @@ class StorageController(
                     .status(HttpStatus.CREATED)
                     .header(
                         "Location",
-                        Uris.Files.byId(file.value.first.value).toASCIIString(),
-                    ).body(UploadFileOutputModel(file.value.first.value, file.value.second))
+                        Uris.Files.byId(file.value.value).toASCIIString(),
+                    ).body(IdOutputModel(file.value.value))
 
             is Failure ->
                 when (file.value) {
@@ -302,9 +297,6 @@ class StorageController(
                     UploadFileError.InvalidCredential ->
                         Problem.invalidCredential(instance)
 
-                    UploadFileError.ErrorEncryptingUploadFile ->
-                        Problem.invalidEncryptFile(instance)
-
                     UploadFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(folderId, instance)
                 }
         }
@@ -325,8 +317,6 @@ class StorageController(
                     user,
                     Id(folderId),
                     Id(fileId),
-                    input.pathSaveFile,
-                    input.encryptedKey,
                 )
         ) {
             is Success ->

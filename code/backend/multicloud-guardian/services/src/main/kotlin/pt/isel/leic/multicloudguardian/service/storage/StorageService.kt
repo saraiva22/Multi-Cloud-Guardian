@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
+import pt.isel.leic.multicloudguardian.domain.file.FileDownload
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderDomainConfig
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.user.User
@@ -17,9 +18,6 @@ import pt.isel.leic.multicloudguardian.repository.TransactionManager
 import pt.isel.leic.multicloudguardian.service.security.SecurityService
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.CreateBlobStorageContextError
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.StorageFileJclouds
-import java.io.FileOutputStream
-import java.nio.file.Files
-import java.util.Arrays
 
 @Service
 class StorageService(
@@ -76,19 +74,7 @@ class StorageService(
                     }
 
                 is Success -> {
-                    val secretKey = securityService.generationKeyAES()
-                    val iv = securityService.generationIV()
-
-                    val fileContentData =
-                        if (encryption) {
-                            val encryptedData =
-                                securityService.encrypt(file.fileContent, secretKey, iv) ?: return@run failure(
-                                    UploadFileError.ErrorEncryptingUploadFile,
-                                )
-                            iv + encryptedData // Prepend IV to the encrypted data
-                        } else {
-                            file.fileContent
-                        }
+                    val fileContentData = file.fileContent
 
                     val basePath =
                         folderId?.let { folder?.path } ?: "${user.username.value}/"
@@ -123,14 +109,8 @@ class StorageService(
                                     clock.now(),
                                 )
                             contextStorage.value.close()
-                            val key =
-                                if (encryption) {
-                                    securityService.secretKeyToString(secretKey)
-                                } else {
-                                    ""
-                                }
-
-                            success(Pair(fileId, key))
+                            logger.info("KEY : ${file.encryptedKey}")
+                            success(fileId)
                         }
                     }
                 }
@@ -179,23 +159,17 @@ class StorageService(
     fun downloadFile(
         user: User,
         fileId: Id,
-        pathSaveFile: String,
-        encryptionKey: String?,
-    ): DownloadFileResult = handleFileDownload(user, fileId, pathSaveFile, encryptionKey)
+    ): DownloadFileResult = handleFileDownload(user, fileId)
 
     fun downloadFileInFolder(
         user: User,
         folderId: Id,
         fileId: Id,
-        pathSaveFile: String,
-        encryptionKey: String?,
-    ): DownloadFileResult = handleFileDownload(user, fileId, pathSaveFile, encryptionKey, folderId)
+    ): DownloadFileResult = handleFileDownload(user, fileId, folderId)
 
     private fun handleFileDownload(
         user: User,
         fileId: Id,
-        pathSaveFile: String,
-        encryptionKey: String? = null,
         folderId: Id? = null,
     ): DownloadFileResult =
         transactionManager.run {
@@ -230,9 +204,8 @@ class StorageService(
                     }
 
                 is Success -> {
-                    val saveFilePath = "$pathSaveFile/${file.fileName}"
                     val downloadFile =
-                        jcloudsStorage.downloadBlob(bucketName, file.path, saveFilePath, contextStorage.value)
+                        jcloudsStorage.downloadBlob(bucketName, file.path, contextStorage.value)
 
                     when (downloadFile) {
                         is Failure -> {
@@ -241,40 +214,20 @@ class StorageService(
                         }
 
                         is Success -> {
-                            // Read the encrypted file
-                            val downloadedFile = java.io.File(saveFilePath)
-                            val downloadedBytes: ByteArray = Files.readAllBytes(downloadedFile.toPath())
-
+                            val fileDown =
+                                FileDownload(
+                                    downloadFile.value,
+                                    file.fileName,
+                                    "image/png",
+                                    file.encryption,
+                                )
                             if (!file.encryption) {
-                                FileOutputStream(saveFilePath).use { outputStream ->
-                                    outputStream.write(downloadedBytes)
-                                }
-                                return@run success(true)
+                                return@run success(Pair(fileDown, null))
                             }
 
-                            if (encryptionKey == null) return@run failure(DownloadFileError.InvalidKey)
-                            val key =
-                                securityService.convertStringToSecretKey(encryptionKey) ?: return@run failure(
-                                    DownloadFileError.ErrorDecryptingFile,
-                                )
-
-                            // Extract IV and encrypted
-
-                            val iv: ByteArray =
-                                Arrays.copyOfRange(downloadedBytes, 0, 12) // The first 12 bytes are the IV
-                            val encryptedData: ByteArray =
-                                Arrays.copyOfRange(downloadedBytes, 12, downloadedBytes.size)
-
-                            val decryptedData: ByteArray =
-                                securityService.decrypt(encryptedData, key, iv) ?: return@run failure(
-                                    DownloadFileError.ErrorDecryptingFile,
-                                )
-
-                            FileOutputStream(saveFilePath).use { outputStream ->
-                                outputStream.write(decryptedData)
-                            }
-
-                            success(true)
+                            // Here I have to search the key in the database
+                            val fileKey = file.encryptionKey ?: return@run failure(DownloadFileError.InvalidKey)
+                            success(Pair(fileDown, fileKey))
                         }
                     }
                 }

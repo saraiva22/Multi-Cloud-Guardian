@@ -27,7 +27,7 @@ class JdbiStorageRepository(
             handle
                 .createUpdate(
                     """
-                    insert into dbo.Files (user_id, folder_id, file_name,checksum, path, size, encryption) values (:user_id,:folderId, :name, :checksum, :path, :size, :encryption)
+                    insert into dbo.Files (user_id, folder_id, file_name,checksum, path, size, encryption_key,encryption) values (:user_id,:folderId, :name, :checksum, :path, :size, :encryption_key, :encryption)
                     """.trimIndent(),
                 ).bind("user_id", userId.value)
                 .bind("folderId", folderId?.value)
@@ -35,6 +35,7 @@ class JdbiStorageRepository(
                 .bind("checksum", checkSum)
                 .bind("path", path)
                 .bind("size", file.size)
+                .bind("encryption_key", file.encryptedKey)
                 .bind("encryption", encryption)
                 .executeAndReturnGeneratedKeys()
                 .mapTo<Int>()

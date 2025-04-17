@@ -21,5 +21,6 @@ data class File(
     val checksum: Long,
     val path: String,
     val size: Int,
+    val encryptionKey: String?,
     val encryption: Boolean,
 )

@@ -5,5 +5,6 @@ data class FileCreate(
     val fileContent: ByteArray,
     val contentType: String,
     val size: Long,
+    val encryptedKey: String?,
     val encryption: Boolean,
 )

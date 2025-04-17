@@ -2,6 +2,7 @@ package pt.isel.leic.multicloudguardian.service.storage
 
 import org.jclouds.blobstore.BlobStoreContext
 import pt.isel.leic.multicloudguardian.domain.file.File
+import pt.isel.leic.multicloudguardian.domain.file.FileDownload
 import pt.isel.leic.multicloudguardian.domain.utils.Either
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 
@@ -22,8 +23,6 @@ sealed class UploadFileError {
 
     data object ErrorCreatingContextUpload : UploadFileError()
 
-    data object ErrorEncryptingUploadFile : UploadFileError()
-
     data object FileNameAlreadyExists : UploadFileError()
 
     data object InvalidCredential : UploadFileError()
@@ -31,7 +30,7 @@ sealed class UploadFileError {
     data object ParentFolderNotFound : UploadFileError()
 }
 
-typealias UploadFileResult = Either<UploadFileError, Pair<Id, String>>
+typealias UploadFileResult = Either<UploadFileError, Id>
 
 sealed class GetFileByIdError {
     data object FileNotFound : GetFileByIdError()
@@ -64,7 +63,7 @@ sealed class DownloadFileError {
 
     data object ParentFolderNotFound : DownloadFileError()
 }
-typealias DownloadFileResult = Either<DownloadFileError, Boolean>
+typealias DownloadFileResult = Either<DownloadFileError, Pair<FileDownload, String?>>
 
 sealed class DeleteFileError {
     data object FileNotFound : DeleteFileError()
