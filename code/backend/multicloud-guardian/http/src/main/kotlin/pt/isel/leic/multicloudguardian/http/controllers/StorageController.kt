@@ -17,12 +17,13 @@ import pt.isel.leic.multicloudguardian.domain.utils.Id
 import pt.isel.leic.multicloudguardian.domain.utils.Success
 import pt.isel.leic.multicloudguardian.http.Uris
 import pt.isel.leic.multicloudguardian.http.media.Problem
-import pt.isel.leic.multicloudguardian.http.model.storage.DownloadFileInputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.DownloadFileOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FileCreateInputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FileInfoOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FilesListOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FolderCreateInputModel
+import pt.isel.leic.multicloudguardian.http.model.storage.FolderInfoOutputModel
+import pt.isel.leic.multicloudguardian.http.model.storage.FoldersListOutputModel
 import pt.isel.leic.multicloudguardian.http.model.utils.IdOutputModel
 import pt.isel.leic.multicloudguardian.service.storage.CreationFolderError
 import pt.isel.leic.multicloudguardian.service.storage.DeleteFileError
@@ -213,6 +214,14 @@ class StorageController(
         }
     }
 
+    @GetMapping(Uris.Folders.GET_FOLDERS)
+    fun getFolder(authenticatedUser: AuthenticatedUser): ResponseEntity<*> {
+        val res = storageService.getFolder(authenticatedUser.user)
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(FoldersListOutputModel(res.map { FolderInfoOutputModel.fromDomain(it) }))
+    }
+
     @PostMapping(Uris.Folders.CREATE_FOLDER_IN_FOLDER)
     fun createFolderInFolder(
         @Validated @RequestBody input: FolderCreateInputModel,
@@ -251,11 +260,26 @@ class StorageController(
         }
     }
 
+    @GetMapping(Uris.Folders.GET_FOLDER_BY_ID)
+    fun getFolder(): ResponseEntity<*> {
+        TODO()
+    }
+
+    @GetMapping(Uris.Folders.GET_FILES_IN_FOLDER)
+    fun getFilesInFolder(): ResponseEntity<*> {
+        TODO()
+    }
+
+    @GetMapping(Uris.Folders.GET_FILE_IN_FOLDER)
+    fun getFileInFolder(): ResponseEntity<*> {
+        TODO()
+    }
+
     @PostMapping(Uris.Folders.UPLOAD_FILE_IN_FOLDER)
     fun uploadFileInFolder(
         @RequestParam("file") fileMultiPart: MultipartFile,
-        @RequestParam("encryptedKey") encryptedKey: String,
         @RequestParam("encryption") encryption: Boolean,
+        @RequestParam("encryptedKey") encryptedKey: String,
         @Validated @PathVariable folderId: Int,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
@@ -307,9 +331,13 @@ class StorageController(
         }
     }
 
-    @PostMapping(Uris.Folders.DOWNLOAD_FILE_IN_FOLDER)
+    @GetMapping(Uris.Folders.DOWNLOAD_FOLDER)
+    fun downloadFolder(): ResponseEntity<*> {
+        TODO()
+    }
+
+    @GetMapping(Uris.Folders.DOWNLOAD_FILE_IN_FOLDER)
     fun downloadFileInFolder(
-        @RequestBody input: DownloadFileInputModel,
         @Validated @PathVariable folderId: Int,
         @Validated @PathVariable fileId: Int,
         authenticatedUser: AuthenticatedUser,
@@ -327,8 +355,12 @@ class StorageController(
             is Success ->
                 ResponseEntity
                     .status(HttpStatus.OK)
-                    .header("Location", Uris.Files.downloadFile(fileId).toASCIIString())
-                    .build<Unit>()
+                    .body(
+                        DownloadFileOutputModel(
+                            res.value.first,
+                            res.value.second,
+                        ),
+                    )
 
             is Failure ->
                 when (res.value) {
@@ -342,5 +374,15 @@ class StorageController(
                     DownloadFileError.InvalidKey -> Problem.invalidKey(instance)
                 }
         }
+    }
+
+    @DeleteMapping(Uris.Folders.DELETE_FOLDER)
+    fun deleteFolder(): ResponseEntity<*> {
+        TODO()
+    }
+
+    @DeleteMapping(Uris.Folders.DELETE_FILE_IN_FOLDER)
+    fun deleteFileInFolder(): ResponseEntity<*> {
+        TODO()
     }
 }

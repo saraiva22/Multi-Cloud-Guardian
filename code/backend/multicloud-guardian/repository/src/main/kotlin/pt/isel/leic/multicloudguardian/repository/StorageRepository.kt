@@ -52,6 +52,8 @@ interface StorageRepository {
 
     fun getFiles(userId: Id): List<File>
 
+    fun getFolders(userId: Id): List<Folder>
+
     fun getPathById(
         userId: Id,
         fileId: Id,

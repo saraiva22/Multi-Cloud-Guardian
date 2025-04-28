@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.file.FileDownload
+import pt.isel.leic.multicloudguardian.domain.folder.Folder
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderDomainConfig
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.user.User
@@ -270,6 +271,11 @@ class StorageService(
     fun getFiles(user: User): List<File> =
         transactionManager.run {
             it.storageRepository.getFiles(user.id)
+        }
+
+    fun getFolder(user: User): List<Folder> =
+        transactionManager.run {
+            it.storageRepository.getFolders(user.id)
         }
 
     fun createFolder(

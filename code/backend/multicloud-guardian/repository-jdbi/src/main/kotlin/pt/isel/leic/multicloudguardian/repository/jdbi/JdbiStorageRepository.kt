@@ -165,6 +165,16 @@ class JdbiStorageRepository(
             .mapTo<File>()
             .toList()
 
+    override fun getFolders(userId: Id): List<Folder> =
+        handle
+            .createQuery(
+                """
+                select folder.* from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.user_id = :userId 
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .mapTo<Folder>()
+            .toList()
+
     override fun getPathById(
         userId: Id,
         fileId: Id,
