@@ -1,9 +1,7 @@
 package pt.isel.leic.multicloudguardian.service.security
 
-import jakarta.inject.Named
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.slf4j.LoggerFactory
-import pt.isel.leic.multicloudguardian.domain.user.UsersDomain
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.security.Security
@@ -38,10 +36,7 @@ sealed class TypeCrypto {
     data object Decryption : TypeCrypto()
 }
 
-@Named
-class SecurityService(
-    private val usersDomain: UsersDomain,
-) {
+class SecurityService {
     init {
         // Registers Bouncy Castle as a security provider
         Security.addProvider(BouncyCastleProvider())

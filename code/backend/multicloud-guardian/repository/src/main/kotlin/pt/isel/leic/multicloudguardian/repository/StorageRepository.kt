@@ -10,7 +10,6 @@ interface StorageRepository {
     fun storeFile(
         file: FileCreate,
         path: String,
-        checkSum: Long,
         url: String,
         userId: Id,
         folderId: Id?,

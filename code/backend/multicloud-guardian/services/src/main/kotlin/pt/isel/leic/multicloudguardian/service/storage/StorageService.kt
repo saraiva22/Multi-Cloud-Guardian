@@ -15,14 +15,12 @@ import pt.isel.leic.multicloudguardian.domain.utils.Success
 import pt.isel.leic.multicloudguardian.domain.utils.failure
 import pt.isel.leic.multicloudguardian.domain.utils.success
 import pt.isel.leic.multicloudguardian.repository.TransactionManager
-import pt.isel.leic.multicloudguardian.service.security.SecurityService
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.CreateBlobStorageContextError
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.StorageFileJclouds
 
 @Service
 class StorageService(
     private val transactionManager: TransactionManager,
-    private val securityService: SecurityService,
     private val jcloudsStorage: StorageFileJclouds,
     private val providerDomain: ProviderDomainConfig,
     private val clock: Clock,
@@ -62,7 +60,6 @@ class StorageService(
 
             val provider = usersRepository.getProvider(user.id)
             val bucketName = providerDomain.getBucketName(provider)
-            val checkSum = securityService.calculateChecksum(file.fileContent)
             when (val contextStorage = createContextStorage(provider, bucketName)) {
                 is Failure ->
                     when (contextStorage.value) {
@@ -101,7 +98,6 @@ class StorageService(
                                 fileRepository.storeFile(
                                     file,
                                     path,
-                                    checkSum,
                                     path,
                                     user.id,
                                     folderId,

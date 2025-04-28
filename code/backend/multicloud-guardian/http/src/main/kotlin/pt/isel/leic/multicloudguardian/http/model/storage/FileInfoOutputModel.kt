@@ -7,7 +7,7 @@ data class FileInfoOutputModel(
     val userId: Int,
     val folderId: Int?,
     val name: String,
-    val size: Int,
+    val size: Long,
     val encryption: Boolean,
     val url: String? = null,
 ) {

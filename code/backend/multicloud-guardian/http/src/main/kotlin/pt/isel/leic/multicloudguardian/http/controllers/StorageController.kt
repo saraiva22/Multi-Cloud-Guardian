@@ -38,11 +38,11 @@ class StorageController(
     @PostMapping(Uris.Files.UPLOAD)
     fun uploadFile(
         @RequestParam("file") fileMultiPart: MultipartFile,
-        @RequestParam("encryptedKey") encryptedKey: String,
         @RequestParam("encryption") encryption: Boolean,
+        @RequestParam("encryptedKey") encryptedKey: String,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
-        val fileCreateInputModel = FileCreateInputModel(fileMultiPart, encryptedKey, encryption)
+        val fileCreateInputModel = FileCreateInputModel(fileMultiPart, encryption, encryptedKey)
         val instance = Uris.Files.uploadFile()
         val fileDomain = fileCreateInputModel.toDomain()
         val file =
@@ -89,6 +89,16 @@ class StorageController(
         }
     }
 
+    @GetMapping(Uris.Files.GET_FILES)
+    fun getFiles(authenticatedUser: AuthenticatedUser): ResponseEntity<*> {
+        val res = storageService.getFiles(authenticatedUser.user)
+        return ResponseEntity.status(HttpStatus.OK).body(
+            FilesListOutputModel(
+                res.map { (FileInfoOutputModel.fromDomain(it)) },
+            ),
+        )
+    }
+
     @GetMapping(Uris.Files.GET_BY_ID)
     fun getFileById(
         @Validated @PathVariable fileId: Int,
@@ -132,7 +142,12 @@ class StorageController(
             is Success ->
                 ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(res.value.second?.let { DownloadFileOutputModel(res.value.first, it) })
+                    .body(
+                        DownloadFileOutputModel(
+                            res.value.first,
+                            res.value.second,
+                        ),
+                    )
 
             is Failure ->
                 when (res.value) {
@@ -166,16 +181,6 @@ class StorageController(
                     DeleteFileError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
                 }
         }
-    }
-
-    @GetMapping(Uris.Files.GET_FILES)
-    fun getFiles(authenticatedUser: AuthenticatedUser): ResponseEntity<*> {
-        val res = storageService.getFiles(authenticatedUser.user)
-        return ResponseEntity.status(HttpStatus.OK).body(
-            FilesListOutputModel(
-                res.map { (FileInfoOutputModel.fromDomain(it)) },
-            ),
-        )
     }
 
     @PostMapping(Uris.Folders.CREATE)
@@ -255,7 +260,7 @@ class StorageController(
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Folders.uploadFileInFolder(folderId)
-        val fileCreateInputModel = FileCreateInputModel(fileMultiPart, encryptedKey, encryption)
+        val fileCreateInputModel = FileCreateInputModel(fileMultiPart, encryption, encryptedKey)
         val fileDomain = fileCreateInputModel.toDomain()
         val file =
             storageService.uploadFileInFolder(

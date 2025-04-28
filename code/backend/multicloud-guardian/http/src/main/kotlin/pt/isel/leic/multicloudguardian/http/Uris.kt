@@ -47,14 +47,12 @@ object Uris {
         const val CREATE = "$PREFIX/folders"
         const val GET_FOLDERS = "$PREFIX/folders"
         const val CREATE_FOLDER_IN_FOLDER = "$PREFIX/folders/{folderId}"
-
         const val GET_FOLDER_BY_ID = "$PREFIX/folders/{folderId}"
         const val GET_FILES_IN_FOLDER = "$PREFIX/folders/{folderId}/files"
         const val GET_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}"
         const val UPLOAD_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files"
         const val DOWNLOAD_FOLDER = "$PREFIX/folders/{folderId}/download"
-        const val DOWNLOAD_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}"
-
+        const val DOWNLOAD_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}/download"
         const val DELETE_FOLDER = "$PREFIX/folders/{folderId}"
         const val DELETE_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}"
 

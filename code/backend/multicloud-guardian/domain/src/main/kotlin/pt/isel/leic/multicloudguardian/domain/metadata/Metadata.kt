@@ -11,15 +11,14 @@ import pt.isel.leic.multicloudguardian.domain.utils.Id
  * @property accessCount The number of times the file has been accessed.
  * @property tags A list of keywords associated with the file for search optimization.
  * @property createdAt The [Instant]  when the metadata was created.
- * @property indexedAt The [Instant] when the metadata was last indexed.
+ * @property updatedAt The [Instant] when the metadata was last indexed.
  */
 
 data class Metadata(
     val metadataId: Id,
     val fileId: Id,
     val contentType: String,
-    val accessCount: Int,
     val tags: String,
     val createdAt: Instant,
-    val indexedAt: Instant,
+    val updatedAt: Instant,
 )

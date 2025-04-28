@@ -23,7 +23,7 @@ data class Folder(
     val userId: Id,
     val parentFolderId: Id?,
     val folderName: String,
-    val size: Int,
+    val size: Long,
     val numberFiles: Int,
     val path: String,
     val createdAt: Instant,

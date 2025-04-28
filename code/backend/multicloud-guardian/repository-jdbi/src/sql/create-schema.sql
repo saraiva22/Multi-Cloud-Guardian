@@ -53,7 +53,6 @@ create table dbo.Files(
     user_id INT REFERENCES dbo.Users(id) on delete cascade on update cascade,
     folder_id INT REFERENCES dbo.Folders(folder_id) on delete set null default null, 
     file_name VARCHAR(30) not null,
-    checksum bigint not null,
     path VARCHAR(255) not null,
     size bigint not null,
     encryption_key VARCHAR(256),
@@ -66,10 +65,10 @@ create table dbo.Metadata(
     content_type VARCHAR(200) not null,
     tags TEXT[] not null,
     created_at bigint not null,
-    indexed_at bigint not null,
-    constraint created_before_indexed_at check (created_at <= indexed_at),
+    updated_at bigint not null,
+    constraint created_before_updated_at check (created_at <= updated_at),
     constraint created_at_is_valid check (created_at > 0),
-    constraint indexed_at_is_valid check (indexed_at > 0)
+    constraint updated_at_is_valid check (updated_at > 0)
 );
 
 

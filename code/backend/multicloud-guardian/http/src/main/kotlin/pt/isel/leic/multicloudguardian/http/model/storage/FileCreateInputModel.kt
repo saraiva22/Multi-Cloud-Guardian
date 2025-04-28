@@ -6,8 +6,8 @@ import java.util.UUID
 
 data class FileCreateInputModel(
     val file: MultipartFile,
-    val encryptedKey: String?,
     val encryption: Boolean,
+    val encryptedKey: String?,
 ) {
     fun toDomain(): FileCreate =
         FileCreate(

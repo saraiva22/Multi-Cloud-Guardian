@@ -16,7 +16,6 @@ class JdbiStorageRepository(
     override fun storeFile(
         file: FileCreate,
         path: String,
-        checkSum: Long,
         url: String,
         userId: Id,
         folderId: Id?,
@@ -27,12 +26,11 @@ class JdbiStorageRepository(
             handle
                 .createUpdate(
                     """
-                    insert into dbo.Files (user_id, folder_id, file_name,checksum, path, size, encryption_key,encryption) values (:user_id,:folderId, :name, :checksum, :path, :size, :encryption_key, :encryption)
+                    insert into dbo.Files (user_id, folder_id, file_name,path, size, encryption_key,encryption) values (:user_id,:folderId, :name,  :path, :size, :encryption_key, :encryption)
                     """.trimIndent(),
                 ).bind("user_id", userId.value)
                 .bind("folderId", folderId?.value)
                 .bind("name", file.blobName)
-                .bind("checksum", checkSum)
                 .bind("path", path)
                 .bind("size", file.size)
                 .bind("encryption_key", file.encryptedKey)
@@ -46,13 +44,13 @@ class JdbiStorageRepository(
         handle
             .createUpdate(
                 """
-                insert into dbo.Metadata (file_id, content_type, tags, created_at, indexed_at) values (:file_id, :content_type, :tags, :created_at, :indexed_at)
+                insert into dbo.Metadata (file_id, content_type, tags, created_at, updated_at) values (:file_id, :content_type, :tags, :created_at, :updated_at)
                 """.trimIndent(),
             ).bind("file_id", fileId)
             .bind("content_type", file.contentType)
             .bindArray("tags", file.blobName, file.contentType, file.size.toString())
             .bind("created_at", createdAt.epochSeconds)
-            .bind("indexed_at", createdAt.epochSeconds)
+            .bind("updated_at", createdAt.epochSeconds)
             .execute()
 
         return Id(fileId)
