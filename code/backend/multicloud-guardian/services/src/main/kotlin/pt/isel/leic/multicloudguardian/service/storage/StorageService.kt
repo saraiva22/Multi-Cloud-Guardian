@@ -106,7 +106,6 @@ class StorageService(
                                     clock.now(),
                                 )
                             contextStorage.value.close()
-                            logger.info("KEY : ${file.encryptedKey}")
                             success(fileId)
                         }
                     }
@@ -125,7 +124,7 @@ class StorageService(
                 fileRepository.getFileById(user.id, fileId) ?: return@run failure(GetFileByIdError.FileNotFound)
 
             if (file.encryption) {
-                return@run failure(GetFileByIdError.FileIsEncrypted)
+                success(Pair(file, null))
             }
 
             val provider = usersRepository.getProvider(user.id)
@@ -211,11 +210,14 @@ class StorageService(
                         }
 
                         is Success -> {
+                            val metadata =
+                                fileRepository.getMetadataByFile(fileId)
+                                    ?: return@run failure(DownloadFileError.MetadataNotFound)
                             val fileDown =
                                 FileDownload(
                                     downloadFile.value,
                                     file.fileName,
-                                    "image/png",
+                                    metadata.contentType,
                                     file.encryption,
                                 )
                             if (!file.encryption) {
@@ -276,6 +278,17 @@ class StorageService(
     fun getFolder(user: User): List<Folder> =
         transactionManager.run {
             it.storageRepository.getFolders(user.id)
+        }
+
+    fun getFolderById(
+        user: User,
+        folderId: Id,
+    ): GetFolderResult =
+        transactionManager.run {
+            val folder =
+                it.storageRepository.getFolderById(user.id, folderId)
+                    ?: return@run failure(GetFolderByIdError.FolderNotFound)
+            success(folder)
         }
 
     fun createFolder(

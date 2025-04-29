@@ -4,14 +4,20 @@ import kotlinx.datetime.Instant
 import org.jdbi.v3.core.Jdbi
 import org.jdbi.v3.core.kotlin.KotlinPlugin
 import org.jdbi.v3.postgres.PostgresPlugin
+import pt.isel.leic.multicloudguardian.domain.file.File
+import pt.isel.leic.multicloudguardian.domain.folder.Folder
 import pt.isel.leic.multicloudguardian.domain.token.TokenValidationInfo
 import pt.isel.leic.multicloudguardian.domain.user.PasswordValidationInfo
 import pt.isel.leic.multicloudguardian.domain.user.User
+import pt.isel.leic.multicloudguardian.domain.user.UserInfo
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.EmailMapper
+import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.FileMapper
+import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.FolderMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.IdMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.InstantMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.PasswordValidationInfoMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.TokenValidationInfoMapper
+import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.UserInfoMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.UserMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.UsernameMapper
 
@@ -27,6 +33,9 @@ fun Jdbi.configureWithAppRequirements(): Jdbi {
     registerColumnMapper(UsernameMapper::class.java, UsernameMapper())
 
     registerRowMapper(User::class.java, UserMapper())
+    registerRowMapper(UserInfo::class.java, UserInfoMapper())
+    registerRowMapper(Folder::class.java, FolderMapper())
+    registerRowMapper(File::class.java, FileMapper())
 
     return this
 }

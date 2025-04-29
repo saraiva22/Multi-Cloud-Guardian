@@ -1,11 +1,12 @@
 package pt.isel.leic.multicloudguardian.domain.folder
 
 import kotlinx.datetime.Instant
+import pt.isel.leic.multicloudguardian.domain.user.UserInfo
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 
 /** Represents a folder in the cloud storage.
  * @property folderId The unique identifier for the folder.
- * @property userId The unique identifier for the user.
+ * @property userId T
  * @property parentFolderId The unique identifier for the parent folder.
  * @property folderName The name of the folder.
  * @property size The size of the folder in bytes.
@@ -20,7 +21,7 @@ private const val MIN_FOLDER_NAME_LENGTH = 5
 
 data class Folder(
     val folderId: Id,
-    val userId: Id,
+    val user: UserInfo,
     val parentFolderId: Id?,
     val folderName: String,
     val size: Long,

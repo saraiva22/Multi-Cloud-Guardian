@@ -3,6 +3,7 @@ package pt.isel.leic.multicloudguardian.service.storage
 import org.jclouds.blobstore.BlobStoreContext
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileDownload
+import pt.isel.leic.multicloudguardian.domain.folder.Folder
 import pt.isel.leic.multicloudguardian.domain.utils.Either
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 
@@ -35,8 +36,6 @@ typealias UploadFileResult = Either<UploadFileError, Id>
 sealed class GetFileByIdError {
     data object FileNotFound : GetFileByIdError()
 
-    data object FileIsEncrypted : GetFileByIdError()
-
     data object InvalidCredential : GetFileByIdError()
 
     data object ErrorCreatingContext : GetFileByIdError()
@@ -48,6 +47,8 @@ typealias GetFileResult = Either<GetFileByIdError, Pair<File, String>>
 
 sealed class DownloadFileError {
     data object FileNotFound : DownloadFileError()
+
+    data object MetadataNotFound : DownloadFileError()
 
     data object InvalidCredential : DownloadFileError()
 
@@ -94,3 +95,9 @@ sealed class CreationFolderError {
 }
 
 typealias CreationFolderResult = Either<CreationFolderError, Id>
+
+sealed class GetFolderByIdError {
+    data object FolderNotFound : GetFolderByIdError()
+}
+
+typealias GetFolderResult = Either<GetFolderByIdError, Folder>

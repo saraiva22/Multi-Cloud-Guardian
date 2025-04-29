@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
+import pt.isel.leic.multicloudguardian.domain.metadata.Metadata
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 import pt.isel.leic.multicloudguardian.repository.StorageRepository
 
@@ -26,7 +27,8 @@ class JdbiStorageRepository(
             handle
                 .createUpdate(
                     """
-                    insert into dbo.Files (user_id, folder_id, file_name,path, size, encryption_key,encryption) values (:user_id,:folderId, :name,  :path, :size, :encryption_key, :encryption)
+                    insert into dbo.Files (user_id, folder_id, file_name,path, size, encryption_key,encryption) 
+                    values (:user_id,:folderId, :name,  :path, :size, :encryption_key, :encryption)
                     """.trimIndent(),
                 ).bind("user_id", userId.value)
                 .bind("folderId", folderId?.value)
@@ -44,7 +46,8 @@ class JdbiStorageRepository(
         handle
             .createUpdate(
                 """
-                insert into dbo.Metadata (file_id, content_type, tags, created_at, updated_at) values (:file_id, :content_type, :tags, :created_at, :updated_at)
+                insert into dbo.Metadata (file_id, content_type, tags, created_at, updated_at) 
+                values (:file_id, :content_type, :tags, :created_at, :updated_at)
                 """.trimIndent(),
             ).bind("file_id", fileId)
             .bind("content_type", file.contentType)
@@ -97,7 +100,8 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select file.*  from dbo.Files file inner join dbo.Users on file.user_id = id where file.file_id = :fileId and file.user_id = :userId
+                select file.*, users.id, users.email, users.username
+                from dbo.Files file inner join dbo.Users on file.user_id = id where file.file_id = :fileId and file.user_id = :userId
                 """.trimIndent(),
             ).bind("userId", userId.value)
             .bind("fileId", fileId.value)
@@ -112,7 +116,8 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select folder.* from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.folder_name = :folderName and folder.user_id = :userId
+                select folder.*, users.id, users.email, users.username 
+                from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.folder_name = :folderName and folder.user_id = :userId
                 and ((:parentFolderId IS NULL AND folder.parent_folder_id IS NULL) 
                 OR folder.parent_folder_id = :parentFolderId)
                 """.trimIndent(),
@@ -148,7 +153,8 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select folder.* from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.folder_id = :folderId and folder.user_id = :userId
+                select folder.*, users.email, users.username 
+                from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.folder_id = :folderId and folder.user_id = :userId
                 """.trimIndent(),
             ).bind("userId", userId.value)
             .bind("folderId", folderId.value)
@@ -159,7 +165,8 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select file.*  from dbo.Files file inner join dbo.Users on file.user_id = id where file.user_id = :userId
+                select file.*, users.email, users.username 
+                from dbo.Files file inner join dbo.Users on file.user_id = id where file.user_id = :userId
                 """.trimIndent(),
             ).bind("userId", userId.value)
             .mapTo<File>()
@@ -169,7 +176,8 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select folder.* from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.user_id = :userId 
+                select folder.*, users.id, users.email, users.username 
+                from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.user_id = :userId 
                 """.trimIndent(),
             ).bind("userId", userId.value)
             .mapTo<Folder>()
@@ -223,6 +231,16 @@ class JdbiStorageRepository(
                 .one()
         return Id(id)
     }
+
+    override fun getMetadataByFile(fileId: Id): Metadata? =
+        handle
+            .createQuery(
+                """
+                select metadata.* from dbo.Files file inner join dbo.metadata  on file.file_id = metadata.file_id where file.file_id = :fileId
+                """.trimIndent(),
+            ).bind("fileId", fileId.value)
+            .mapTo<Metadata>()
+            .singleOrNull()
 
     companion object {
         private val logger = LoggerFactory.getLogger(JdbiStorageRepository::class.java)

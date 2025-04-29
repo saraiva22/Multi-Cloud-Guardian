@@ -4,7 +4,7 @@ import pt.isel.leic.multicloudguardian.domain.folder.Folder
 
 data class FolderInfoOutputModel(
     val folderId: Int,
-    val userId: Int,
+    val user: UserInfoOutputModel,
     val parentFolderId: Int?,
     val folderName: String,
     val size: Long,
@@ -17,7 +17,11 @@ data class FolderInfoOutputModel(
         fun fromDomain(folder: Folder): FolderInfoOutputModel =
             FolderInfoOutputModel(
                 folder.folderId.value,
-                folder.userId.value,
+                UserInfoOutputModel(
+                    folder.user.id.value,
+                    folder.user.username.value,
+                    folder.user.email.value,
+                ),
                 folder.parentFolderId?.value,
                 folder.folderName,
                 folder.size,

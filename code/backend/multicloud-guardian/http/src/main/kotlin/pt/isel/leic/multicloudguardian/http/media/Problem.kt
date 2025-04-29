@@ -80,6 +80,7 @@ class Problem(
         private val invalidFileName = URI("${FILE_FOLDER}invalid-file-name")
         private val invalidCredential = URI("${FILE_FOLDER}invalid-credential")
         private val fileNotFound = URI("${FILE_FOLDER}file-not-found")
+        private val metadataNotFound = URI("${FILE_FOLDER}metadata-not-found")
         private val invalidDownloadFile = URI("${FILE_FOLDER}invalid-download-file")
         private val invalidDecryptFile = URI("${FILE_FOLDER}invalid-decrypt-file")
         private val invalidEncryptFile = URI("${FILE_FOLDER}invalid-encrypt-file")
@@ -308,6 +309,18 @@ class Problem(
                 instance = instance,
             ).toResponse()
 
+        fun metadataNotFound(
+            id: Int,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = metadataNotFound,
+                title = "File not found",
+                status = HttpStatus.NOT_FOUND.value(),
+                detail = "File $id not found",
+                instance = instance,
+            ).toResponse()
+
         fun invalidDownloadFile(instance: URI?): ResponseEntity<*> =
             Problem(
                 type = invalidDownloadFile,
@@ -362,6 +375,18 @@ class Problem(
                 title = "Invalid folder creation",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = "Invalid folder creation",
+                instance = instance,
+            ).toResponse()
+
+        fun folderNotFound(
+            id: Int,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = folderNotFound,
+                title = "Folder not found",
+                status = HttpStatus.NOT_FOUND.value(),
+                detail = "Folder $id not found",
                 instance = instance,
             ).toResponse()
 

@@ -29,6 +29,7 @@ import pt.isel.leic.multicloudguardian.service.storage.CreationFolderError
 import pt.isel.leic.multicloudguardian.service.storage.DeleteFileError
 import pt.isel.leic.multicloudguardian.service.storage.DownloadFileError
 import pt.isel.leic.multicloudguardian.service.storage.GetFileByIdError
+import pt.isel.leic.multicloudguardian.service.storage.GetFolderByIdError
 import pt.isel.leic.multicloudguardian.service.storage.StorageService
 import pt.isel.leic.multicloudguardian.service.storage.UploadFileError
 
@@ -121,7 +122,6 @@ class StorageController(
                     GetFileByIdError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
                     GetFileByIdError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
                     GetFileByIdError.InvalidCredential -> Problem.invalidCredential(instance)
-                    GetFileByIdError.FileIsEncrypted -> Problem.fileIsEncrypted(fileId, instance)
                 }
         }
     }
@@ -160,6 +160,7 @@ class StorageController(
                     DownloadFileError.ErrorDecryptingFile -> Problem.invalidDecryptFile(instance)
                     DownloadFileError.InvalidKey -> Problem.invalidKey(instance)
                     DownloadFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(0, instance)
+                    DownloadFileError.MetadataNotFound -> Problem.metadataNotFound(fileId, instance)
                 }
         }
     }
@@ -261,8 +262,23 @@ class StorageController(
     }
 
     @GetMapping(Uris.Folders.GET_FOLDER_BY_ID)
-    fun getFolder(): ResponseEntity<*> {
-        TODO()
+    fun getFolder(
+        @PathVariable @Validated folderId: Int,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Folders.folderById(folderId)
+        val res = storageService.getFolderById(authenticatedUser.user, Id(folderId))
+        return when (res) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(FolderInfoOutputModel.fromDomain(res.value))
+
+            is Failure ->
+                when (res.value) {
+                    GetFolderByIdError.FolderNotFound -> Problem.folderNotFound(folderId, instance)
+                }
+        }
     }
 
     @GetMapping(Uris.Folders.GET_FILES_IN_FOLDER)
@@ -372,6 +388,7 @@ class StorageController(
                     DownloadFileError.ErrorDecryptingFile -> Problem.invalidDecryptFile(instance)
                     DownloadFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(folderId, instance)
                     DownloadFileError.InvalidKey -> Problem.invalidKey(instance)
+                    DownloadFileError.MetadataNotFound -> Problem.metadataNotFound(fileId, instance)
                 }
         }
     }

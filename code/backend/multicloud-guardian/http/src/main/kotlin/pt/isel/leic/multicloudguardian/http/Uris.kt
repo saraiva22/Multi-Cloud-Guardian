@@ -58,9 +58,7 @@ object Uris {
 
         fun register(): URI = URI(CREATE)
 
-        fun folderById(id: Int): URI = UriTemplate(GET_FOLDERS).expand(id)
-
-        fun getFolders(): URI = URI(GET_FOLDERS)
+        fun folderById(id: Int): URI = UriTemplate(GET_FOLDER_BY_ID).expand(id)
 
         fun filesInFolder(folderId: Int): URI = UriTemplate(GET_FILES_IN_FOLDER).expand(folderId)
 
