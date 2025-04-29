@@ -101,3 +101,17 @@ sealed class GetFolderByIdError {
 }
 
 typealias GetFolderResult = Either<GetFolderByIdError, Folder>
+
+sealed class GetFilesInFolderError {
+    data object FolderNotFound : GetFilesInFolderError()
+}
+
+typealias GetFilesInFolderResult = Either<GetFilesInFolderError, List<File>>
+
+sealed class GetFileInFolderError {
+    data object FolderNotFound : GetFileInFolderError()
+
+    data object FileNotFound : GetFileInFolderError()
+}
+
+typealias GetFileInFolderResult = Either<GetFileInFolderError, File>

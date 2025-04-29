@@ -100,10 +100,28 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select file.*, users.id, users.email, users.username
+                select file.*, users.username ,users.email 
                 from dbo.Files file inner join dbo.Users on file.user_id = id where file.file_id = :fileId and file.user_id = :userId
                 """.trimIndent(),
             ).bind("userId", userId.value)
+            .bind("fileId", fileId.value)
+            .mapTo<File>()
+            .singleOrNull()
+
+    override fun getFileInFolder(
+        userId: Id,
+        folderId: Id,
+        fileId: Id,
+    ): File? =
+        handle
+            .createQuery(
+                """
+                select file.*, users.username ,users.email 
+                from dbo.Files file inner join dbo.Users on file.user_id = id where file.file_id = :fileId and file.user_id = :userId
+                and file.folder_id = :folderId
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .bind("folderId", folderId.value)
             .bind("fileId", fileId.value)
             .mapTo<File>()
             .singleOrNull()
@@ -116,7 +134,7 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select folder.*, users.id, users.email, users.username 
+                select folder.*, users.username ,users.email 
                 from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.folder_name = :folderName and folder.user_id = :userId
                 and ((:parentFolderId IS NULL AND folder.parent_folder_id IS NULL) 
                 OR folder.parent_folder_id = :parentFolderId)
@@ -153,7 +171,7 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select folder.*, users.email, users.username 
+                select folder.*, users.username ,users.email 
                 from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.folder_id = :folderId and folder.user_id = :userId
                 """.trimIndent(),
             ).bind("userId", userId.value)
@@ -165,7 +183,7 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select file.*, users.email, users.username 
+                select file.*, users.username ,users.email 
                 from dbo.Files file inner join dbo.Users on file.user_id = id where file.user_id = :userId
                 """.trimIndent(),
             ).bind("userId", userId.value)
@@ -176,11 +194,26 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select folder.*, users.id, users.email, users.username 
+                select folder.*, users.username ,users.email 
                 from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.user_id = :userId 
                 """.trimIndent(),
             ).bind("userId", userId.value)
             .mapTo<Folder>()
+            .toList()
+
+    override fun getFilesInFolder(
+        userId: Id,
+        folderId: Id,
+    ): List<File> =
+        handle
+            .createQuery(
+                """
+                select files.*, users.username ,users.email  from dbo.Files inner join dbo.folders on files.folder_id = folders.folder_id 
+                inner join dbo.users on folders.user_id = users.id where folders.folder_id = :folderId and users.id = :userId
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .bind("folderId", folderId.value)
+            .mapTo<File>()
             .toList()
 
     override fun getPathById(

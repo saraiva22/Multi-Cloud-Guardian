@@ -26,7 +26,7 @@ class FileMapper : RowMapper<File> {
                 ),
             folderId = rs.getObject("folder_id")?.let { Id(it as Int) },
             fileName = rs.getString("file_name"),
-            path = rs.getString("file_path"),
+            path = rs.getString("path"),
             size = rs.getLong("size"),
             encryption = rs.getBoolean("encryption"),
             encryptionKey = rs.getString("encryption_key"),

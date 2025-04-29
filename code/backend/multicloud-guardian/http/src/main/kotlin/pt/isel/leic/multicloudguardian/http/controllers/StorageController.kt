@@ -29,6 +29,8 @@ import pt.isel.leic.multicloudguardian.service.storage.CreationFolderError
 import pt.isel.leic.multicloudguardian.service.storage.DeleteFileError
 import pt.isel.leic.multicloudguardian.service.storage.DownloadFileError
 import pt.isel.leic.multicloudguardian.service.storage.GetFileByIdError
+import pt.isel.leic.multicloudguardian.service.storage.GetFileInFolderError
+import pt.isel.leic.multicloudguardian.service.storage.GetFilesInFolderError
 import pt.isel.leic.multicloudguardian.service.storage.GetFolderByIdError
 import pt.isel.leic.multicloudguardian.service.storage.StorageService
 import pt.isel.leic.multicloudguardian.service.storage.UploadFileError
@@ -282,13 +284,45 @@ class StorageController(
     }
 
     @GetMapping(Uris.Folders.GET_FILES_IN_FOLDER)
-    fun getFilesInFolder(): ResponseEntity<*> {
-        TODO()
+    fun getFilesInFolder(
+        @PathVariable @Validated folderId: Int,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Folders.filesInFolder(folderId)
+        val res = storageService.getFilesInFolder(authenticatedUser.user, Id(folderId))
+        return when (res) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(FilesListOutputModel(res.value.map { FileInfoOutputModel.fromDomain(it) }))
+
+            is Failure ->
+                when (res.value) {
+                    GetFilesInFolderError.FolderNotFound -> Problem.folderNotFound(folderId, instance)
+                }
+        }
     }
 
     @GetMapping(Uris.Folders.GET_FILE_IN_FOLDER)
-    fun getFileInFolder(): ResponseEntity<*> {
-        TODO()
+    fun getFileInFolder(
+        @PathVariable @Validated folderId: Int,
+        @PathVariable @Validated fileId: Int,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Folders.fileInFolder(folderId, fileId)
+        val res = storageService.getFileInFolder(authenticatedUser.user, Id(folderId), Id(fileId))
+        return when (res) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(FileInfoOutputModel.fromDomain(res.value))
+
+            is Failure ->
+                when (res.value) {
+                    GetFileInFolderError.FolderNotFound -> Problem.folderNotFound(folderId, instance)
+                    GetFileInFolderError.FileNotFound -> Problem.fileNotFound(fileId, instance)
+                }
+        }
     }
 
     @PostMapping(Uris.Folders.UPLOAD_FILE_IN_FOLDER)

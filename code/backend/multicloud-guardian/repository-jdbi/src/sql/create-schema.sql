@@ -55,8 +55,8 @@ create table dbo.Files(
     file_name VARCHAR(30) not null,
     path VARCHAR(255) not null,
     size bigint not null,
-    encryption_key VARCHAR(256),
-    encryption BOOLEAN not null
+    encryption BOOLEAN not null,
+    encryption_key VARCHAR(256)
 );
 
 create table dbo.Metadata(

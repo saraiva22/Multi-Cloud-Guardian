@@ -291,6 +291,34 @@ class StorageService(
             success(folder)
         }
 
+    fun getFilesInFolder(
+        user: User,
+        folderId: Id,
+    ): GetFilesInFolderResult =
+        transactionManager.run {
+            it.storageRepository.getFolderById(user.id, folderId) ?: return@run failure(
+                GetFilesInFolderError.FolderNotFound,
+            )
+
+            val files = it.storageRepository.getFilesInFolder(user.id, folderId)
+            success(files)
+        }
+
+    fun getFileInFolder(
+        user: User,
+        folderId: Id,
+        fileId: Id,
+    ): GetFileInFolderResult =
+        transactionManager.run {
+            val storageRepository = it.storageRepository
+            storageRepository.getFolderById(user.id, folderId)
+                ?: return@run failure(GetFileInFolderError.FolderNotFound)
+            val file =
+                storageRepository.getFileInFolder(user.id, folderId, fileId)
+                    ?: return@run failure(GetFileInFolderError.FileNotFound)
+            success(file)
+        }
+
     fun createFolder(
         folderName: String,
         user: User,

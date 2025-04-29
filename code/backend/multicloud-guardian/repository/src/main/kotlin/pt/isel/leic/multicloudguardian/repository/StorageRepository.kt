@@ -34,6 +34,12 @@ interface StorageRepository {
         fileId: Id,
     ): File?
 
+    fun getFileInFolder(
+        userId: Id,
+        folderId: Id,
+        fileId: Id,
+    ): File?
+
     fun getFolderByName(
         userId: Id,
         parentFolderId: Id?,
@@ -54,6 +60,11 @@ interface StorageRepository {
     fun getFiles(userId: Id): List<File>
 
     fun getFolders(userId: Id): List<Folder>
+
+    fun getFilesInFolder(
+        userId: Id,
+        folderId: Id,
+    ): List<File>
 
     fun getPathById(
         userId: Id,
