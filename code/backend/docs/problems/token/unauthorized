@@ -1,0 +1,4 @@
+Unauthorized, issued when the user is not authorized to perform the requested action. This can happen for various reasons, such as:
+- The user does not have the required permissions to access the resource.
+- The user is not authenticated and needs to log in.
+- The user's session has expired and needs to be refreshed.

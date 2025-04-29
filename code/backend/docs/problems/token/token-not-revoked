@@ -1,0 +1,4 @@
+Token was not revoke, please verify the token and try again. Possible reasons include:
+- The token has already been used.
+- The token has expired.
+- The token is invalid.

@@ -57,7 +57,6 @@ class Problem(
         // User
         private val usernameAlreadyExists = URI("${USER_FOLDER}username-already-exists")
         private val emailAlreadyExists = URI("${USER_FOLDER}email-already-exists")
-        private val invalidInviteCode = URI("${USER_FOLDER}invalid-register-code")
         private val userNotFound = URI("${USER_FOLDER}user-not-found")
         private val usernameNotFound = URI("${USER_FOLDER}username-not-found")
         private val invalidEmail = URI("${USER_FOLDER}invalid-email")
@@ -65,7 +64,7 @@ class Problem(
         private val userOrPasswordAreInvalid = URI("${USER_FOLDER}user-or-password-are-invalid")
 
         // Token
-        private val invalidToken = URI("${TOKEN_FOLDER}user-not-found")
+        private val invalidToken = URI("${TOKEN_FOLDER}invalid-token")
         private val tokenNotRevoked = URI("${TOKEN_FOLDER}token-not-revoked")
         val unauthorizedRequest = URI("${TOKEN_FOLDER}unauthorized")
 
