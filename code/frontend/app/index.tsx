@@ -10,14 +10,14 @@ export default function App() {
   return (
     <SafeAreaView className="bg-primary h-full">
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <View className="w-full justify-center items-center min-h-[85vh] px-4">
+        <View className="w-full justify-center items-center min-h-[85vh] px-5">
           <View className="flex-row items-center mt-5">
             <Image
               source={images.logo}
               className="w-[73px] h-[80px] mr-1"
               resizeMode="contain"
             />
-            <Text className="text-3xl text-white font-bold">
+            <Text className="text-[24px] text-white font-bold">
               Multi Cloud Guardian
             </Text>
           </View>
@@ -28,11 +28,11 @@ export default function App() {
             resizeMode="contain"
           />
 
-          <Text className="text-4xl text-white font-bold text-center mt-5">
+          <Text className="text-[30px] text-white font-bold text-center mt-5">
             Freedom to Store,{"\n"}
             Power to <Text className="text-secondary-200">Protect</Text>
           </Text>
-          <Text className="text-base text-gray-100 text-center mt-5 max-w-[500px] self-center">
+          <Text className="text-[15px] text-gray-100 text-center mt-5">
             Securely store and manage your files{"\n"}with privacy-first
             encryption
           </Text>
