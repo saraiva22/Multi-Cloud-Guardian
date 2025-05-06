@@ -17,6 +17,7 @@ import search from "../assets/icons/search.png";
 import settings from "../assets/icons/settings.png";
 import uploadFile from "../assets/icons/upload-file.png";
 import upload from "../assets/icons/upload.png";
+import logout from "../assets/icons/logout.png";
 
 export default {
   europe,
@@ -38,4 +39,5 @@ export default {
   settings,
   uploadFile,
   upload,
+  logout,
 };
