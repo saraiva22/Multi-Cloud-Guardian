@@ -1,17 +1,141 @@
-import { View, Image, Text, ScrollView, Alert } from "react-native";
-import { useState } from "react";
+import { View, Image, Text, ScrollView } from "react-native";
+import { useEffect, useReducer, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { images } from "../../constants";
-import CustomButtom from "../../components/CustomButton";
-import { Link, router } from "expo-router";
+import { images } from "@/constants";
+import CustomButtom from "@/components/CustomButton";
+import { Link, router, usePathname } from "expo-router";
 import FormField from "@/components/FormField";
+import { Problem } from "@/services/media/Problem";
+import { useAuthentication } from "@/context/AuthProvider";
+import { login } from "@/services/users/UserService";
+import {
+  generateMasterKey,
+  generateRandomSalt,
+} from "@/services/security/SecurityService";
+import { save } from "@/services/storage/SecureStorage";
+
+const KEY_NAME = "user_info";
+const KEY_MASTER = "key_master-";
+
+type State =
+  | {
+      tag: "editing";
+      error?: Problem | string;
+      inputs: { username: string; password: string };
+    }
+  | { tag: "submitting"; username: string }
+  | { tag: "redirect" };
+
+type Action =
+  | { type: "edit"; inputName: string; inputValue: string }
+  | { type: "submit" }
+  | { type: "error"; message: Problem | string }
+  | { type: "success" };
+
+function logUnexceptedAction(state: State, action: Action) {
+  console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
+}
+
+function reduce(state: State, action: Action): State {
+  switch (state.tag) {
+    case "editing":
+      if (action.type === "edit") {
+        return {
+          tag: "editing",
+          error: "undefined",
+          inputs: { ...state.inputs, [action.inputName]: action.inputValue },
+        };
+      } else if (action.type === "submit") {
+        return { tag: "submitting", username: state.inputs.username };
+      } else {
+        logUnexceptedAction(state, action);
+        return state;
+      }
+
+    case "submitting":
+      if (action.type === "success") {
+        return {
+          tag: "redirect",
+        };
+      } else if (action.type === "error") {
+        return {
+          tag: "editing",
+          error: action.message,
+          inputs: { username: state.username, password: "" },
+        };
+      } else {
+        logUnexceptedAction(state, action);
+        return state;
+      }
+
+    case "redirect":
+      logUnexceptedAction(state, action);
+      return state;
+  }
+}
+
+const firstState: State = {
+  tag: "editing",
+  inputs: { username: "", password: "" },
+};
 
 const SignIn = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState({
-    username: "",
-    password: "",
-  });
+  const [state, dispatch] = useReducer(reduce, firstState);
+  const { setUsername, setKeyMaster } = useAuthentication();
+
+  useEffect(() => {
+    console.log("STATE ", state);
+    if (state.tag === "redirect") {
+      router.replace("/home");
+    }
+  }, [state.tag]);
+
+  function handleChange(inputName: string, inputValue: string) {
+    dispatch({
+      type: "edit",
+      inputName,
+      inputValue,
+    });
+  }
+
+  async function handleSubmit() {
+    if (state.tag !== "editing") {
+      return;
+    }
+    dispatch({ type: "submit" });
+
+    const username = state.inputs.username;
+    const password = state.inputs.password;
+
+    try {
+      if (!username?.trim() || !password?.trim()) {
+        dispatch({ type: "error", message: "Invalid username or password" });
+        return;
+      }
+      const result = await login(username, password);
+      if (!result) {
+        dispatch({ type: "error", message: "Invalid username or password" });
+        return;
+      }
+      console.log("Username ", username);
+      save(KEY_NAME, JSON.stringify({ username: username }));
+      const saltArrayBuffer = await generateRandomSalt();
+      const masterKey = await generateMasterKey(saltArrayBuffer, password);
+      console.log("MASTER_KEY: ", masterKey);
+
+      save(`${KEY_MASTER}${username}`, JSON.stringify({ key: masterKey }));
+      setUsername(result);
+      setKeyMaster(masterKey);
+      dispatch({ type: "success" });
+    } catch (error) {
+      dispatch({ type: "error", message: error });
+    }
+  }
+
+  const username =
+    state.tag === "submitting" ? state.username : state.inputs.username;
+  const password = state.tag === "submitting" ? "" : state.inputs.password;
+
   return (
     <SafeAreaView className="bg-primary h-full">
       <ScrollView>
@@ -30,25 +154,25 @@ const SignIn = () => {
 
           <FormField
             title="Username"
-            value={form.username}
-            handleChangeText={() => console.log()}
+            value={username}
+            handleChangeText={(text) => handleChange("username", text)}
             otherStyles="mt-7"
             keyboardType="email-address"
-            placeholder={""}
+            placeholder={"At least 5 characters"}
           />
           <FormField
             title="Password"
-            value={form.password}
-            handleChangeText={(e) => setForm({ ...form, password: e })}
+            value={password}
+            handleChangeText={(text) => handleChange("password", text)}
             otherStyles="mt-7"
-            placeholder={""}
+            placeholder={"At least 8 characters"}
           />
 
           <CustomButtom
             title="Sign In"
-            handlePress={() => console.log("Sign In")}
+            handlePress={handleSubmit}
             containerStyles="mt-7"
-            isLoading={isSubmitting}
+            isLoading={state.tag === "submitting"}
             textStyles={""}
           />
 

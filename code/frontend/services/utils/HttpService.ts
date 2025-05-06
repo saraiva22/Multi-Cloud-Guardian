@@ -1,3 +1,5 @@
+import { MEDIA_TYPE_PROBLEM, Problem } from "../media/Problem";
+
 const LOCAL_IP = "192.168.1.72";
 const PORT = "8080";
 
@@ -17,3 +19,64 @@ export const apiRoutes = {
   DOWNLOAD_FILE: "/files/:id/download",
   DELETE_FILE: "/files/:id",
 };
+
+export default function httpService() {
+  return {
+    get: get,
+    post: post,
+    put: put,
+    delete: del,
+    patch: patch,
+  };
+
+  async function processRequest<T>(
+    uri: string,
+    method: string,
+    body?: string
+  ): Promise<T> {
+    const config: RequestInit = {
+      method,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: body,
+    };
+
+    const response = await fetch(uri, config);
+
+    if (!response.ok) {
+      if (response.headers.get("Content-Type")?.includes(MEDIA_TYPE_PROBLEM)) {
+        const res = await response.json();
+        throw res as Problem;
+      } else throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const contentTypes = response.headers.get("Content-Type");
+    if (!contentTypes || !contentTypes.includes("application/json")) {
+      return {} as T;
+    }
+
+    return (await response.json()) as T;
+  }
+
+  async function get<T>(path: string): Promise<T> {
+    return processRequest<T>(path, "GET", undefined);
+  }
+
+  async function post<T>(path: string, body?: string): Promise<T> {
+    return processRequest<T>(path, "POST", body);
+  }
+
+  async function put<T>(path: string, body?: string): Promise<T> {
+    return processRequest<T>(path, "PUT", body);
+  }
+
+  async function del<T>(path: string, body?: string): Promise<T> {
+    return processRequest<T>(path, "DELETE", body);
+  }
+
+  async function patch<T>(path: string, body?: string): Promise<T> {
+    return processRequest<T>(path, "PATCH", body);
+  }
+}
