@@ -230,13 +230,31 @@ class JdbiStorageRepository(
             .mapTo<String>()
             .singleOrNull()
 
-    override fun deleteFile(file: File) {
+    override fun deleteFile(
+        userId: Id,
+        file: File,
+    ) {
         handle
             .createUpdate(
                 """
-                delete from dbo.Files where file_id = :fileId
+                delete from dbo.Files where file_id = :fileId and user_id = :userId
                 """.trimIndent(),
             ).bind("fileId", file.fileId.value)
+            .bind("userId", userId.value)
+            .execute()
+    }
+
+    override fun deleteFolder(
+        userId: Id,
+        folder: Folder,
+    ) {
+        handle
+            .createUpdate(
+                """
+                delete from dbo.Folders where folder_id = :folderId and user_id = :userId
+                """.trimIndent(),
+            ).bind("folderId", folder.folderId.value)
+            .bind("userId", userId.value)
             .execute()
     }
 

@@ -180,6 +180,32 @@ class StorageFileJclouds(
         }
     }
 
+    fun deleteBlobs(
+        context: BlobStoreContext,
+        bucketName: String,
+        folderPath: String,
+    ): DeleteBlobResult {
+        try {
+            val blobStore = context.blobStore
+
+            val blobs =
+                blobStore
+                    .list(bucketName, ListContainerOptions.Builder.prefix(folderPath))
+                    .map { it.name }
+            logger.info("Blobs to delete: $blobs")
+            if (blobs.isNotEmpty()) {
+                blobStore.removeBlobs(bucketName, blobs)
+                logger.info("Deleted folder $folderPath and contents: $blobs")
+            } else {
+                logger.info("No blobs found for folder $folderPath")
+            }
+            return success(Unit)
+        } catch (e: Exception) {
+            logger.error("Error deleting folder $folderPath", e)
+            return failure(DeleteBlobError.ErrorDeletingBlob)
+        }
+    }
+
     fun generateBlobUrl(
         providerId: ProviderType,
         bucketName: String,

@@ -262,7 +262,89 @@ class StorageService(
                         is Failure -> return@run failure(DeleteFileError.ErrorDeletingFile)
 
                         is Success -> {
-                            fileRepository.deleteFile(file)
+                            fileRepository.deleteFile(user.id, file)
+                            success(true)
+                        }
+                    }
+                }
+            }
+        }
+
+    fun deleteFolder(
+        user: User,
+        folderId: Id,
+    ): DeleteFolderResult =
+        transactionManager.run {
+            val usersRepository = it.usersRepository
+            val fileRepository = it.storageRepository
+
+            val folder =
+                fileRepository.getFolderById(user.id, folderId)
+                    ?: return@run failure(DeleteFolderError.FolderNotFound)
+
+            val provider = usersRepository.getProvider(user.id)
+            val bucketName = providerDomain.getBucketName(provider)
+
+            when (val contextStorage = createContextStorage(provider, bucketName)) {
+                is Failure ->
+                    when (contextStorage.value) {
+                        CreateContextJCloudError.ErrorCreatingContext -> return@run failure(DeleteFolderError.ErrorCreatingContext)
+                        CreateContextJCloudError.ErrorCreatingGlobalBucket -> return@run failure(
+                            DeleteFolderError.ErrorCreatingGlobalBucket,
+                        )
+
+                        CreateContextJCloudError.InvalidCredential -> return@run failure(DeleteFolderError.InvalidCredential)
+                    }
+
+                is Success -> {
+                    when (jcloudsStorage.deleteBlobs(contextStorage.value, bucketName, folder.path)) {
+                        is Failure -> return@run failure(DeleteFolderError.ErrorDeletingFolder)
+
+                        is Success -> {
+                            fileRepository.deleteFolder(user.id, folder)
+                            success(true)
+                        }
+                    }
+                }
+            }
+        }
+
+    fun deleteFileInFolder(
+        user: User,
+        folderId: Id,
+        fileId: Id,
+    ): DeleteFileResult =
+        transactionManager.run {
+            val usersRepository = it.usersRepository
+            val fileRepository = it.storageRepository
+
+            val folder =
+                fileRepository.getFolderById(user.id, folderId)
+                    ?: return@run failure(DeleteFileError.ParentFolderNotFound)
+
+            val file =
+                fileRepository.getFileInFolder(user.id, folderId, fileId)
+                    ?: return@run failure(DeleteFileError.FileNotFound)
+
+            val provider = usersRepository.getProvider(user.id)
+            val bucketName = providerDomain.getBucketName(provider)
+
+            when (val contextStorage = createContextStorage(provider, bucketName)) {
+                is Failure ->
+                    when (contextStorage.value) {
+                        CreateContextJCloudError.ErrorCreatingContext -> return@run failure(DeleteFileError.ErrorCreatingContext)
+                        CreateContextJCloudError.ErrorCreatingGlobalBucket -> return@run failure(
+                            DeleteFileError.ErrorCreatingGlobalBucket,
+                        )
+                        CreateContextJCloudError.InvalidCredential -> return@run failure(DeleteFileError.InvalidCredential)
+                    }
+
+                is Success -> {
+                    when (jcloudsStorage.deleteBlob(contextStorage.value, bucketName, file.path)) {
+                        is Failure -> return@run failure(DeleteFileError.ErrorDeletingFile)
+
+                        is Success -> {
+                            fileRepository.deleteFile(user.id, file)
                             success(true)
                         }
                     }

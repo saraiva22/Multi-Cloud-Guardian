@@ -76,9 +76,25 @@ sealed class DeleteFileError {
     data object ErrorCreatingGlobalBucket : DeleteFileError()
 
     data object ErrorDeletingFile : DeleteFileError()
+
+    data object ParentFolderNotFound : DeleteFileError()
 }
 
 typealias DeleteFileResult = Either<DeleteFileError, Boolean>
+
+sealed class DeleteFolderError {
+    data object FolderNotFound : DeleteFolderError()
+
+    data object InvalidCredential : DeleteFolderError()
+
+    data object ErrorCreatingContext : DeleteFolderError()
+
+    data object ErrorCreatingGlobalBucket : DeleteFolderError()
+
+    data object ErrorDeletingFolder : DeleteFolderError()
+}
+
+typealias DeleteFolderResult = Either<DeleteFolderError, Boolean>
 
 sealed class CreationFolderError {
     data object FolderNameAlreadyExists : CreationFolderError()

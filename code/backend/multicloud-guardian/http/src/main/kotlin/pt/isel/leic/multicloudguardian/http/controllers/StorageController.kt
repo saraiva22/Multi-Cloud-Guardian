@@ -27,6 +27,7 @@ import pt.isel.leic.multicloudguardian.http.model.storage.FoldersListOutputModel
 import pt.isel.leic.multicloudguardian.http.model.utils.IdOutputModel
 import pt.isel.leic.multicloudguardian.service.storage.CreationFolderError
 import pt.isel.leic.multicloudguardian.service.storage.DeleteFileError
+import pt.isel.leic.multicloudguardian.service.storage.DeleteFolderError
 import pt.isel.leic.multicloudguardian.service.storage.DownloadFileError
 import pt.isel.leic.multicloudguardian.service.storage.GetFileByIdError
 import pt.isel.leic.multicloudguardian.service.storage.GetFileInFolderError
@@ -183,6 +184,7 @@ class StorageController(
                     DeleteFileError.InvalidCredential -> Problem.invalidCredential(instance)
                     DeleteFileError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
                     DeleteFileError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
+                    DeleteFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(0, instance)
                 }
         }
     }
@@ -428,12 +430,44 @@ class StorageController(
     }
 
     @DeleteMapping(Uris.Folders.DELETE_FOLDER)
-    fun deleteFolder(): ResponseEntity<*> {
-        TODO()
+    fun deleteFolder(
+        @PathVariable @Validated folderId: Int,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Folders.deleteFolder(folderId)
+        val user = authenticatedUser.user
+        return when (val res = storageService.deleteFolder(user, Id(folderId))) {
+            is Success -> ResponseEntity.status(HttpStatus.OK).build<Unit>()
+            is Failure ->
+                when (res.value) {
+                    DeleteFolderError.FolderNotFound -> Problem.folderNotFound(folderId, instance)
+                    DeleteFolderError.InvalidCredential -> Problem.invalidCredential(instance)
+                    DeleteFolderError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
+                    DeleteFolderError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
+                    DeleteFolderError.ErrorDeletingFolder -> Problem.invalidDeleteFile(instance)
+                }
+        }
     }
 
     @DeleteMapping(Uris.Folders.DELETE_FILE_IN_FOLDER)
-    fun deleteFileInFolder(): ResponseEntity<*> {
-        TODO()
+    fun deleteFileInFolder(
+        @PathVariable @Validated folderId: Int,
+        @PathVariable @Validated fileId: Int,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Folders.deleteFileInFolder(folderId, fileId)
+        val user = authenticatedUser.user
+        return when (val res = storageService.deleteFileInFolder(user, Id(folderId), Id(fileId))) {
+            is Success -> ResponseEntity.status(HttpStatus.OK).build<Unit>()
+            is Failure ->
+                when (res.value) {
+                    DeleteFileError.FileNotFound -> Problem.fileNotFound(fileId, instance)
+                    DeleteFileError.InvalidCredential -> Problem.invalidCredential(instance)
+                    DeleteFileError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
+                    DeleteFileError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
+                    DeleteFileError.ErrorDeletingFile -> Problem.invalidDeleteFile(instance)
+                    DeleteFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(folderId, instance)
+                }
+        }
     }
 }

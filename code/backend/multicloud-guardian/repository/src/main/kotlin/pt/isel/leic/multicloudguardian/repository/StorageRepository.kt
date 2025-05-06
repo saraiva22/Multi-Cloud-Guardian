@@ -71,7 +71,15 @@ interface StorageRepository {
         fileId: Id,
     ): String?
 
-    fun deleteFile(file: File)
+    fun deleteFile(
+        userId: Id,
+        file: File,
+    )
+
+    fun deleteFolder(
+        userId: Id,
+        folder: Folder,
+    )
 
     fun createFolder(
         userId: Id,
