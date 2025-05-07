@@ -121,7 +121,7 @@ class UsersController(
     @PostMapping(Uris.Users.LOGOUT)
     fun logout(authenticatedUser: AuthenticatedUser): ResponseEntity<*> {
         val instance = Uris.Users.logout()
-        return when (userService.revokeToken(authenticatedUser.user.id, authenticatedUser.token)) {
+        return when (userService.revokeToken(authenticatedUser.token)) {
             is Success ->
                 ResponseEntity
                     .status(HttpStatus.OK)

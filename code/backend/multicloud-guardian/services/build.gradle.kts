@@ -24,6 +24,7 @@ dependencies {
     implementation("org.slf4j:slf4j-api:2.0.16")
 
     // To use the JDBI-based repository implementation on the tests
+    testImplementation(project(":multicloud-guardian:repository-jdbi"))
     testImplementation("org.jdbi:jdbi3-core:3.37.1")
     testImplementation("org.postgresql:postgresql:42.7.2")
 

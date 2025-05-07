@@ -109,10 +109,7 @@ class UsersService(
         }
     }
 
-    fun revokeToken(
-        userId: Id,
-        token: String,
-    ): TokenRevocationResult {
+    fun revokeToken(token: String): TokenRevocationResult {
         val tokenValidationInfo = usersDomain.createTokenValidationInformation(token)
         return transactionManager.run {
             val res = it.usersRepository.removeTokenByValidationInfo(tokenValidationInfo)
