@@ -18,6 +18,10 @@ import settings from "../assets/icons/settings.png";
 import uploadFile from "../assets/icons/upload-file.png";
 import upload from "../assets/icons/upload.png";
 import logout from "../assets/icons/logout.png";
+import filter_white from "../assets/icons/filter_white.png";
+import filter_black from "../assets/icons/filter_black.png";
+import org_white from "../assets/icons/org_white.png";
+import org_black from "../assets/icons/org_black.png";
 
 export default {
   europe,
@@ -40,4 +44,8 @@ export default {
   uploadFile,
   upload,
   logout,
+  filter_white,
+  filter_black,
+  org_white,
+  org_black,
 };

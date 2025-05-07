@@ -51,7 +51,6 @@ object Uris {
         const val GET_FILES_IN_FOLDER = "$PREFIX/folders/{folderId}/files"
         const val GET_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}"
         const val UPLOAD_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files"
-        const val DOWNLOAD_FOLDER = "$PREFIX/folders/{folderId}/download"
         const val DOWNLOAD_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}/download"
         const val DELETE_FOLDER = "$PREFIX/folders/{folderId}"
         const val DELETE_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}"
@@ -69,11 +68,7 @@ object Uris {
             fileId: Int,
         ): URI = UriTemplate(GET_FILE_IN_FOLDER).expand(folderId, fileId)
 
-        fun fileInFolderById(id: Int): URI = UriTemplate(GET_FOLDER_BY_ID).expand(id)
-
         fun uploadFileInFolder(folderId: Int): URI = UriTemplate(UPLOAD_FILE_IN_FOLDER).expand(folderId)
-
-        fun downloadFolder(folderId: Int): URI = UriTemplate(DOWNLOAD_FOLDER).expand(folderId)
 
         fun downloadFileInFolder(
             folderId: Int,

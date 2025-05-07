@@ -11,11 +11,11 @@ import { useAuthentication } from "@/context/AuthProvider";
 export default function App() {
   const { loading, isLogged } = useAuthentication();
 
-  if (!loading && isLogged) return <Redirect href="/home" />; // change urgently!!! 
+  if (!loading && isLogged) return <Redirect href="/home" />; // change urgently!!!
 
   return (
-    <SafeAreaView className="bg-primary h-full">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+    <SafeAreaView className="bg-primary flex-1">
+      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}>
         <View className="w-full justify-center items-center min-h-[85vh] px-5">
           <View className="flex-row items-center mt-5">
             <Image

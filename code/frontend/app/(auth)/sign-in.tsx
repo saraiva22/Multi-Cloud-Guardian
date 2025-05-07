@@ -1,9 +1,9 @@
-import { View, Image, Text, ScrollView } from "react-native";
+import { View, Image, Text, ScrollView, Alert } from "react-native";
 import { useEffect, useReducer, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { images } from "@/constants";
 import CustomButtom from "@/components/CustomButton";
-import { Link, router, usePathname } from "expo-router";
+import { Link, router } from "expo-router";
 import FormField from "@/components/FormField";
 import { Problem } from "@/services/media/Problem";
 import { useAuthentication } from "@/context/AuthProvider";
@@ -15,7 +15,7 @@ import {
 import { save } from "@/services/storage/SecureStorage";
 
 const KEY_NAME = "user_info";
-const KEY_MASTER = "key_master-";
+const KEY_MASTER = "key_master";
 
 type State =
   | {
@@ -32,7 +32,7 @@ type Action =
   | { type: "error"; message: Problem | string }
   | { type: "success" };
 
-function logUnexceptedAction(state: State, action: Action) {
+function logUnexpectedAction(state: State, action: Action) {
   console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
 }
 
@@ -42,21 +42,19 @@ function reduce(state: State, action: Action): State {
       if (action.type === "edit") {
         return {
           tag: "editing",
-          error: "undefined",
+          error: undefined,
           inputs: { ...state.inputs, [action.inputName]: action.inputValue },
         };
       } else if (action.type === "submit") {
         return { tag: "submitting", username: state.inputs.username };
       } else {
-        logUnexceptedAction(state, action);
+        logUnexpectedAction(state, action);
         return state;
       }
 
     case "submitting":
       if (action.type === "success") {
-        return {
-          tag: "redirect",
-        };
+        return { tag: "redirect" };
       } else if (action.type === "error") {
         return {
           tag: "editing",
@@ -64,12 +62,12 @@ function reduce(state: State, action: Action): State {
           inputs: { username: state.username, password: "" },
         };
       } else {
-        logUnexceptedAction(state, action);
+        logUnexpectedAction(state, action);
         return state;
       }
 
     case "redirect":
-      logUnexceptedAction(state, action);
+      logUnexpectedAction(state, action);
       return state;
   }
 }
@@ -78,18 +76,15 @@ const firstState: State = {
   tag: "editing",
   inputs: { username: "", password: "" },
 };
-
 const SignIn = () => {
   const [state, dispatch] = useReducer(reduce, firstState);
   const { setUsername, setKeyMaster } = useAuthentication();
 
   useEffect(() => {
-    console.log("STATE ", state);
     if (state.tag === "redirect") {
       router.replace("/home");
     }
-  }, [state.tag]);
-
+  });
   function handleChange(inputName: string, inputValue: string) {
     dispatch({
       type: "edit",
@@ -109,6 +104,7 @@ const SignIn = () => {
 
     try {
       if (!username?.trim() || !password?.trim()) {
+        Alert.alert("Error", "Please fill in all fields");
         dispatch({ type: "error", message: "Invalid username or password" });
         return;
       }
@@ -117,15 +113,10 @@ const SignIn = () => {
         dispatch({ type: "error", message: "Invalid username or password" });
         return;
       }
-      console.log("Username ", username);
-      save(KEY_NAME, JSON.stringify({ username: username }));
+      await save(KEY_NAME, JSON.stringify({ username: username }));
       const saltArrayBuffer = await generateRandomSalt();
       const masterKey = await generateMasterKey(saltArrayBuffer, password);
-      console.log("MASTER_KEY: ", masterKey);
-
-      save(`${KEY_MASTER}${username}`, JSON.stringify({ key: masterKey }));
-      setUsername(result);
-      setKeyMaster(masterKey);
+      await save(KEY_MASTER, JSON.stringify({ key: masterKey }));
       dispatch({ type: "success" });
     } catch (error) {
       dispatch({ type: "error", message: error });
@@ -133,8 +124,11 @@ const SignIn = () => {
   }
 
   const username =
-    state.tag === "submitting" ? state.username : state.inputs.username;
-  const password = state.tag === "submitting" ? "" : state.inputs.password;
+    state.tag === "submitting" && state.username
+      ? state.username
+      : state.inputs?.username || "";
+  const password =
+    state.tag === "submitting" ? "" : state.inputs?.password || "";
 
   return (
     <SafeAreaView className="bg-primary h-full">

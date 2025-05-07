@@ -9,13 +9,13 @@ import React, { useState } from "react";
 const Home = () => {
   const { username } = useAuthentication();
 
-  const [refreshing, setRefreshing] = useState(false);
+  // const [refreshing, setRefreshing] = useState(false);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    // await refetch();
-    setRefreshing(false);
-  };
+  // const onRefresh = async () => {
+  //   setRefreshing(true);
+  //   // await refetch();
+  //   setRefreshing(false);
+  // };
 
   return (
     <SafeAreaView className="bg-primary h-full">
@@ -57,9 +57,9 @@ const Home = () => {
             subtitle="Be the first one to upload a file"
           />
         )}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        // refreshControl={
+        //   <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        // }
       />
     </SafeAreaView>
   );

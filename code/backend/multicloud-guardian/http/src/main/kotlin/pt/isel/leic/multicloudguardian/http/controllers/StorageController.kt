@@ -383,11 +383,6 @@ class StorageController(
         }
     }
 
-    @GetMapping(Uris.Folders.DOWNLOAD_FOLDER)
-    fun downloadFolder(): ResponseEntity<*> {
-        TODO()
-    }
-
     @GetMapping(Uris.Folders.DOWNLOAD_FILE_IN_FOLDER)
     fun downloadFileInFolder(
         @Validated @PathVariable folderId: Int,

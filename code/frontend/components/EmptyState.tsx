@@ -25,7 +25,7 @@ const EmptyState = ({ title, subtitle }: EmptyStateProps) => {
       <Text className="text-sm font-pmedium text-gray-100">{subtitle}</Text>
       <CustomButton
         title="Create file"
-        handlePress={() => router.push("/files")}
+        handlePress={() => router.push("/(modals)/create-file")}
         containerStyles="w-full my-5"
         textStyles={""}
         isLoading={false}

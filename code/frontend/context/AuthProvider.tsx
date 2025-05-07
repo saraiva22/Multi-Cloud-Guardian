@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { getValueFor } from "@/services/storage/SecureStorage";
 
 const KEY_NAME = "user_info";
-const KEY_MASTER = "key_master-";
+const KEY_MASTER = "key_master";
 
 type State = {
   username: string | undefined;
@@ -38,6 +38,7 @@ export function AuthProvider({ children }) {
         if (res) {
           setIsLogged(true);
           setUsername(res.username);
+          console.log("Value  1 ", res.username);
         } else {
           setIsLogged(false);
           setUsername(undefined);
@@ -52,7 +53,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    getValueFor(`${KEY_MASTER}${observedUsername}`)
+    getValueFor(KEY_MASTER)
       .then((res) => {
         if (res) {
           setKeyMaster(res.key);

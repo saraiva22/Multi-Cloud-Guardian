@@ -15,14 +15,12 @@ import { logout } from "@/services/users/UserService";
 import { router } from "expo-router";
 
 const KEY_NAME = "user_info";
-const KEY_MASTER = "key_master-";
+const KEY_MASTER = "key_master";
 
 const Settings = () => {
-  const { username, setUsername, setIsLogged } = useAuthentication();
+  const { setUsername, setIsLogged } = useAuthentication();
 
   const goLogout = async () => {
-    const value = username;
-    console.log(value);
     try {
       await logout();
     } catch (error) {
@@ -31,7 +29,7 @@ const Settings = () => {
       setUsername(null);
       setIsLogged(false);
       removeValueFor(KEY_NAME);
-      removeValueFor(`${KEY_MASTER}${value}`);
+      removeValueFor(KEY_MASTER);
       router.replace("/sign-in");
     }
   };
