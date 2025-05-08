@@ -157,13 +157,13 @@ const SignUp = () => {
     const performance = state.inputs.performance;
     const location = state.inputs.location;
 
-    try {
-      if (!username?.trim() || !password?.trim() || !email?.trim()) {
-        Alert.alert("Error", "Please fill in all fields");
-        dispatch({ type: "error", message: "Invalid username or password" });
-        return;
-      }
+    if (!username?.trim() || !password?.trim() || !email?.trim()) {
+      Alert.alert("Error", "Please fill in all fields");
+      dispatch({ type: "error", message: "Invalid username or password" });
+      return;
+    }
 
+    try {
       await register(username, email, password, performance, location);
 
       await save(KEY_NAME, JSON.stringify({ username: username }));

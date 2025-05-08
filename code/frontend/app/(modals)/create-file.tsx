@@ -15,7 +15,12 @@ import { icons } from "@/constants";
 import { router } from "expo-router";
 import EncryptionToggle from "@/components/EncryptionToggle";
 import { useAuthentication } from "@/context/AuthProvider";
-import { Problem } from "@/services/media/Problem";
+import {
+  getProblemMessage,
+  isProblem,
+  Problem,
+} from "@/services/media/Problem";
+import { uploadFile } from "@/services/storage/StorageService";
 
 type State =
   | {
@@ -151,16 +156,28 @@ const CreateFile = () => {
       return;
     }
     dispatch({ type: "submit" });
-    console.log("SUBMIT");
 
     const fileName = state.inputs.fileName;
     const encryption = state.inputs.encryption;
     const file = state.inputs.file;
 
-    console.log(fileName);
-    console.log(encryption);
-    console.log(file);
-    dispatch({ type: "success" });
+    if (!fileName?.trim() || !file) {
+      Alert.alert("Error", "Please fill in all fields");
+      dispatch({ type: "error", message: "Invalid username or password" });
+      return;
+    }
+
+    try {
+      await uploadFile(file, fileName, encryption, keyMaster);
+
+      dispatch({ type: "success" });
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        `${isProblem(error) ? getProblemMessage(error) : error}`
+      );
+      dispatch({ type: "error", message: error });
+    }
   }
 
   const fileName =
