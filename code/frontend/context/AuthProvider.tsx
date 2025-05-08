@@ -38,7 +38,7 @@ export function AuthProvider({ children }) {
         if (res) {
           setIsLogged(true);
           setUsername(res.username);
-          console.log("Value  1 ", res.username);
+          console.log("Value ", res.username);
         } else {
           setIsLogged(false);
           setUsername(undefined);

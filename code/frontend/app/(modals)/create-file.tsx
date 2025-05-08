@@ -38,7 +38,7 @@ type State =
 type Action =
   | { type: "edit"; inputName: string; inputValue: string | boolean | any }
   | { type: "submit" }
-  | { type: "error"; message: string }
+  | { type: "error"; message: Problem | string }
   | { type: "success" };
 
 function logUnexpectedAction(state: State, action: Action) {

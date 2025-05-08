@@ -134,7 +134,7 @@ const SignIn = () => {
     <SafeAreaView className="bg-primary h-full">
       <ScrollView>
         <View className="w-full justify-center min-h-[83h] px-4 my-6">
-          <View className="relative flex-row items-center justify-center mt-10 mb-6 h-[50px]">
+          <View className="relative flex-row items-center justify-center mt-2 mb-2 h-[50px]">
             <Image
               source={images.logo}
               resizeMode="contain"
@@ -152,14 +152,14 @@ const SignIn = () => {
             handleChangeText={(text) => handleChange("username", text)}
             otherStyles="mt-7"
             keyboardType="email-address"
-            placeholder={"At least 5 characters"}
+            placeholder={"Enter a valid username"}
           />
           <FormField
             title="Password"
             value={password}
             handleChangeText={(text) => handleChange("password", text)}
             otherStyles="mt-7"
-            placeholder={"At least 8 characters"}
+            placeholder={"Enter a valid password"}
           />
 
           <CustomButtom
@@ -178,7 +178,7 @@ const SignIn = () => {
               href="/sign-up"
               className="text-lg font-psemibold text-secondary"
             >
-              Signup
+              Register
             </Link>
           </View>
         </View>

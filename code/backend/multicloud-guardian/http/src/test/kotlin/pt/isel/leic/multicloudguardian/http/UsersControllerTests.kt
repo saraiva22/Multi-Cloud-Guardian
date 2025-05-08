@@ -1,12 +1,13 @@
 package pt.isel.leic.multicloudguardian.http
 
-class UsersControllerTests
-
 /*
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class UsersControllerTests : ApplicationTests() {
     @Test
     fun `can create an user`() {
         // given: an HTTP client
-        /*
+
         val client = WebTestClient.bindToServer().baseUrl("http://localhost:$port/api").build()
 
         // and: a random user
@@ -70,11 +71,6 @@ class UsersControllerTests
                 .returnResult()
                 .responseBody!!
     }
-
-
-    }
-
-
 }
 
 
