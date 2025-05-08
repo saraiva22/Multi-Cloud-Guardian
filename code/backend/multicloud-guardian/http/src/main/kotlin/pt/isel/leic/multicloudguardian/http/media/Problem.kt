@@ -100,17 +100,20 @@ class Problem(
                 type = internalServerError,
                 title = "Internal server error",
                 status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                detail = "An intervale server error occured",
+                detail = "An interval server error occurred",
                 instance = instance,
             ).toResponse()
 
-        fun invalidRequestContent(errors: List<String>? = null): Problem =
+        fun invalidRequestContent(
+            errors: List<String>? = null,
+            instance: URI = URI(""),
+        ): Problem =
             Problem(
                 type = invalidRequestContent,
                 title = "Invalid request content",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = errors?.joinToString(", ") ?: "Invalid request content",
-                instance = invalidRequestContent,
+                instance = instance,
             )
 
         fun unauthorizedRequest(instance: URI?): ResponseEntity<*> =

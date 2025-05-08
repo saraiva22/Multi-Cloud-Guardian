@@ -1,3 +1,8 @@
+/**
+ * Problem JSON Media Type
+ * Represents a problem detail as defined in RFC 7807.
+ */
+
 export type Problem = {
   type: string;
   title: string;

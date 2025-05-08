@@ -9,7 +9,7 @@ import React, { useState } from "react";
 const Home = () => {
   const { username } = useAuthentication();
 
-  // const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // const onRefresh = async () => {
   //   setRefreshing(true);

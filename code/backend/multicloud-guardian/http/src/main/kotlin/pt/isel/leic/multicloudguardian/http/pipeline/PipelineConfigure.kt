@@ -8,7 +8,7 @@ import pt.isel.leic.multicloudguardian.http.pipeline.interceptors.Authentication
 import pt.isel.leic.multicloudguardian.http.pipeline.resolvers.AuthenticatedUserArgumentResolver
 
 @Configuration
-class PipelineConfigurer(
+class PipelineConfigure(
     val authenticationInterceptor: AuthenticationInterceptor,
     val authenticatedUserArgumentResolver: AuthenticatedUserArgumentResolver,
 ) : WebMvcConfigurer {

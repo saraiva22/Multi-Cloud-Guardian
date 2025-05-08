@@ -4,6 +4,7 @@ import { getValueFor } from "@/services/storage/SecureStorage";
 const KEY_NAME = "user_info";
 const KEY_MASTER = "key_master";
 
+
 type State = {
   username: string | undefined;
   keyMaster: string | undefined;
