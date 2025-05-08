@@ -5,7 +5,11 @@ import { images } from "@/constants";
 import CustomButtom from "@/components/CustomButton";
 import { Link, router } from "expo-router";
 import FormField from "@/components/FormField";
-import { Problem } from "@/services/media/Problem";
+import {
+  getProblemMessage,
+  isProblem,
+  Problem,
+} from "@/services/media/Problem";
 import { useAuthentication } from "@/context/AuthProvider";
 import { login } from "@/services/users/UserService";
 import {
@@ -119,6 +123,10 @@ const SignIn = () => {
       await save(KEY_MASTER, JSON.stringify({ key: masterKey }));
       dispatch({ type: "success" });
     } catch (error) {
+      Alert.alert(
+        "Error",
+        `${isProblem(error) ? getProblemMessage(error) : error}`
+      );
       dispatch({ type: "error", message: error });
     }
   }

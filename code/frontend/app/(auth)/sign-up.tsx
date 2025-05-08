@@ -4,7 +4,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { images } from "../../constants";
 import FormField from "../../components/FormField";
 import CustomButtom from "../../components/CustomButton";
-import Slider from "@react-native-community/slider";
 import { Link, router } from "expo-router";
 import {
   generateMasterKey,
@@ -14,7 +13,11 @@ import { PerformanceType } from "@/domain/preferences/PerformanceType";
 import SliderState from "@/components/SliderState";
 import { icons } from "@/constants";
 import { LocationType } from "@/domain/preferences/LocationType";
-import { Problem } from "@/services/media/Problem";
+import {
+  getProblemMessage,
+  isProblem,
+  Problem,
+} from "@/services/media/Problem";
 import { register } from "@/services/users/UserService";
 import { save } from "@/services/storage/SecureStorage";
 
@@ -22,9 +25,9 @@ const KEY_NAME = "user_info";
 const KEY_MASTER = "key_master";
 
 const LOCATION_ARRAY = [
-  { label: LocationType.EUROPE, icon: icons.europe },
   { label: LocationType.NORTH_AMERICA, icon: icons.northAmerica },
   { label: LocationType.SOUTH_AMERICA, icon: icons.southAmerica },
+  { label: LocationType.EUROPE, icon: icons.europe },
   { label: LocationType.OTHERS, icon: icons.others },
 ];
 
@@ -71,7 +74,7 @@ function reduce(state: State, action: Action): State {
       if (action.type === "edit") {
         return {
           tag: "editing",
-          error: undefined,
+          error: state.error,
           inputs: { ...state.inputs, [action.inputName]: action.inputValue },
         };
       } else if (action.type === "submit") {
@@ -98,8 +101,8 @@ function reduce(state: State, action: Action): State {
             username: state.username,
             email: state.email,
             password: "",
-            performance: 0,
-            location: 0,
+            performance: PerformanceType.LOW,
+            location: LocationType.NORTH_AMERICA,
           },
         };
       } else {
@@ -119,8 +122,8 @@ const firstState: State = {
     username: "",
     email: "",
     password: "",
-    location: 0,
-    performance: 0,
+    performance: PerformanceType.LOW,
+    location: LocationType.NORTH_AMERICA,
   },
 };
 
@@ -167,9 +170,13 @@ const SignUp = () => {
       const saltArrayBuffer = await generateRandomSalt();
       const masterKey = await generateMasterKey(saltArrayBuffer, password);
       await save(KEY_MASTER, JSON.stringify({ key: masterKey }));
+      dispatch({ type: "success" });
     } catch (error) {
+      Alert.alert(
+        "Error",
+        `${isProblem(error) ? getProblemMessage(error) : error}`
+      );
       dispatch({ type: "error", message: error });
-      Alert.alert("Error", "Error sign up");
     }
   }
 
