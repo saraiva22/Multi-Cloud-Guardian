@@ -1,7 +1,7 @@
-import { View, Text, Image, Platform } from "react-native";
+import { View, Text, Image, Platform, useColorScheme } from "react-native";
 import { Tabs } from "expo-router";
 import { icons } from "../../constants";
-
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 type Icon = {
   icon: any;
   color: string;
@@ -9,25 +9,29 @@ type Icon = {
   focused: boolean;
 };
 
-const OptionsTabs = {
-  home: "Home",
-  files: "Files",
-  folders: "Folders",
-  settings: "Settings",
-};
+const AvailableRoutes = [
+  { key: "home", title: "Home", icon: icons.home },
+  { key: "files", title: "Files", icon: icons.files },
+  { key: "folders", title: "Folders", icon: icons.folders },
+  { key: "settings", title: "Settings", icon: icons.settings },
+];
 
 const TabIcon = ({ icon, color, name, focused }: Icon) => {
   return (
-    <View className="flex items.center justify-center gap-2">
+    <View className="flex items-center justify-center gap-2">
       <Image
         source={icon}
         resizeMode="contain"
         tintColor={color}
-        className="w-6 h-6"
+        className="w-[20px] h-[20px]"
       />
       <Text
-        className={`${focused ? "font-psemibold" : "font-pregular"} text-xs`}
-        style={{ color: color }}
+        ellipsizeMode="tail"
+        style={{
+          color,
+          fontSize: 10,
+          fontFamily: focused ? "Poppins-SemiBold" : "Poppins-Regular",
+        }}
       >
         {name}
       </Text>
@@ -36,87 +40,59 @@ const TabIcon = ({ icon, color, name, focused }: Icon) => {
 };
 
 function TabsLayout() {
-  if (Platform.OS !== "web") {
-    return (
-      <>
-        <Tabs
-          screenOptions={{
-            tabBarShowLabel: false,
-            tabBarActiveTintColor: "#FFA001",
-            tabBarInactiveTintColor: "#CDCDE0",
-            tabBarStyle: {
-              backgroundColor: "#161622",
-              borderTopWidth: 1,
-              borderTopColor: "#232533",
-              height: 84,
-            },
-          }}
-        >
-          <Tabs.Screen
-            name="home"
-            options={{
-              title: OptionsTabs.home,
-              headerShown: false,
-              tabBarIcon: ({ color, focused }) => (
-                <TabIcon
-                  icon={icons.home}
-                  color={color}
-                  name={OptionsTabs.home}
-                  focused={focused}
-                />
-              ),
-            }}
-          />
-          <Tabs.Screen
-            name="files"
-            options={{
-              title: OptionsTabs.files,
-              headerShown: false,
-              tabBarIcon: ({ color, focused }) => (
-                <TabIcon
-                  icon={icons.files}
-                  color={color}
-                  name={OptionsTabs.files}
-                  focused={focused}
-                />
-              ),
-            }}
-          />
+  // const colorScheme = useColorScheme();
+  // console.log(colorScheme);
+  // const tabBarBackground = colorScheme !== "dark" ? "#232533" : "#fff";
+  // const tabBarBorder = colorScheme !== "dark" ? "#2C2C38" : "#eee";
+  const insets = useSafeAreaInsets();
+  if (Platform.OS === "web") return null;
 
-          <Tabs.Screen
-            name="folders"
-            options={{
-              title: OptionsTabs.folders,
-              headerShown: false,
-              tabBarIcon: ({ color, focused }) => (
-                <TabIcon
-                  icon={icons.folders}
-                  color={color}
-                  name={OptionsTabs.folders}
-                  focused={focused}
-                />
-              ),
-            }}
-          />
-          <Tabs.Screen
-            name="settings"
-            options={{
-              title: OptionsTabs.settings,
-              headerShown: false,
-              tabBarIcon: ({ color, focused }) => (
-                <TabIcon
-                  icon={icons.settings}
-                  color={color}
-                  name={OptionsTabs.settings}
-                  focused={focused}
-                />
-              ),
-            }}
-          />
-        </Tabs>
-      </>
-    );
-  }
+  return (
+    <Tabs
+      screenOptions={{
+        tabBarShowLabel: false,
+        tabBarActiveTintColor: "#FFA001",
+        tabBarInactiveTintColor: "#CDCDE0",
+        tabBarStyle: {
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 78 + insets.bottom,
+          paddingTop: 15,
+          paddingBottom: insets.bottom,
+          backgroundColor: "#1E1E2D",
+          borderTopWidth: 0,
+        },
+
+        tabBarItemStyle: {
+          width: "auto",
+          paddingHorizontal: 8,
+        },
+      }}
+    >
+      {AvailableRoutes.map((route, index) => (
+        <Tabs.Screen
+          key={route.key}
+          name={route.key}
+          options={{
+            headerShown: false,
+
+            tabBarItemStyle: { marginLeft: "auto" },
+
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon
+                icon={route.icon}
+                color={color}
+                name={route.title}
+                focused={focused}
+              />
+            ),
+          }}
+        />
+      ))}
+    </Tabs>
+  );
 }
 
 export default TabsLayout;
