@@ -132,7 +132,7 @@ const SignUp = () => {
 
   useEffect(() => {
     if (state.tag === "redirect") {
-      router.replace("/sign-in");
+      router.replace("/(modals)/signup-success");
     }
   });
 
@@ -259,6 +259,7 @@ const SignUp = () => {
             containerStyles="mt-5"
             isLoading={state.tag === "submitting"}
             textStyles={""}
+            color="bg-secondary"
           />
 
           <View className="flex justify-center pt-5 flex-row gap-2">
