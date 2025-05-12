@@ -6,6 +6,7 @@ type ButtonInfo = {
   containerStyles: string;
   textStyles: string;
   isLoading: boolean;
+  color: string;
 };
 
 const CustomButton = ({
@@ -14,12 +15,13 @@ const CustomButton = ({
   containerStyles,
   textStyles,
   isLoading,
+  color,
 }: ButtonInfo) => {
   return (
     <TouchableOpacity
       onPress={handlePress}
       activeOpacity={0.7}
-      className={`bg-secondary rounded-xl min-h-[62px] flex flex-row justify-center items-center ${containerStyles} ${
+      className={`${color} rounded-xl min-h-[62px] flex flex-row justify-center items-center ${containerStyles} ${
         isLoading ? "opacity-50" : ""
       }`}
       disabled={isLoading}

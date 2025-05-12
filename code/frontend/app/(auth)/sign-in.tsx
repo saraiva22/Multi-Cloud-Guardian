@@ -176,6 +176,7 @@ const SignIn = () => {
             containerStyles="mt-7"
             isLoading={state.tag === "submitting"}
             textStyles={""}
+            color="bg-secondary"
           />
 
           <View className="flex justify-center pt-5 flex-row gap-2">
