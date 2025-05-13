@@ -49,6 +49,7 @@ export default function App() {
               containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
               textStyles="text-black text-center font-bold"
               isLoading={false}
+              color="border-secondary"
             />
             <CustomButton
               title="Register"
@@ -56,6 +57,7 @@ export default function App() {
               containerStyles="w-full bg-secondary-200 rounded-lg py-4"
               textStyles="text-black text-center font-bold"
               isLoading={false}
+              color="border-secondary"
             />
           </View>
         </View>

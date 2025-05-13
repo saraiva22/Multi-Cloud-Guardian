@@ -27,8 +27,9 @@ const EmptyState = ({ title, subtitle }: EmptyStateProps) => {
         title="Create file"
         handlePress={() => router.push("/(modals)/create-file")}
         containerStyles="w-full my-5"
-        textStyles={""}
         isLoading={false}
+        textStyles={""}
+        color="bg-secondary"
       />
     </View>
   );

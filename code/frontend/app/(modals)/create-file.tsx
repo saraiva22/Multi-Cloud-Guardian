@@ -247,6 +247,7 @@ const CreateFile = () => {
           containerStyles="mt-7"
           isLoading={state.tag === "submitting"}
           textStyles={""}
+          color="bg-secondary"
         />
       </ScrollView>
     </SafeAreaView>

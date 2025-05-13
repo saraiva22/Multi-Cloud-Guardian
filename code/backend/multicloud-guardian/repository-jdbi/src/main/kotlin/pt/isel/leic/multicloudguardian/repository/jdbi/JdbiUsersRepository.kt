@@ -11,6 +11,7 @@ import pt.isel.leic.multicloudguardian.domain.token.Token
 import pt.isel.leic.multicloudguardian.domain.token.TokenValidationInfo
 import pt.isel.leic.multicloudguardian.domain.user.PasswordValidationInfo
 import pt.isel.leic.multicloudguardian.domain.user.User
+import pt.isel.leic.multicloudguardian.domain.user.UserStorageInfo
 import pt.isel.leic.multicloudguardian.domain.user.components.Email
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
 import pt.isel.leic.multicloudguardian.domain.utils.Id
@@ -53,11 +54,18 @@ class JdbiUsersRepository(
             .mapTo<Int>()
             .single() == 1
 
-    override fun getUserById(id: Id): User? =
+    override fun getUserById(id: Id): UserStorageInfo? =
         handle
-            .createQuery("select * from dbo.Users where id = :id")
-            .bind("id", id.value)
-            .mapTo<User>()
+            .createQuery(
+                """
+                select users.id, username, email, location, performance
+                from dbo.Users as users
+                inner join dbo.Preferences as pref
+                on users.id = pref.user_id
+                where users.id = :id
+                """.trimIndent(),
+            ).bind("id", id.value)
+            .mapTo<UserStorageInfo>()
             .singleOrNull()
 
     override fun getUserByEmail(email: Email): User? =

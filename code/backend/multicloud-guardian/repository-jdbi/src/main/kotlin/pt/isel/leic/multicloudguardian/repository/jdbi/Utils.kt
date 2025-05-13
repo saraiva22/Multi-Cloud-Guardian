@@ -10,6 +10,7 @@ import pt.isel.leic.multicloudguardian.domain.token.TokenValidationInfo
 import pt.isel.leic.multicloudguardian.domain.user.PasswordValidationInfo
 import pt.isel.leic.multicloudguardian.domain.user.User
 import pt.isel.leic.multicloudguardian.domain.user.UserInfo
+import pt.isel.leic.multicloudguardian.domain.user.UserStorageInfo
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.EmailMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.FileMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.FolderMapper
@@ -19,6 +20,7 @@ import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.PasswordValidatio
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.TokenValidationInfoMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.UserInfoMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.UserMapper
+import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.UserStorageInfoMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.UsernameMapper
 
 fun Jdbi.configureWithAppRequirements(): Jdbi {
@@ -34,6 +36,7 @@ fun Jdbi.configureWithAppRequirements(): Jdbi {
 
     registerRowMapper(User::class.java, UserMapper())
     registerRowMapper(UserInfo::class.java, UserInfoMapper())
+    registerRowMapper(UserStorageInfo::class.java, UserStorageInfoMapper())
     registerRowMapper(Folder::class.java, FolderMapper())
     registerRowMapper(File::class.java, FileMapper())
 

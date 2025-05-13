@@ -121,6 +121,8 @@ const SignIn = () => {
       const saltArrayBuffer = await generateRandomSalt();
       const masterKey = await generateMasterKey(saltArrayBuffer, password);
       await save(KEY_MASTER, JSON.stringify({ key: masterKey }));
+      setUsername(username);
+      setKeyMaster(masterKey);
       dispatch({ type: "success" });
     } catch (error) {
       Alert.alert(

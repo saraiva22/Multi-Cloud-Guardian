@@ -20,7 +20,7 @@ import pt.isel.leic.multicloudguardian.http.media.Problem
 import pt.isel.leic.multicloudguardian.http.model.user.UserCreateInputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserCreateTokenInputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserHomeOutputModel
-import pt.isel.leic.multicloudguardian.http.model.user.UserInfoOutputModel
+import pt.isel.leic.multicloudguardian.http.model.user.UserStorageInfoOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserTokenCreateOutputModel
 import pt.isel.leic.multicloudguardian.http.model.utils.IdOutputModel
 import pt.isel.leic.multicloudguardian.service.user.TokenCreationError
@@ -148,7 +148,15 @@ class UsersController(
             is Success ->
                 ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(UserInfoOutputModel(user.value.id.value, user.value.username.value, user.value.email.value))
+                    .body(
+                        UserStorageInfoOutputModel(
+                            user.value.id.value,
+                            user.value.username.value,
+                            user.value.email.value,
+                            user.value.locationType.name,
+                            user.value.performanceType.name,
+                        ),
+                    )
 
             is Failure -> Problem.userNotFound(id, instance)
         }
