@@ -29,7 +29,7 @@ import {
 import { useAuthentication } from "@/context/AuthProvider";
 
 const KEY_NAME = "user_info";
-const KEY_MASTER = "key_master";
+const KEY_MASTER = "key_master-";
 
 const LOCATION_ARRAY = [
   { label: LocationType.NORTH_AMERICA, icon: icons.northAmerica },
@@ -192,7 +192,10 @@ const SignUp = () => {
         password,
         iterations
       );
-      await save(KEY_MASTER, JSON.stringify({ masterKey: masterKey }));
+      await save(
+        `${KEY_MASTER}${username}`,
+        JSON.stringify({ masterKey: masterKey })
+      );
       setKeyMaster(masterKey);
       dispatch({ type: "success" });
     } catch (error) {

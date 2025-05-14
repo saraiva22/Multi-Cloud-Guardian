@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getValueFor } from "@/services/storage/SecureStorage";
+import { getValueFor, removeValueFor } from "@/services/storage/SecureStorage";
 
 const KEY_NAME = "user_info";
-const KEY_MASTER = "key_master";
+const KEY_MASTER = "key_master-";
 
 type State = {
   username: string | undefined;
@@ -33,36 +33,28 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getValueFor(KEY_NAME)
-      .then((res) => {
+    const loadUserData = async () => {
+      try {
+        const res = await getValueFor(KEY_NAME);
         if (res) {
           setIsLogged(true);
           setUsername(res.username);
+          const masterKey = await getValueFor(`${KEY_MASTER}${res.username}`);
+          if (masterKey) {
+            setKeyMaster(masterKey);
+          }
         } else {
           setIsLogged(false);
           setUsername(undefined);
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         console.log(error);
-      })
-      .finally(() => {
+      } finally {
         setLoading(false);
-      });
-  }, []);
+      }
+    };
 
-  useEffect(() => {
-    getValueFor(KEY_MASTER)
-      .then((res) => {
-        if (res) {
-          setKeyMaster(res.masterKey);
-        } else {
-          setKeyMaster(undefined);
-        }
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+    loadUserData();
   }, []);
 
   const value = {

@@ -16,7 +16,7 @@ const EncryptionToggle = ({
 }: EncryptionToggleProps) => {
   return (
     <View className={`flex-row justify-between items-center ${otherStyles}`}>
-      <Text className="text-base font-semibold text-white">{label}</Text>
+      <Text className="text-base text-gray-100 font-pmedium">{label}</Text>
       <Switch
         value={value}
         onValueChange={onChange}

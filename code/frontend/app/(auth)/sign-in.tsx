@@ -20,7 +20,7 @@ import {
 import { getValueFor, save } from "@/services/storage/SecureStorage";
 
 const KEY_NAME = "user_info";
-const KEY_MASTER = "key_master";
+const KEY_MASTER = "key_master-";
 
 type State =
   | {
@@ -119,7 +119,7 @@ const SignIn = () => {
         return;
       }
       await save(KEY_NAME, JSON.stringify({ username: username }));
-      const isMasterKey = await getValueFor(KEY_MASTER);
+      const isMasterKey = await getValueFor(`${KEY_MASTER}${username}`);
       if (isMasterKey === null) {
         const credentials = await getCredentials();
         const salt = convertStringToArrayBuffer(credentials.salt);
@@ -128,7 +128,10 @@ const SignIn = () => {
           password,
           credentials.iterations
         );
-        await save(KEY_MASTER, JSON.stringify({ masterKey: masterKey }));
+        await save(
+          `${KEY_MASTER}${username}`,
+          JSON.stringify({ masterKey: masterKey })
+        );
         setKeyMaster(masterKey);
       }
       setUsername(username);

@@ -197,7 +197,7 @@ const CreateFile = () => {
 
   return (
     <SafeAreaView className="bg-primary h-full">
-      <ScrollView className="px-4 my-6">
+      <ScrollView className="px-4 my-6 mt-12">
         <Text className="text-2xl text-white font-psemibold">Upload Flie</Text>
 
         <FormField
@@ -205,7 +205,11 @@ const CreateFile = () => {
           value={fileName}
           placeholder="Enter a title for your file..."
           handleChangeText={(text) => handleChange("fileName", text)}
-          otherStyles="mt-10"
+          otherStyles="mt-7"
+        />
+
+        <View
+          style={{ height: 0.5, backgroundColor: "#F8F8F8", marginTop: 20 }}
         />
 
         <EncryptionToggle
@@ -213,12 +217,16 @@ const CreateFile = () => {
           onChange={(value) => handleChange("encryption", value)}
           otherStyles="mt-7"
         />
+
+        <View
+          style={{ height: 0.5, backgroundColor: "#F8F8F8", marginTop: 20 }}
+        />
         <View className="mt-7 space-y-2">
           <Text className="text-base text-gray-100 font-pmedium">
             Upload Video
           </Text>
 
-          <TouchableOpacity onPress={openPicker}>
+          <TouchableOpacity onPress={openPicker} className="mt-3">
             <View className="w-full h-40 px-4 bg-black-100 rounded-2xl border border-black-200 flex justify-center items-center">
               <View className="w-14 h-14 border border-dashed border-secondary-100 flex justify-center items-center">
                 {file === null ? (
