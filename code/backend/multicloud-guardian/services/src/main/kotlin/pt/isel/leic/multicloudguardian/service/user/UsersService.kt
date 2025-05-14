@@ -28,6 +28,8 @@ class UsersService(
         username: String,
         email: String,
         password: String,
+        salt: String,
+        iterations: Int,
         performanceType: PerformanceType,
         locationType: LocationType,
     ): UserCreationResult {
@@ -47,7 +49,7 @@ class UsersService(
             } else if (usersRepository.isEmailStoredByEmail(Email(email))) {
                 failure(UserCreationError.EmailAlreadyExists)
             } else {
-                val id = usersRepository.storeUser(Username(username), Email(email), passwordValidationInfo)
+                val id = usersRepository.storeUser(Username(username), Email(email), salt, iterations, passwordValidationInfo)
                 usersRepository.storagePreferences(id, performanceType, locationType, provider)
                 success(id)
             }
@@ -59,6 +61,15 @@ class UsersService(
             val usersRepository = it.usersRepository
             val user = usersRepository.getUserById(Id(id)) ?: return@run failure(UserSearchError.UserNotFound)
             success(user)
+        }
+
+    fun getUserCredentialsById(userId: Int): UserCredentialsResult =
+        transactionManager.run {
+            val usersRepository = it.usersRepository
+            val credentials =
+                usersRepository.getUserCredentialsById(Id(userId))
+                    ?: return@run failure(UserCredentialsError.UserNotFound)
+            success(credentials)
         }
 
     fun createToken(

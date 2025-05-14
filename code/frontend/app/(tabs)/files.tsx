@@ -6,7 +6,7 @@ import { icons } from "@/constants";
 import { useAuthentication } from "@/context/AuthProvider";
 import React, { useState } from "react";
 
-const Files = () => {
+const FilesScreen = () => {
   const { username } = useAuthentication();
 
   return (
@@ -50,4 +50,4 @@ const Files = () => {
   );
 };
 
-export default Files;
+export default FilesScreen;

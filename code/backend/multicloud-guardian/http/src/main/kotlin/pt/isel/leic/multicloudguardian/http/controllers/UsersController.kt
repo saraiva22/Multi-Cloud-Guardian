@@ -19,6 +19,7 @@ import pt.isel.leic.multicloudguardian.http.Uris
 import pt.isel.leic.multicloudguardian.http.media.Problem
 import pt.isel.leic.multicloudguardian.http.model.user.UserCreateInputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserCreateTokenInputModel
+import pt.isel.leic.multicloudguardian.http.model.user.UserCredentialsOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserHomeOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserStorageInfoOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserTokenCreateOutputModel
@@ -47,6 +48,8 @@ class UsersController(
                 input.username,
                 input.email,
                 input.password,
+                input.salt,
+                input.iterations,
                 input.performanceType,
                 input.locationType,
             )
@@ -159,6 +162,22 @@ class UsersController(
                     )
 
             is Failure -> Problem.userNotFound(id, instance)
+        }
+    }
+
+    @GetMapping(Uris.Users.CREDENTIALS)
+    fun getCredentials(authenticatedUser: AuthenticatedUser): ResponseEntity<*> {
+        val instance = Uris.Users.credentials()
+        val result = userService.getUserCredentialsById(authenticatedUser.user.id.value)
+        return when (result) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(
+                        UserCredentialsOutputModel.fromDomain(result.value),
+                    )
+
+            is Failure -> Problem.userNotFound(authenticatedUser.user.id.value, instance)
         }
     }
 

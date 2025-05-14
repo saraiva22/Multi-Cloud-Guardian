@@ -15,8 +15,11 @@ object Uris {
         const val LOGOUT = "$PREFIX/logout"
         const val GET_BY_ID = "$PREFIX/users/{id}"
         const val HOME = "$PREFIX/me"
+        const val CREDENTIALS = "$PREFIX/users/credentials"
 
         fun byId(id: Int): URI = UriTemplate(GET_BY_ID).expand(id)
+
+        fun credentials(): URI = URI(CREDENTIALS)
 
         fun home(): URI = URI(HOME)
 

@@ -1,5 +1,6 @@
 package pt.isel.leic.multicloudguardian.service.user
 
+import pt.isel.leic.multicloudguardian.domain.credentials.Credentials
 import pt.isel.leic.multicloudguardian.domain.user.UserStorageInfo
 import pt.isel.leic.multicloudguardian.domain.utils.Either
 import pt.isel.leic.multicloudguardian.domain.utils.Id
@@ -19,3 +20,9 @@ sealed class UserSearchError {
 }
 
 typealias UserSearchResult = Either<UserSearchError, UserStorageInfo>
+
+sealed class UserCredentialsError {
+    data object UserNotFound : UserCredentialsError()
+}
+
+typealias UserCredentialsResult = Either<UserCredentialsError, Credentials>

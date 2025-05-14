@@ -1,6 +1,7 @@
 package pt.isel.leic.multicloudguardian.http.model.user
 
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
 import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
@@ -25,6 +26,10 @@ data class UserCreateInputModel(
         message = "Password must have between 5 and 40 characters",
     )
     val password: String,
+    @field:NotBlank(message = "Salt must not be blank")
+    val salt: String,
+    @field:NotNull(message = "Iterations must not be null")
+    val iterations: Int,
     val performanceType: PerformanceType,
     val locationType: LocationType,
 )

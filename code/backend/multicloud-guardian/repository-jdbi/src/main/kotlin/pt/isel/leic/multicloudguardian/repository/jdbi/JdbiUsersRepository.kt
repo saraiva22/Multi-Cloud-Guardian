@@ -4,6 +4,7 @@ import kotlinx.datetime.Instant
 import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.kotlin.mapTo
 import org.slf4j.LoggerFactory
+import pt.isel.leic.multicloudguardian.domain.credentials.Credentials
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
 import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
@@ -23,6 +24,8 @@ class JdbiUsersRepository(
     override fun storeUser(
         username: Username,
         email: Email,
+        salt: String,
+        iterations: Int,
         passwordValidation: PasswordValidationInfo,
     ): Id {
         val userId =
@@ -37,6 +40,18 @@ class JdbiUsersRepository(
                 .executeAndReturnGeneratedKeys()
                 .mapTo<Int>()
                 .one()
+
+        logger.info("{} user created with id {}", username.value, userId)
+
+        handle
+            .createUpdate(
+                """
+                insert into dbo.Credentials (user_id, salt_id, iterations) values (:user_id, :salt_id, :iterations)
+                """.trimIndent(),
+            ).bind("user_id", userId)
+            .bind("salt_id", salt)
+            .bind("iterations", iterations)
+            .execute()
         return Id(userId)
     }
 
@@ -54,7 +69,7 @@ class JdbiUsersRepository(
             .mapTo<Int>()
             .single() == 1
 
-    override fun getUserById(id: Id): UserStorageInfo? =
+    override fun getUserById(userId: Id): UserStorageInfo? =
         handle
             .createQuery(
                 """
@@ -64,8 +79,22 @@ class JdbiUsersRepository(
                 on users.id = pref.user_id
                 where users.id = :id
                 """.trimIndent(),
-            ).bind("id", id.value)
+            ).bind("id", userId.value)
             .mapTo<UserStorageInfo>()
+            .singleOrNull()
+
+    override fun getUserCredentialsById(userId: Id): Credentials? =
+        handle
+            .createQuery(
+                """
+                select credentials_id, users.id as user_id, username, email, salt_id, iterations
+                from dbo.Users as users
+                inner join dbo.Credentials as cred
+                on users.id = cred.user_id
+                where users.id  = :id
+                """.trimIndent(),
+            ).bind("id", userId.value)
+            .mapTo<Credentials>()
             .singleOrNull()
 
     override fun getUserByEmail(email: Email): User? =

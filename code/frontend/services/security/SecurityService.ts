@@ -8,13 +8,14 @@ const ALGORITHM = "sha256";
 const IV_LENGTH_BYTES = 12;
 const AES_LENGTH_BYTES = 32;
 const SALT_LENGTH_BYTES = 16;
+const MASTER_KEY_LENGTH_BYTES = 32;
 
 // Generates a 256-bits MASTER KEY
 export const generateMasterKey = async (
   salt: ArrayBuffer,
   password: string,
-  iterations = 20000,
-  keyLength = 32,
+  iterations: number,
+  keyLength = MASTER_KEY_LENGTH_BYTES,
   digest = ALGORITHM
 ): Promise<string> => {
   const saltBuffer = Buffer.from(new Uint8Array(salt));
@@ -142,4 +143,20 @@ function toUint8Array(
     result[i] = (words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
   }
   return result;
+}
+
+// Generates a random number between min and max (inclusive)
+export function generateRandomNumber(min: number, max: number): number {
+  const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+  return randomNumber;
+}
+
+// Converts a string to an ArrayBuffer
+export function convertArrayBufferToString(buffer: ArrayBuffer): string {
+  return Buffer.from(buffer).toString("hex");
+}
+
+// Converts a string to an ArrayBuffer
+export function convertStringToArrayBuffer(str: string): ArrayBuffer {
+  return Buffer.from(str, "hex").buffer;
 }

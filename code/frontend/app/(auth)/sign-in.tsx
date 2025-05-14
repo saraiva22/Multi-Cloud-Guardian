@@ -11,12 +11,13 @@ import {
   Problem,
 } from "@/services/media/Problem";
 import { useAuthentication } from "@/context/AuthProvider";
-import { login } from "@/services/users/UserService";
+import { getCredentials, login } from "@/services/users/UserService";
 import {
+  convertStringToArrayBuffer,
   generateMasterKey,
   generateRandomSalt,
 } from "@/services/security/SecurityService";
-import { save } from "@/services/storage/SecureStorage";
+import { getValueFor, save } from "@/services/storage/SecureStorage";
 
 const KEY_NAME = "user_info";
 const KEY_MASTER = "key_master";
@@ -118,11 +119,19 @@ const SignIn = () => {
         return;
       }
       await save(KEY_NAME, JSON.stringify({ username: username }));
-      const saltArrayBuffer = await generateRandomSalt();
-      const masterKey = await generateMasterKey(saltArrayBuffer, password);
-      await save(KEY_MASTER, JSON.stringify({ key: masterKey }));
+      const isMasterKey = await getValueFor(KEY_MASTER);
+      if (isMasterKey === null) {
+        const credentials = await getCredentials();
+        const salt = convertStringToArrayBuffer(credentials.salt);
+        const masterKey = await generateMasterKey(
+          salt,
+          password,
+          credentials.iterations
+        );
+        await save(KEY_MASTER, JSON.stringify({ masterKey: masterKey }));
+        setKeyMaster(masterKey);
+      }
       setUsername(username);
-      setKeyMaster(masterKey);
       dispatch({ type: "success" });
     } catch (error) {
       Alert.alert(

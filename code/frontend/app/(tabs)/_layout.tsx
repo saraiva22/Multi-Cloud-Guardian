@@ -1,7 +1,26 @@
-import { View, Text, Image, Platform, useColorScheme } from "react-native";
-import { Tabs } from "expo-router";
+import {
+  View,
+  Text,
+  Image,
+  Platform,
+  useColorScheme,
+  TouchableOpacity,
+} from "react-native";
+import { router, Tabs } from "expo-router";
 import { icons } from "../../constants";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { NavigationContainer } from "@react-navigation/native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import HomeScreen from "./home";
+
+const AvailableRoutes = [
+  { key: "home", title: "Home", icon: icons.home },
+  { key: "files", title: "Files", icon: icons.files },
+  { key: "plus", title: "Plus", icon: icons.plus },
+  { key: "folders", title: "Folders", icon: icons.folders },
+  { key: "settings", title: "Settings", icon: icons.settings },
+];
+
 type Icon = {
   icon: any;
   color: string;
@@ -9,16 +28,9 @@ type Icon = {
   focused: boolean;
 };
 
-const AvailableRoutes = [
-  { key: "home", title: "Home", icon: icons.home },
-  { key: "files", title: "Files", icon: icons.files },
-  { key: "folders", title: "Folders", icon: icons.folders },
-  { key: "settings", title: "Settings", icon: icons.settings },
-];
-
 const TabIcon = ({ icon, color, name, focused }: Icon) => {
   return (
-    <View className="flex items-center justify-center gap-2">
+    <View className="w-full flex items-center justify-center gap-2 h-full">
       <Image
         source={icon}
         resizeMode="contain"
@@ -29,7 +41,7 @@ const TabIcon = ({ icon, color, name, focused }: Icon) => {
         ellipsizeMode="tail"
         style={{
           color,
-          fontSize: 10,
+          fontSize: 7,
           fontFamily: focused ? "Poppins-SemiBold" : "Poppins-Regular",
         }}
       >
@@ -70,27 +82,77 @@ function TabsLayout() {
           paddingHorizontal: 8,
         },
       }}
+      backBehavior="history"
     >
-      {AvailableRoutes.map((route, index) => (
-        <Tabs.Screen
-          key={route.key}
-          name={route.key}
-          options={{
-            headerShown: false,
+      {AvailableRoutes.map((route, index) => {
+        const isPlus = route.key === "plus";
+        if (isPlus) {
+          return (
+            <Tabs.Screen
+              key={route.key}
+              name={route.key}
+              options={{
+                headerShown: false,
+                tabBarButton: (props) => (
+                  <TouchableOpacity
+                    {...props}
+                    onPress={() => {
+                      router.push("/(modals)/create");
+                    }}
+                    style={{
+                      top: -45,
+                      justifyContent: "center",
+                      alignItems: "center",
+                      ...props.style,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 60,
+                        height: 60,
+                        borderRadius: 35,
+                        backgroundColor: "#FFA001",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Image
+                        source={route.icon}
+                        resizeMode="contain"
+                        style={{
+                          width: 24,
+                          height: 24,
+                          tintColor: "white",
+                        }}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                ),
+              }}
+            />
+          );
+        }
+        return (
+          <Tabs.Screen
+            key={route.key}
+            name={route.key}
+            options={{
+              headerShown: false,
 
-            tabBarItemStyle: { marginLeft: "auto" },
+              tabBarItemStyle: { marginLeft: "auto" },
 
-            tabBarIcon: ({ color, focused }) => (
-              <TabIcon
-                icon={route.icon}
-                color={color}
-                name={route.title}
-                focused={focused}
-              />
-            ),
-          }}
-        />
-      ))}
+              tabBarIcon: ({ color, focused }) => (
+                <TabIcon
+                  icon={route.icon}
+                  color={color}
+                  name={route.title}
+                  focused={focused}
+                />
+              ),
+            }}
+          />
+        );
+      })}
     </Tabs>
   );
 }

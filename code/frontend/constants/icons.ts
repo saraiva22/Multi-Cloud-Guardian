@@ -22,6 +22,12 @@ import filter_white from "../assets/icons/filter_white.png";
 import filter_black from "../assets/icons/filter_black.png";
 import org_white from "../assets/icons/org_white.png";
 import org_black from "../assets/icons/org_black.png";
+import notificiation_black from "../assets/icons/notificiation_black.png";
+import notificiation_white from "../assets/icons/notificiation_white.png";
+import profile from "../assets/icons/profile.png";
+import plus_white from "../assets/icons/plus_white.png";
+import plus_black from "../assets/icons/plus_black.png";
+import plus from "../assets/icons/plus.png";
 
 export default {
   europe,
@@ -48,4 +54,10 @@ export default {
   filter_black,
   org_white,
   org_black,
+  notificiation_black,
+  notificiation_white,
+  profile,
+  plus_white,
+  plus_black,
+  plus,
 };

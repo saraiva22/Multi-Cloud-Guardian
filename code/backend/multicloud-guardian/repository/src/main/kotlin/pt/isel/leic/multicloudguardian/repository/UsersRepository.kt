@@ -1,6 +1,7 @@
 package pt.isel.leic.multicloudguardian.repository
 
 import kotlinx.datetime.Instant
+import pt.isel.leic.multicloudguardian.domain.credentials.Credentials
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
 import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
@@ -17,6 +18,8 @@ interface UsersRepository {
     fun storeUser(
         username: Username,
         email: Email,
+        salt: String,
+        iterations: Int,
         passwordValidation: PasswordValidationInfo,
     ): Id
 
@@ -47,7 +50,9 @@ interface UsersRepository {
 
     fun getUserByUsername(username: Username): User?
 
-    fun getUserById(id: Id): UserStorageInfo?
+    fun getUserById(userId: Id): UserStorageInfo?
+
+    fun getUserCredentialsById(userId: Id): Credentials?
 
     fun getUserByEmail(email: Email): User?
 

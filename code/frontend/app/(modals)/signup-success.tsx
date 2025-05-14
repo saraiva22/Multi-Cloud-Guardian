@@ -38,7 +38,7 @@ const SignUpSuccess = () => {
           isLoading={loading}
           containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
           textStyles="text-white text-center font-bold"
-          color="bg-green-600"
+          color="bg-green-500"
         />
       </View>
     </SafeAreaView>

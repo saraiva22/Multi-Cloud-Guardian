@@ -22,6 +22,13 @@ create table dbo.Tokens(
     constraint last_used_at_is_valid check (last_used_at > 0)
 );
 
+create table dbo.Credentials(
+    credentials_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id INT REFERENCES dbo.Users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    salt_id VARCHAR(256) not null,
+    iterations int not null
+);
+
 create table dbo.Preferences (
     preferences_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT REFERENCES dbo.Users(id) ON DELETE CASCADE ON UPDATE CASCADE,

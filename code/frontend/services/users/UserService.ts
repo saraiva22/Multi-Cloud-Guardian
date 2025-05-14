@@ -4,6 +4,7 @@ import { RegisterOutput } from "./models/RegisterOutputModel";
 import { LogoutOutput } from "./models/LogoutOutput";
 import { PerformanceType } from "@/domain/preferences/PerformanceType";
 import { LocationType } from "@/domain/preferences/LocationType";
+import { CreateUserOutputModel } from "./models/CredentialOutputMode";
 
 const httpService = httpServiceInit();
 
@@ -11,6 +12,8 @@ export async function register(
   username: string,
   email: string,
   password: string,
+  salt: string,
+  iterations: number,
   performance: PerformanceType,
   location: LocationType
 ): Promise<RegisterOutput> {
@@ -21,6 +24,8 @@ export async function register(
       username,
       email,
       password,
+      salt,
+      iterations,
       performanceType: performance,
       locationType: location,
     })
@@ -44,4 +49,9 @@ export async function login(
 export async function logout(): Promise<LogoutOutput> {
   const path = PREFIX_API + apiRoutes.LOGOUT;
   return await httpService.post<LogoutOutput>(path);
+}
+
+export async function getCredentials(): Promise<CreateUserOutputModel> {
+  const path = PREFIX_API + apiRoutes.GET_USER_CREDENTIALS;
+  return await httpService.get<CreateUserOutputModel>(path);
 }

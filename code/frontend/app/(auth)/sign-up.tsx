@@ -8,6 +8,8 @@ import { Link, router } from "expo-router";
 import {
   generateMasterKey,
   generateRandomSalt,
+  generateRandomNumber,
+  convertArrayBufferToString,
 } from "../../services/security/SecurityService";
 import { PerformanceType } from "@/domain/preferences/PerformanceType";
 import SliderState from "@/components/SliderState";
@@ -20,6 +22,11 @@ import {
 } from "@/services/media/Problem";
 import { register } from "@/services/users/UserService";
 import { save } from "@/services/storage/SecureStorage";
+import {
+  MAX_ITERATIONS,
+  MIN_ITERATIONS,
+} from "@/domain/credentials/Credentials";
+import { useAuthentication } from "@/context/AuthProvider";
 
 const KEY_NAME = "user_info";
 const KEY_MASTER = "key_master";
@@ -129,6 +136,7 @@ const firstState: State = {
 
 const SignUp = () => {
   const [state, dispatch] = useReducer(reduce, firstState);
+  const { setKeyMaster } = useAuthentication();
 
   useEffect(() => {
     if (state.tag === "redirect") {
@@ -164,12 +172,28 @@ const SignUp = () => {
     }
 
     try {
-      await register(username, email, password, performance, location);
+      const saltArrayBuffer = await generateRandomSalt();
+      const salt = convertArrayBufferToString(saltArrayBuffer);
+
+      const iterations = generateRandomNumber(MIN_ITERATIONS, MAX_ITERATIONS);
+      await register(
+        username,
+        email,
+        password,
+        salt,
+        iterations,
+        performance,
+        location
+      );
 
       await save(KEY_NAME, JSON.stringify({ username: username }));
-      const saltArrayBuffer = await generateRandomSalt();
-      const masterKey = await generateMasterKey(saltArrayBuffer, password);
-      await save(KEY_MASTER, JSON.stringify({ key: masterKey }));
+      const masterKey = await generateMasterKey(
+        saltArrayBuffer,
+        password,
+        iterations
+      );
+      await save(KEY_MASTER, JSON.stringify({ masterKey: masterKey }));
+      setKeyMaster(masterKey);
       dispatch({ type: "success" });
     } catch (error) {
       Alert.alert(

@@ -11,6 +11,7 @@ export const apiRoutes = {
   LOGIN: "/users/token",
   LOGOUT: "/logout",
   GET_USER_BY_ID: "/users/:id",
+  GET_USER_CREDENTIALS: "/users/credentials",
 
   // Files
   UPLOAD_FILE: "/files",
