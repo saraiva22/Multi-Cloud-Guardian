@@ -4,7 +4,6 @@ import { getValueFor } from "@/services/storage/SecureStorage";
 const KEY_NAME = "user_info";
 const KEY_MASTER = "key_master";
 
-
 type State = {
   username: string | undefined;
   keyMaster: string | undefined;
@@ -39,7 +38,6 @@ export function AuthProvider({ children }) {
         if (res) {
           setIsLogged(true);
           setUsername(res.username);
-          console.log("Value ", res.username);
         } else {
           setIsLogged(false);
           setUsername(undefined);
@@ -57,8 +55,7 @@ export function AuthProvider({ children }) {
     getValueFor(KEY_MASTER)
       .then((res) => {
         if (res) {
-          setKeyMaster(res.key);
-          console.log("KEYMASTER: ", res.key);
+          setKeyMaster(res.masterKey);
         } else {
           setKeyMaster(undefined);
         }
