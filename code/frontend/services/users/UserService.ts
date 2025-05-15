@@ -5,6 +5,7 @@ import { LogoutOutput } from "./models/LogoutOutput";
 import { PerformanceType } from "@/domain/preferences/PerformanceType";
 import { LocationType } from "@/domain/preferences/LocationType";
 import { CreateUserOutputModel } from "./models/CredentialOutputMode";
+import { UserInfoOutputModel } from "./models/UserInfoOutuputModel";
 
 const httpService = httpServiceInit();
 
@@ -54,4 +55,12 @@ export async function logout(): Promise<LogoutOutput> {
 export async function getCredentials(): Promise<CreateUserOutputModel> {
   const path = PREFIX_API + apiRoutes.GET_USER_CREDENTIALS;
   return await httpService.get<CreateUserOutputModel>(path);
+}
+
+export async function getUserByUsername(
+  username: string
+): Promise<UserInfoOutputModel> {
+  const params = new URLSearchParams({ username }).toString();
+  const path = `${PREFIX_API}${apiRoutes.GET_USER_BY_USERNAME}?${params}`;
+  return await httpService.get<UserInfoOutputModel>(path);
 }

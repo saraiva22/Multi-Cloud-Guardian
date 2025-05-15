@@ -8,6 +8,7 @@ import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.preferences.PreferencesDomain
 import pt.isel.leic.multicloudguardian.domain.token.Token
 import pt.isel.leic.multicloudguardian.domain.user.User
+import pt.isel.leic.multicloudguardian.domain.user.UserStorageInfo
 import pt.isel.leic.multicloudguardian.domain.user.UsersDomain
 import pt.isel.leic.multicloudguardian.domain.user.components.Email
 import pt.isel.leic.multicloudguardian.domain.user.components.Password
@@ -63,6 +64,13 @@ class UsersService(
             success(user)
         }
 
+    fun getUserByUsername(username: Username): UserSearchResult =
+        transactionManager.run {
+            val usersRepository = it.usersRepository
+            val user = usersRepository.getUserInfoByUsername(username) ?: return@run failure(UserSearchError.UserNotFound)
+            success(user)
+        }
+
     fun getUserCredentialsById(userId: Int): UserCredentialsResult =
         transactionManager.run {
             val usersRepository = it.usersRepository
@@ -82,7 +90,7 @@ class UsersService(
         }
         return transactionManager.run {
             val usersRepository = it.usersRepository
-            val user: User =
+            val user =
                 usersRepository.getUserByUsername(Username(username))
                     ?: return@run failure(TokenCreationError.UsernameNotFound)
             if (!usersDomain.validatePassword(password, user.passwordValidation)) {
@@ -119,6 +127,11 @@ class UsersService(
             }
         }
     }
+
+    fun searchUsers(username: String): List<UserStorageInfo> =
+        transactionManager.run {
+            it.usersRepository.searchUsers(username)
+        }
 
     fun revokeToken(token: String): TokenRevocationResult {
         val tokenValidationInfo = usersDomain.createTokenValidationInformation(token)

@@ -18,7 +18,7 @@ const AvailableRoutes = [
   { key: "files", title: "Files", icon: icons.files },
   { key: "plus", title: "Plus", icon: icons.plus },
   { key: "folders", title: "Folders", icon: icons.folders },
-  { key: "settings", title: "Settings", icon: icons.settings },
+  { key: "profile", title: "Profile", icon: icons.profileTab },
 ];
 
 type Icon = {

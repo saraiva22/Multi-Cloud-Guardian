@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import pt.isel.leic.multicloudguardian.domain.user.AuthenticatedUser
 import pt.isel.leic.multicloudguardian.domain.user.components.Email
@@ -21,6 +22,7 @@ import pt.isel.leic.multicloudguardian.http.model.user.UserCreateInputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserCreateTokenInputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserCredentialsOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserHomeOutputModel
+import pt.isel.leic.multicloudguardian.http.model.user.UserListOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserStorageInfoOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserTokenCreateOutputModel
 import pt.isel.leic.multicloudguardian.http.model.utils.IdOutputModel
@@ -121,6 +123,17 @@ class UsersController(
         }
     }
 
+    @GetMapping(Uris.Users.SEARCH_USERS)
+    fun searchUsers(
+        @RequestParam username: String,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val user = userService.searchUsers(username)
+        return ResponseEntity
+            .status(200)
+            .body(UserListOutputModel(user.map { UserHomeOutputModel(it.id.value, it.username.value) }))
+    }
+
     @PostMapping(Uris.Users.LOGOUT)
     fun logout(authenticatedUser: AuthenticatedUser): ResponseEntity<*> {
         val instance = Uris.Users.logout()
@@ -161,7 +174,32 @@ class UsersController(
                         ),
                     )
 
-            is Failure -> Problem.userNotFound(id, instance)
+            is Failure -> Problem.userNotFoundById(id, instance)
+        }
+    }
+
+    @GetMapping(Uris.Users.GET_BY_USERNAME)
+    fun getByUsername(
+        @RequestParam username: String,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Users.byUsername(username)
+        val user = userService.getUserByUsername(Username(username))
+        return when (user) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(
+                        UserStorageInfoOutputModel(
+                            user.value.id.value,
+                            user.value.username.value,
+                            user.value.email.value,
+                            user.value.locationType.name,
+                            user.value.performanceType.name,
+                        ),
+                    )
+
+            is Failure -> Problem.userNotFoundByUsername(username, instance)
         }
     }
 
@@ -177,7 +215,7 @@ class UsersController(
                         UserCredentialsOutputModel.fromDomain(result.value),
                     )
 
-            is Failure -> Problem.userNotFound(authenticatedUser.user.id.value, instance)
+            is Failure -> Problem.userNotFoundById(authenticatedUser.user.id.value, instance)
         }
     }
 

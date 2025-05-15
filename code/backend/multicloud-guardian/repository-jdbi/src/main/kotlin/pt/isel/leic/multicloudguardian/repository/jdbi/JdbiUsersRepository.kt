@@ -83,6 +83,30 @@ class JdbiUsersRepository(
             .mapTo<UserStorageInfo>()
             .singleOrNull()
 
+    override fun getUserInfoByUsername(username: Username): UserStorageInfo? =
+        handle
+            .createQuery(
+                """
+                 select users.id, username, email, location, performance
+                from dbo.Users as users
+                inner join dbo.Preferences as pref
+                on users.id = pref.user_id
+                where users.username = :username
+                """.trimIndent(),
+            ).bind("username", username.value)
+            .mapTo<UserStorageInfo>()
+            .singleOrNull()
+
+    override fun getUserByUsername(username: Username): User? =
+        handle
+            .createQuery(
+                """
+                select * from dbo.Users where username = :username
+                """.trimIndent(),
+            ).bind("username", username.value)
+            .mapTo<User>()
+            .singleOrNull()
+
     override fun getUserCredentialsById(userId: Id): Credentials? =
         handle
             .createQuery(
@@ -95,13 +119,6 @@ class JdbiUsersRepository(
                 """.trimIndent(),
             ).bind("id", userId.value)
             .mapTo<Credentials>()
-            .singleOrNull()
-
-    override fun getUserByEmail(email: Email): User? =
-        handle
-            .createQuery("select * from dbo.Users where email = :email")
-            .bind("email", email.value)
-            .mapTo<User>()
             .singleOrNull()
 
     override fun storagePreferences(
@@ -136,6 +153,21 @@ class JdbiUsersRepository(
             .mapTo<UserAndTokenModel>()
             .singleOrNull()
             ?.userAndToken
+
+    override fun searchUsers(username: String): List<UserStorageInfo> =
+        handle
+            .createQuery(
+                """
+                select users.id, username, email, location, performance
+                from dbo.Users as users
+                inner join dbo.Preferences as pref
+                on users.id = pref.user_id
+                where users.username like :username
+                order by username
+                """.trimIndent(),
+            ).bind("username", "$username%")
+            .mapTo<UserStorageInfo>()
+            .list()
 
     override fun updateTokenLastUsed(
         token: Token,
@@ -197,16 +229,6 @@ class JdbiUsersRepository(
                 """.trimIndent(),
             ).bind("validation_information", tokenValidationInfo.validationInfo)
             .execute()
-
-    override fun getUserByUsername(username: Username): User? =
-        handle
-            .createQuery(
-                """
-                select * from dbo.Users where username = :username
-                """.trimIndent(),
-            ).bind("username", username.value)
-            .mapTo<User>()
-            .singleOrNull()
 
     override fun getProvider(userId: Id): ProviderType {
         val provider =

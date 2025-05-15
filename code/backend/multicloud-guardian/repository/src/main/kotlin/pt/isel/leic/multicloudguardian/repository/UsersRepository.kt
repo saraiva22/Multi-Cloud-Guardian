@@ -41,6 +41,8 @@ interface UsersRepository {
         now: Instant,
     )
 
+    fun searchUsers(username: String): List<UserStorageInfo>
+
     fun createToken(
         token: Token,
         maxTokens: Int,
@@ -50,11 +52,11 @@ interface UsersRepository {
 
     fun getUserByUsername(username: Username): User?
 
+    fun getUserInfoByUsername(username: Username): UserStorageInfo?
+
     fun getUserById(userId: Id): UserStorageInfo?
 
     fun getUserCredentialsById(userId: Id): Credentials?
-
-    fun getUserByEmail(email: Email): User?
 
     fun getProvider(userId: Id): ProviderType
 }

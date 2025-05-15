@@ -28,6 +28,10 @@ import profile from "../assets/icons/profile.png";
 import plus_white from "../assets/icons/plus_white.png";
 import plus_black from "../assets/icons/plus_black.png";
 import plus from "../assets/icons/plus.png";
+import profileTab from "../assets/icons/profileTab.png";
+import add_friend from "../assets/icons/add-friend.png";
+import storage from "../assets/icons/storage.png";
+import preferences from "../assets/icons/preferences.png";
 
 export default {
   europe,
@@ -60,4 +64,8 @@ export default {
   plus_white,
   plus_black,
   plus,
+  profileTab,
+  add_friend,
+  storage,
+  preferences,
 };
