@@ -198,7 +198,19 @@ const CreateFile = () => {
   return (
     <SafeAreaView className="bg-primary h-full">
       <ScrollView className="px-4 my-6 mt-12">
-        <Text className="text-2xl text-white font-psemibold">Upload Flie</Text>
+        <View className="flex-row items-center mb-6 mt-2">
+          <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
+            <Image
+              source={icons.back}
+              className="w-6 h-6"
+              resizeMode="contain"
+              tintColor="white"
+            />
+          </TouchableOpacity>
+          <Text className="text-2xl text-white font-psemibold ml-32">
+            Upload Flie
+          </Text>
+        </View>
 
         <FormField
           title="File Name"
@@ -215,7 +227,7 @@ const CreateFile = () => {
         <EncryptionToggle
           value={encryption}
           onChange={(value) => handleChange("encryption", value)}
-          otherStyles="mt-7"
+          otherStyles=" mt-7"
         />
 
         <View

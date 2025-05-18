@@ -11,10 +11,15 @@ import {
   generateRandomNumber,
   convertArrayBufferToString,
 } from "../../services/security/SecurityService";
-import { PerformanceType } from "@/domain/preferences/PerformanceType";
+import {
+  PERFORMANCE_ARRAY,
+  PerformanceType,
+} from "@/domain/preferences/PerformanceType";
 import SliderState from "@/components/SliderState";
-import { icons } from "@/constants";
-import { LocationType } from "@/domain/preferences/LocationType";
+import {
+  LOCATION_ARRAY,
+  LocationType,
+} from "@/domain/preferences/LocationType";
 import {
   getProblemMessage,
   isProblem,
@@ -30,19 +35,6 @@ import { useAuthentication } from "@/context/AuthProvider";
 
 const KEY_NAME = "user_info";
 const KEY_MASTER = "key_master-";
-
-const LOCATION_ARRAY = [
-  { label: LocationType.NORTH_AMERICA, icon: icons.northAmerica },
-  { label: LocationType.SOUTH_AMERICA, icon: icons.southAmerica },
-  { label: LocationType.EUROPE, icon: icons.europe },
-  { label: LocationType.OTHERS, icon: icons.others },
-];
-
-const PERFORMANCE_ARRAY = [
-  { label: PerformanceType.LOW, icon: icons.low },
-  { label: PerformanceType.MEDIUM, icon: icons.medium },
-  { label: PerformanceType.HIGH, icon: icons.high },
-];
 
 type State =
   | {

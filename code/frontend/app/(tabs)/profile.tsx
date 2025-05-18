@@ -35,14 +35,12 @@ const ProfileScreen = () => {
 
   const handlePreferences = async () => {
     if (username) {
-      const pref = await getUserByUsername(username);
-      console.log(pref);
       router.push("/(modals)/preferences");
     }
   };
   return (
     <SafeAreaView className="bg-primary h-full">
-      <View className="items-center mt-10">
+      <View className="items-center mt-16">
         <Text className="text-[26px] font-semibold color-white mb-10">
           Profile
         </Text>
@@ -104,7 +102,7 @@ const ProfileScreen = () => {
       <CustomButtom
         title="Logout"
         handlePress={goLogout}
-        containerStyles="mt-60"
+        containerStyles="mt-48"
         isLoading={false}
         textStyles={""}
         color="bg-secondary rounded-full  mx-4 mb-4 h-[50px] w-[80%] self-center"

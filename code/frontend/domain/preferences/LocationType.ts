@@ -1,3 +1,5 @@
+import { icons } from "@/constants";
+
 /**
  * LocationType
  * @description - This enum is used to define the location type of a user.
@@ -31,3 +33,28 @@ export const LocationTypeValue = {
   [LocationType.EUROPE]: 2,
   [LocationType.OTHERS]: 3,
 };
+
+/**
+ * LOCATION_ARRAY
+ * @description - This array is used to define the location types and their corresponding icons.
+ */
+export const LOCATION_ARRAY = [
+  { label: LocationType.NORTH_AMERICA, icon: icons.northAmerica },
+  { label: LocationType.SOUTH_AMERICA, icon: icons.southAmerica },
+  { label: LocationType.EUROPE, icon: icons.europe },
+  { label: LocationType.OTHERS, icon: icons.others },
+];
+
+/**
+ * LocationTypeInfo
+ * @description - This object is used to define the label and icon of each location type.
+ */
+
+export const LocationTypeInfo = {
+  NORTH_AMERICA: { label: "North America", icon: icons.northAmerica },
+  SOUTH_AMERICA: { label: "South America", icon: icons.southAmerica },
+  EUROPE: { label: "Europe", icon: icons.europe },
+  OTHERS: { label: "Others", icon: icons.others },
+} as const;
+
+

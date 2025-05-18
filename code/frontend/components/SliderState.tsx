@@ -54,7 +54,6 @@ const SliderState = ({
           thumbTintColor="#4F46E5"
         />
 
-        {/* Área de imagens */}
         <View className="flex-row justify-between mt-3">
           {state.map((state, index) => (
             <View

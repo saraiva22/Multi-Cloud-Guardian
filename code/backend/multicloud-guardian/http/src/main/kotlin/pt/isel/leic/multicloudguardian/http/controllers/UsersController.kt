@@ -169,8 +169,8 @@ class UsersController(
                             user.value.id.value,
                             user.value.username.value,
                             user.value.email.value,
-                            user.value.locationType.name,
-                            user.value.performanceType.name,
+                            user.value.locationType,
+                            user.value.performanceType,
                         ),
                     )
 
@@ -194,8 +194,8 @@ class UsersController(
                             user.value.id.value,
                             user.value.username.value,
                             user.value.email.value,
-                            user.value.locationType.name,
-                            user.value.performanceType.name,
+                            user.value.locationType,
+                            user.value.performanceType,
                         ),
                     )
 

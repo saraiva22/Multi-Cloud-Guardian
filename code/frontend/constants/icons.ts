@@ -32,6 +32,7 @@ import profileTab from "../assets/icons/profileTab.png";
 import add_friend from "../assets/icons/add-friend.png";
 import storage from "../assets/icons/storage.png";
 import preferences from "../assets/icons/preferences.png";
+import back from "../assets/icons/back.png";
 
 export default {
   europe,
@@ -68,4 +69,5 @@ export default {
   add_friend,
   storage,
   preferences,
+  back,
 };
