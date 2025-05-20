@@ -5,26 +5,35 @@ import SearchInput from "@/components/SearchInput";
 import { icons, images } from "@/constants";
 import { useAuthentication } from "@/context/AuthProvider";
 import React, { useState } from "react";
+import { useRouter } from "expo-router";
+import { getFiles } from "@/services/storage/StorageService";
+import useBlob from "@/hook/useBlob";
 
 const HomeScreen = () => {
   const { username } = useAuthentication();
+  const router = useRouter();
 
   const [refreshing, setRefreshing] = useState(false);
 
-  // const onRefresh = async () => {
-  //   setRefreshing(true);
-  //   // await refetch();
-  //   setRefreshing(false);
-  // };
+  const { data: posts, refetch } = useBlob(getFiles);
+  console.log("posts", posts);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
 
   return (
     <SafeAreaView className="bg-primary h-full">
       <FlatList
-        data={[]}
-        keyExtractor={(item, index) => String(item || index)}
+        data={posts.files}
+        keyExtractor={(item, index) => String(item.fileId || index)}
         renderItem={({ item }) => (
           <View>
-            <Text>{item}</Text>
+            {item?.user && (
+              <Text className="text-white">{item.name}</Text>
+            )}
           </View>
         )}
         ListHeaderComponent={() => (

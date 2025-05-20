@@ -1,6 +1,8 @@
+import { UserInfo } from "@/domain/user/UserInfo";
+
 export type FileOutputModel = {
   fileId: number;
-  userId: number;
+  user: UserInfo;
   folderId: number;
   name: string;
   path: string;

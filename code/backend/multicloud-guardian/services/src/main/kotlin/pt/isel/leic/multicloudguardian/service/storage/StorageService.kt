@@ -210,14 +210,11 @@ class StorageService(
                         }
 
                         is Success -> {
-                            val metadata =
-                                fileRepository.getMetadataByFile(fileId)
-                                    ?: return@run failure(DownloadFileError.MetadataNotFound)
                             val fileDown =
                                 FileDownload(
                                     downloadFile.value,
                                     file.fileName,
-                                    metadata.contentType,
+                                    file.contentType,
                                     file.encryption,
                                 )
                             if (!file.encryption) {

@@ -28,6 +28,8 @@ class FileMapper : RowMapper<File> {
             fileName = rs.getString("file_name"),
             path = rs.getString("path"),
             size = rs.getLong("size"),
+            contentType = rs.getString("content_type"),
+            createdAt = InstantMapper().map(rs, "created_at", ctx),
             encryption = rs.getBoolean("encryption"),
             encryptionKey = rs.getString("encryption_key"),
         )

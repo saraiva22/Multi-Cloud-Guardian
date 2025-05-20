@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
-import pt.isel.leic.multicloudguardian.domain.metadata.Metadata
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 import pt.isel.leic.multicloudguardian.repository.StorageRepository
 
@@ -27,14 +26,16 @@ class JdbiStorageRepository(
             handle
                 .createUpdate(
                     """
-                    insert into dbo.Files (user_id, folder_id, file_name,path, size, encryption_key,encryption) 
-                    values (:user_id,:folderId, :name,  :path, :size, :encryption_key, :encryption)
+                    insert into dbo.Files (user_id, folder_id, file_name,path, size, content_type, created_at, encryption_key, encryption) 
+                    values (:user_id,:folderId, :name,  :path, :size, :content_type, :created_at, :encryption_key, :encryption)
                     """.trimIndent(),
                 ).bind("user_id", userId.value)
                 .bind("folderId", folderId?.value)
                 .bind("name", file.blobName)
                 .bind("path", path)
                 .bind("size", file.size)
+                .bind("content_type", file.contentType)
+                .bind("created_at", createdAt.epochSeconds)
                 .bind("encryption_key", file.encryptedKey)
                 .bind("encryption", encryption)
                 .executeAndReturnGeneratedKeys()
@@ -42,19 +43,6 @@ class JdbiStorageRepository(
                 .one()
 
         logger.info("{} file stored in the database", file.blobName)
-
-        handle
-            .createUpdate(
-                """
-                insert into dbo.Metadata (file_id, content_type, tags, created_at, updated_at) 
-                values (:file_id, :content_type, :tags, :created_at, :updated_at)
-                """.trimIndent(),
-            ).bind("file_id", fileId)
-            .bind("content_type", file.contentType)
-            .bindArray("tags", file.blobName, file.contentType, file.size.toString())
-            .bind("created_at", createdAt.epochSeconds)
-            .bind("updated_at", createdAt.epochSeconds)
-            .execute()
 
         return Id(fileId)
     }
@@ -282,16 +270,6 @@ class JdbiStorageRepository(
                 .one()
         return Id(id)
     }
-
-    override fun getMetadataByFile(fileId: Id): Metadata? =
-        handle
-            .createQuery(
-                """
-                select metadata.* from dbo.Files file inner join dbo.metadata  on file.file_id = metadata.file_id where file.file_id = :fileId
-                """.trimIndent(),
-            ).bind("fileId", fileId.value)
-            .mapTo<Metadata>()
-            .singleOrNull()
 
     companion object {
         private val logger = LoggerFactory.getLogger(JdbiStorageRepository::class.java)

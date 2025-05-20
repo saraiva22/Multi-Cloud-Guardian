@@ -11,7 +11,7 @@ import { useAuthentication } from "@/context/AuthProvider";
 export default function App() {
   const { loading, isLogged } = useAuthentication();
 
-  if (!loading && isLogged) return <Redirect href="/home" />; // change urgently!!!
+  if (!loading && isLogged) return <Redirect href="/home" />;
 
   return (
     <SafeAreaView className="bg-primary flex-1">

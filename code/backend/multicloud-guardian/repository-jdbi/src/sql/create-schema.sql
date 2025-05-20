@@ -62,22 +62,12 @@ create table dbo.Files(
     file_name VARCHAR(30) not null,
     path VARCHAR(255) not null,
     size bigint not null,
-    encryption BOOLEAN not null,
-    encryption_key VARCHAR(256)
-);
-
-create table dbo.Metadata(
-    metadata_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    file_id int REFERENCES dbo.Files(file_id) on delete cascade on update cascade,
     content_type VARCHAR(200) not null,
-    tags TEXT[] not null,
     created_at bigint not null,
-    updated_at bigint not null,
-    constraint created_before_updated_at check (created_at <= updated_at),
-    constraint created_at_is_valid check (created_at > 0),
-    constraint updated_at_is_valid check (updated_at > 0)
+    encryption BOOLEAN not null,
+    encryption_key VARCHAR(256),
+    constraint created_at_is_valid check (created_at > 0)
 );
-
 
 -- Function to update folder size and number of files when a file is added, updated or deleted 
 

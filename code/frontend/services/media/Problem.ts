@@ -28,3 +28,10 @@ export function isProblem(object: any): object is Problem {
 export function getProblemMessage(problem: Problem): string {
   return problem.detail || problem.title;
 }
+
+export function isUnauthorized(problem: Problem): boolean {
+  return (
+    problem.status === 401 ||
+    problem.title === "Unauthorized Request"
+  );
+}

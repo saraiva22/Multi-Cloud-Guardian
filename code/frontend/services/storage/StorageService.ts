@@ -10,6 +10,8 @@ import httpServiceInit, { apiRoutes, PREFIX_API } from "../utils/HttpService";
 import { UploadOutput } from "./model/UploadFileOutputModel";
 import * as FileSystem from "expo-file-system";
 import { Buffer } from "buffer";
+import { FilesListOutputModel } from "./model/FilesListOutputModel";
+import { FileOutputModel } from "./model/FileOutputModel";
 
 const httpService = httpServiceInit();
 
@@ -116,4 +118,15 @@ export async function uploadFile(
   }
 
   return (await response.json()) as UploadOutput;
+}
+
+export async function getFiles(): Promise<FilesListOutputModel> {
+  const path = PREFIX_API + apiRoutes.GET_FILES;
+  return await httpService.get<FilesListOutputModel>(path);
+}
+
+export async function getFile(fileId: number): Promise<FileOutputModel> {
+  const path =
+    PREFIX_API + apiRoutes.GET_FILE_BY_ID.replace(":id", String(fileId));
+  return await httpService.get<FileOutputModel>(path);
 }

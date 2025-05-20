@@ -5,11 +5,13 @@ import {
   useColorScheme,
   TouchableOpacity,
   Alert,
+  SafeAreaView,
+  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useReducer, useState } from "react";
 import { useAuthentication } from "@/context/AuthProvider";
 import { icons } from "@/constants";
-import { router } from "expo-router";
+import { Link, router } from "expo-router";
 import { UserInfoOutputModel } from "@/services/users/models/UserInfoOutuputModel";
 import {
   LOCATION_ARRAY,
@@ -30,6 +32,7 @@ import {
   Problem,
 } from "@/services/media/Problem";
 import { getUserByUsername } from "@/services/users/UserService";
+import { removeValueFor } from "@/services/storage/SecureStorage";
 
 // The State
 type State =
@@ -41,7 +44,7 @@ type State =
       locationInfo: any;
       performanceInfo: any;
     }
-  | { tag: "error"; error: Error | Problem; url: string };
+  | { tag: "error"; error: Problem | string; url: string };
 
 // The Action
 type Action =
@@ -52,7 +55,7 @@ type Action =
       locationInfo: any;
       performanceInfo: any;
     }
-  | { type: "loading-error"; error: Error | Problem };
+  | { type: "loading-error"; error: Problem | string };
 
 // The Logger
 function logUnexpectedAction(state: State, action: Action) {
@@ -109,10 +112,7 @@ async function fetchPreferences(
       performanceInfo,
     });
   } catch (error) {
-    Alert.alert(
-      "Error",
-      `${isProblem(error) ? getProblemMessage(error) : error}`
-    );
+    console.log("Error fetching preferences:", error);
     dispatch({ type: "loading-error", error: error });
   } finally {
     setIsFetching(false);
@@ -120,29 +120,47 @@ async function fetchPreferences(
 }
 
 const firstState: State = { tag: "begin" };
+const KEY_NAME = "user_info";
 
 const Preferences = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
-  const { username } = useAuthentication();
+  const { username, setIsLogged, setUsername } = useAuthentication();
   const [isFetching, setIsFetching] = useState(false);
 
   useEffect(() => {
     if (state.tag == "begin" && username !== undefined) {
       fetchPreferences(username, isFetching, setIsFetching, dispatch);
     }
+
+    if (state.tag === "error") {
+      Alert.alert(
+        "Error",
+        `${
+          isProblem(state.error)
+            ? getProblemMessage(state.error)
+            : isProblem(state.error.body)
+            ? getProblemMessage(state.error.body)
+            : state.error
+        }`
+      );
+      setUsername(null);
+      setIsLogged(false);
+      removeValueFor(KEY_NAME);
+      router.replace("/sign-in");
+    }
   }, [isFetching, setIsFetching, state]);
   switch (state.tag) {
     case "begin":
       return (
-        <View>
-          <Text>Idle</Text>
-        </View>
+        <SafeAreaView className="bg-primary flex-1">
+          <ActivityIndicator />
+        </SafeAreaView>
       );
     case "loading":
       return (
-        <View>
-          <Text>Loading...</Text>
-        </View>
+        <SafeAreaView className="bg-primary flex-1">
+          <ActivityIndicator />
+        </SafeAreaView>
       );
     case "loaded": {
       return (
@@ -233,13 +251,12 @@ const Preferences = () => {
     }
     case "error":
       return (
-        <View>
-          <Text>{`${
-            isProblem(state.error)
-              ? getProblemMessage(state.error)
-              : state.error
-          }`}</Text>
-        </View>
+        <SafeAreaView className="bg-primary flex-1">
+          <ActivityIndicator />
+          <Text className="text-[24px] font-semibold text-white text-center mb-16 mt-4">
+            {state.tag === "error" && "Go to Sign In"}
+          </Text>
+        </SafeAreaView>
       );
   }
 };
