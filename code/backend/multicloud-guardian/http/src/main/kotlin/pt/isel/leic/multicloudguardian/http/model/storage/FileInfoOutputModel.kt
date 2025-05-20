@@ -8,6 +8,8 @@ data class FileInfoOutputModel(
     val folderId: Int?,
     val name: String,
     val size: Long,
+    val contentType: String,
+    val createdAt: Long,
     val encryption: Boolean,
     val url: String? = null,
 ) {
@@ -27,6 +29,8 @@ data class FileInfoOutputModel(
                 folderId = file.folderId?.value,
                 name = file.fileName,
                 size = file.size,
+                contentType = file.contentType,
+                createdAt = file.createdAt.epochSeconds,
                 encryption = file.encryption,
                 url = url,
             )

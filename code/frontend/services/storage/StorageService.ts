@@ -12,6 +12,7 @@ import * as FileSystem from "expo-file-system";
 import { Buffer } from "buffer";
 import { FilesListOutputModel } from "./model/FilesListOutputModel";
 import { FileOutputModel } from "./model/FileOutputModel";
+import { FoldersListOutputModel } from "./model/FoldersListOutputModel";
 
 const httpService = httpServiceInit();
 
@@ -32,7 +33,7 @@ export async function uploadFile(
 
     // Encrypt the file data (uri → encrypted ArrayBuffer)
     const imageBuffer = await readFileAsArrayBuffer(file.uri);
-    const encryptedFileData = await encryptData(imageBuffer, fileIV, fileIV);
+    const encryptedFileData = await encryptData(imageBuffer, fileKey, fileIV);
 
     // Concatenate IV + encrypted file data
     const fileEncryptedWithIV = Buffer.concat([
@@ -48,9 +49,9 @@ export async function uploadFile(
 
     // [signature (32 bytes)] + [IV (12 bytes)] + [encrypted data]
     const finalEncryptedFile = Buffer.concat([
-      Buffer.from(signature, "hex"), // 32 bytes
-      Buffer.from(new Uint8Array(fileIV)), // 12 bytes
-      Buffer.from(new Uint8Array(encryptedFileData)), // restante
+      Buffer.from(signature, "hex"), // 32 bytes - HMAC
+      Buffer.from(new Uint8Array(fileIV)), // 12 bytes - IV
+      Buffer.from(new Uint8Array(encryptedFileData)), // encrypted data
     ]);
 
     // Save the temporary file for upload
@@ -129,4 +130,9 @@ export async function getFile(fileId: number): Promise<FileOutputModel> {
   const path =
     PREFIX_API + apiRoutes.GET_FILE_BY_ID.replace(":id", String(fileId));
   return await httpService.get<FileOutputModel>(path);
+}
+
+export async function getFolders(): Promise<FoldersListOutputModel> {
+  const path = PREFIX_API + apiRoutes.GET_FOLDERS;
+  return await httpService.get<FoldersListOutputModel>(path);
 }

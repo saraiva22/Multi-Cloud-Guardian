@@ -22,6 +22,11 @@ export const apiRoutes = {
   GET_FILE_BY_ID: "/files/:id",
   DOWNLOAD_FILE: "/files/:id/download",
   DELETE_FILE: "/files/:id",
+
+
+  // Folders
+  CREATE_FOLDER: "/folders",
+  GET_FOLDERS: "/folders",
 };
 
 export default function httpService() {

@@ -19,6 +19,8 @@ export type FileType = {
   name: string;
   path: string;
   size: number;
+  contentType: string;
+  createdAt: number;
   encryption: boolean;
   url: string;
 };
