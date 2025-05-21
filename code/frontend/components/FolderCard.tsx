@@ -41,7 +41,6 @@ const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
         </Text>
       </View>
 
-      {/* Middle - Folder Name */}
       <View>
         <Text
           numberOfLines={1}
@@ -52,13 +51,12 @@ const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
       </View>
 
       <View>
-        {/* Size */}
         {item.size > 0 && (
           <Text className="text-white text-xs opacity-80">
             Used: {item.size} Mb
           </Text>
         )}
-        {/* Bottom - File count */}
+
         {item.numberFile > 0 && (
           <Text className="text-white text-xs opacity-80">
             {item.numberFile} files
@@ -93,7 +91,7 @@ const FolderCard = ({ folders }: any) => {
       viewabilityConfig={{
         itemVisiblePercentThreshold: 70,
       }}
-      contentOffset={{ x: 170 }}
+      contentContainerStyle={{ paddingLeft: 2 }}
     />
   );
 };

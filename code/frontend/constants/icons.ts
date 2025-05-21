@@ -33,6 +33,8 @@ import add_friend from "../assets/icons/add-friend.png";
 import storage from "../assets/icons/storage.png";
 import preferences from "../assets/icons/preferences.png";
 import back from "../assets/icons/back.png";
+import plus_folder_white from "../assets/icons/plus_folder_white.png";
+import plus_folder_black from "../assets/icons/plus_folder_black.png";
 
 export default {
   europe,
@@ -70,4 +72,6 @@ export default {
   storage,
   preferences,
   back,
+  plus_folder_white,
+  plus_folder_black,
 };
