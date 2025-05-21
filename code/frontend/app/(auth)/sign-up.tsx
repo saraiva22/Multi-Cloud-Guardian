@@ -67,7 +67,7 @@ function logUnexpectedAction(state: State, action: Action) {
   console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
 }
 
-function reduce(state: State, action: Action): State {
+function reducer(state: State, action: Action): State {
   switch (state.tag) {
     case "editing":
       if (action.type === "edit") {
@@ -127,7 +127,7 @@ const firstState: State = {
 };
 
 const SignUp = () => {
-  const [state, dispatch] = useReducer(reduce, firstState);
+  const [state, dispatch] = useReducer(reducer, firstState);
   const { setKeyMaster } = useAuthentication();
 
   useEffect(() => {
