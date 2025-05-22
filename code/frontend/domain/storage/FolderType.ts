@@ -1,6 +1,6 @@
 import { UserInfo } from "../user/UserInfo";
 
-export type FolderType = {
+export interface FolderType {
   folderId: number;
   user: UserInfo;
   parentId: number | null;
@@ -10,4 +10,4 @@ export type FolderType = {
   path: string;
   createdAt: number;
   updatedAt: number;
-};
+}

@@ -7,6 +7,7 @@ export type FileOutputModel = {
   name: string;
   path: string;
   size: number;
+  createdAt: number;
   encryption: boolean;
   url: string;
 };

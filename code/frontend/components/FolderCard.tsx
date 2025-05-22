@@ -7,10 +7,16 @@ import {
   TouchableOpacity,
 } from "react-native";
 import React, { useState } from "react";
-import * as Animatable from "react-native-animatable";
-
 import { icons, images } from "../constants";
 import { useRouter } from "expo-router";
+import EmptyState from "./EmptyState";
+
+const formatSize = (bytes?: number) => {
+  if (!bytes) return "";
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} Mb`;
+  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} Kb`;
+  return `${bytes} B`;
+};
 
 const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
   const router = useRouter();
@@ -21,6 +27,8 @@ const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
     setActiveItem(item.folderId);
     router.push(`/folders/${item.folderId}`);
   };
+
+  const size = formatSize(item.size);
 
   return (
     <TouchableOpacity
@@ -51,17 +59,13 @@ const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
       </View>
 
       <View>
-        {item.size > 0 && (
-          <Text className="text-white text-xs opacity-80">
-            Used: {item.size} Mb
-          </Text>
-        )}
+        <Text className="text-white text-xs opacity-80">
+          Used: {item.size > 0 ? size : "0 Kb"}
+        </Text>
 
-        {item.numberFile > 0 && (
-          <Text className="text-white text-xs opacity-80">
-            {item.numberFile} files
-          </Text>
-        )}
+        <Text className="text-white text-xs opacity-80">
+          {item.numberFile > 0 ? item.numberFile : 0} files
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -92,6 +96,11 @@ const FolderCard = ({ folders }: any) => {
         itemVisiblePercentThreshold: 70,
       }}
       contentContainerStyle={{ paddingLeft: 2 }}
+      ListEmptyComponent={() => (
+        <Text className="text-gray-200 justify-items-center text-base mt-5">
+          No folders found
+        </Text>
+      )}
     />
   );
 };

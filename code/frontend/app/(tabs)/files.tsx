@@ -1,7 +1,7 @@
 import { FlatList, RefreshControl, View, Text, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import EmptyState from "@/components/EmptyState";
-import SearchInput from "@/components/SearchInput";
+import SearchInput from "@/components/SearchBar";
 import { icons } from "@/constants";
 import { useAuthentication } from "@/context/AuthProvider";
 import React, { useState } from "react";
@@ -43,6 +43,8 @@ const FilesScreen = () => {
           <EmptyState
             title="No Files"
             subtitle="Be the first one to upload a file"
+            page="/(modals)/create-file"
+            titleButton="Upload File"
           />
         )}
       />

@@ -10,13 +10,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import EmptyState from "@/components/EmptyState";
-import SearchInput from "@/components/SearchInput";
+import SearchBar from "@/components/SearchBar";
 import { icons, images } from "@/constants";
 import { useAuthentication } from "@/context/AuthProvider";
 import React, { useEffect, useReducer, useState } from "react";
 import { useRouter } from "expo-router";
 import { getFiles, getFolders } from "@/services/storage/StorageService";
-import useBlob from "@/hook/useBlob";
 import { FilesListOutputModel } from "@/services/storage/model/FilesListOutputModel";
 import { FoldersListOutputModel } from "@/services/storage/model/FoldersListOutputModel";
 
@@ -27,6 +26,7 @@ import {
 } from "@/services/media/Problem";
 import { removeValueFor } from "@/services/storage/SecureStorage";
 import FolderCard from "@/components/FolderCard";
+import FileItemComponent from "@/components/FileItemComponent";
 
 // The State
 type State =
@@ -54,6 +54,8 @@ type Action =
 function logUnexpectedAction(state: State, action: Action) {
   console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
 }
+
+// The Reducer
 function reducer(state: State, action: Action): State {
   switch (state.tag) {
     case "begin":
@@ -97,12 +99,13 @@ const firstState: State = {
   refreshing: false,
 };
 
+// User info key
 const KEY_NAME = "user_info";
 
 const HomeScreen = () => {
   const { username, setUsername, setIsLogged } = useAuthentication();
-  const router = useRouter();
   const [state, dispatch] = useReducer(reducer, firstState);
+  const router = useRouter();
 
   const loadData = async () => {
     try {
@@ -127,10 +130,10 @@ const HomeScreen = () => {
     if (state.tag === "error") {
       const message = isProblem(state.error)
         ? getProblemMessage(state.error)
-        : isProblem(state.error)
-        ? getProblemMessage(state.error)
+        : isProblem(state.error.body)
+        ? getProblemMessage(state.error.body)
         : state.error;
-      Alert.alert("Error", message);
+      Alert.alert("Error", `${message}`);
       setUsername(null);
       setIsLogged(false);
       removeValueFor(KEY_NAME);
@@ -157,17 +160,15 @@ const HomeScreen = () => {
   const refreshing = state.tag === "loaded" && state.refreshing;
 
   console.log("FolderCard folders", folders);
+  console.log("FileItemComponent files", files);
   return (
     <SafeAreaView className="bg-primary h-full">
       {state.tag === "loaded" ? (
         <FlatList
           data={files}
           keyExtractor={(item, index) => String(item.fileId || index)}
-          renderItem={({ item }) => (
-            <View>
-              {item?.user && <Text className="text-white">{item.name}</Text>}
-            </View>
-          )}
+          renderItem={({ item }) => <FileItemComponent item={item} />}
+          contentContainerStyle={{ paddingBottom: 80 }}
           ListHeaderComponent={() => (
             <View className="my-6 px-4 space-y-6">
               <View className="flex-row justify-between items-center mb-5">
@@ -190,7 +191,7 @@ const HomeScreen = () => {
                 </View>
               </View>
 
-              <SearchInput />
+              <SearchBar />
 
               <View className="w-full flex-1 pt-5 pb-8">
                 <View className="flex-row items-center justify-between mb-3">
@@ -214,8 +215,8 @@ const HomeScreen = () => {
                 <FolderCard folders={folders} />
               </View>
               <View className="w-full flex-1 pt-5 pb-8">
-                <Text className="text-lg font-pregular text-gray-100 mb-3">
-                  Files
+                <Text className="text-xl font-bold text-gray-100 mb-3">
+                  My Files
                 </Text>
               </View>
             </View>
@@ -225,6 +226,8 @@ const HomeScreen = () => {
               <EmptyState
                 title="No Files Found"
                 subtitle="Be the first one to upload a file"
+                page="/(modals)/create-file"
+                titleButton="Upload File"
               />
             ) : null
           }

@@ -1,12 +1,12 @@
 import React from "react";
 import { View, Text, Switch } from "react-native";
 
-interface EncryptionToggleProps {
+type EncryptionToggleProps = {
   value: boolean;
   onChange: (value: boolean) => void;
   label?: string;
   otherStyles?: string;
-}
+};
 
 const EncryptionToggle = ({
   value,

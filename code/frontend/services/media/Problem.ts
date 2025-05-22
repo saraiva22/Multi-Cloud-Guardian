@@ -3,13 +3,13 @@
  * Represents a problem detail as defined in RFC 7807.
  */
 
-export type Problem = {
+export interface Problem {
   type: string;
   title: string;
   status: number;
   detail: string;
   instance?: string;
-};
+}
 
 export const MEDIA_TYPE_PROBLEM = "application/problem+json";
 
@@ -30,8 +30,5 @@ export function getProblemMessage(problem: Problem): string {
 }
 
 export function isUnauthorized(problem: Problem): boolean {
-  return (
-    problem.status === 401 ||
-    problem.title === "Unauthorized Request"
-  );
+  return problem.status === 401 || problem.title === "Unauthorized Request";
 }

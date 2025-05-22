@@ -2,14 +2,16 @@ import { StyleSheet, Text, View } from "react-native";
 import React from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
-const Details = () => {
+const FolderDetails = () => {
   const { folderId } = useLocalSearchParams();
 
-  <View>
-    <Text className="text-bold color-black-100">Details `{folderId}`</Text>
-  </View>;
+  return (
+    <View>
+      <Text className="text-black-100">Folder {folderId}</Text>
+    </View>
+  );
 };
 
-export default Details;
+export default FolderDetails;
 
 const styles = StyleSheet.create({});

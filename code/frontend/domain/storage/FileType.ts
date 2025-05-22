@@ -12,7 +12,7 @@ import { UserInfo } from "../user/UserInfo";
  * @property {boolean} encryption - Indicates whether the file is encrypted or not.
  * @property {string} url - The URL to access the file (temporarily)
  */
-export type FileType = {
+export interface FileType {
   fileId: number;
   userInfo: UserInfo;
   folderId: number | null;
@@ -23,4 +23,4 @@ export type FileType = {
   createdAt: number;
   encryption: boolean;
   url: string;
-};
+}

@@ -4,6 +4,7 @@ import {
   Image,
   Platform,
   useColorScheme,
+  StyleSheet,
   TouchableOpacity,
 } from "react-native";
 import { router, Tabs } from "expo-router";
@@ -30,7 +31,7 @@ type Icon = {
 
 const TabIcon = ({ icon, color, name, focused }: Icon) => {
   return (
-    <View className="w-full flex items-center justify-center gap-2 h-full">
+    <View className="flex flex- w-full items-center justify-center gap-2 h-full">
       <Image
         source={icon}
         resizeMode="contain"
@@ -41,8 +42,8 @@ const TabIcon = ({ icon, color, name, focused }: Icon) => {
         ellipsizeMode="tail"
         style={{
           color,
-          fontSize: 7,
-          fontFamily: focused ? "Poppins-SemiBold" : "Poppins-Regular",
+          fontSize: 8,
+          fontFamily: focused ? "Poppins-Bold" : "Poppins-Regular",
         }}
       >
         {name}
@@ -57,7 +58,6 @@ function TabsLayout() {
   // const tabBarBackground = colorScheme !== "dark" ? "#232533" : "#fff";
   // const tabBarBorder = colorScheme !== "dark" ? "#2C2C38" : "#eee";
   const insets = useSafeAreaInsets();
-  if (Platform.OS === "web") return null;
 
   return (
     <Tabs
@@ -65,7 +65,14 @@ function TabsLayout() {
         tabBarShowLabel: false,
         tabBarActiveTintColor: "#FFA001",
         tabBarInactiveTintColor: "#CDCDE0",
+        tabBarItemStyle: {
+          width: "100%",
+          height: "100%",
+          justifyContent: "center",
+          alignItems: "center",
+        },
         tabBarStyle: {
+          backgroundColor: "#1E1E2D",
           position: "absolute",
           left: 0,
           right: 0,
@@ -73,13 +80,7 @@ function TabsLayout() {
           height: 78 + insets.bottom,
           paddingTop: 15,
           paddingBottom: insets.bottom,
-          backgroundColor: "#1E1E2D",
           borderTopWidth: 0,
-        },
-
-        tabBarItemStyle: {
-          width: "auto",
-          paddingHorizontal: 8,
         },
       }}
       backBehavior="history"
@@ -138,7 +139,6 @@ function TabsLayout() {
             name={route.key}
             options={{
               headerShown: false,
-
               tabBarItemStyle: { marginLeft: "auto" },
 
               tabBarIcon: ({ color, focused }) => (

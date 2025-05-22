@@ -1,7 +1,7 @@
 import { FlatList, RefreshControl, View, Text, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import EmptyState from "@/components/EmptyState";
-import SearchInput from "@/components/SearchInput";
+import SearchInput from "@/components/SearchBar";
 import { icons } from "@/constants";
 import { useAuthentication } from "@/context/AuthProvider";
 import React, { useState } from "react";
@@ -41,6 +41,8 @@ const FoldersScreen = () => {
           <EmptyState
             title="No folders found"
             subtitle="Try creating a new folder or adjust your search"
+            page="/(modals)/create-folder"
+            titleButton="Create Folder"
           />
         )}
       />

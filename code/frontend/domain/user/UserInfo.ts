@@ -6,8 +6,8 @@
  * @property {string} email - The email address of the user.
  */
 
-export type UserInfo = {
+export interface UserInfo {
   userId: number;
   username: string;
   email: string;
-};
+}

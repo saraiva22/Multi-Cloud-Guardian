@@ -106,6 +106,7 @@ const CreateFile = () => {
     }
   });
 
+  // Handle input changes
   function handleChange(inputName: string, inputValue: string | boolean | any) {
     dispatch({
       type: "edit",
@@ -114,6 +115,7 @@ const CreateFile = () => {
     });
   }
 
+  // Handle file picker
   async function openPicker() {
     const result = await DocumentPicker.getDocumentAsync({
       type: ["*/*"],
@@ -151,6 +153,7 @@ const CreateFile = () => {
     }
   }
 
+  // Handle form submission
   async function handleSubmit() {
     if (state.tag !== "editing") {
       return;

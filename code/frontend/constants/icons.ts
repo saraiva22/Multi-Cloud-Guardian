@@ -35,6 +35,8 @@ import preferences from "../assets/icons/preferences.png";
 import back from "../assets/icons/back.png";
 import plus_folder_white from "../assets/icons/plus_folder_white.png";
 import plus_folder_black from "../assets/icons/plus_folder_black.png";
+import image_icon from "../assets/icons/image_icon.png";
+import dots_vertical from "../assets/icons/dots_vertical.png";
 
 export default {
   europe,
@@ -74,4 +76,6 @@ export default {
   back,
   plus_folder_white,
   plus_folder_black,
+  image_icon,
+  dots_vertical,
 };

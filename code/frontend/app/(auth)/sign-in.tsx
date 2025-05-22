@@ -15,7 +15,6 @@ import { getCredentials, login } from "@/services/users/UserService";
 import {
   convertStringToArrayBuffer,
   generateMasterKey,
-  generateRandomSalt,
 } from "@/services/security/SecurityService";
 import { getValueFor, save } from "@/services/storage/SecureStorage";
 

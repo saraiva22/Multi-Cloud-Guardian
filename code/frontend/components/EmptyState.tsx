@@ -3,14 +3,21 @@ import React from "react";
 import { images } from "../constants";
 
 import CustomButton from "./CustomButton";
-import { router } from "expo-router";
+import { Href, router } from "expo-router";
 
 interface EmptyStateProps {
   title: string;
   subtitle: string;
+  page: Href;
+  titleButton: string;
 }
 
-const EmptyState = ({ title, subtitle }: EmptyStateProps) => {
+const EmptyState = ({
+  title,
+  subtitle,
+  page,
+  titleButton,
+}: EmptyStateProps) => {
   return (
     <View className="flex justify-center items-center px-4">
       <Image
@@ -24,8 +31,8 @@ const EmptyState = ({ title, subtitle }: EmptyStateProps) => {
       </Text>
       <Text className="text-sm font-pmedium text-gray-100">{subtitle}</Text>
       <CustomButton
-        title="Upload File"
-        handlePress={() => router.push("/(modals)/create-file")}
+        title={titleButton}
+        handlePress={() => router.push(page)}
         containerStyles="w-full my-5"
         isLoading={false}
         textStyles={""}

@@ -126,9 +126,8 @@ export async function getFiles(): Promise<FilesListOutputModel> {
   return await httpService.get<FilesListOutputModel>(path);
 }
 
-export async function getFile(fileId: number): Promise<FileOutputModel> {
-  const path =
-    PREFIX_API + apiRoutes.GET_FILE_BY_ID.replace(":id", String(fileId));
+export async function getFile(fileId: string): Promise<FileOutputModel> {
+  const path = PREFIX_API + apiRoutes.GET_FILE_BY_ID.replace(":id", fileId);
   return await httpService.get<FileOutputModel>(path);
 }
 
