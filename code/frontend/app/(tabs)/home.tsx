@@ -80,12 +80,7 @@ function reducer(state: State, action: Action): State {
         return state;
       }
     case "error":
-      if (action.type === "loading-error") {
-        return { tag: "error", error: action.error };
-      } else {
-        logUnexpectedAction(state, action);
-        return state;
-      }
+      return { tag: "error", error: action.error };
     case "loaded":
       if (action.type === "refreshing") {
         return { tag: "begin", refreshing: action.refreshing };

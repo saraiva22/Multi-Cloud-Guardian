@@ -164,7 +164,7 @@ const Preferences = () => {
       );
     case "loaded": {
       return (
-        <View className="flex-1 bg-primary h-full px-6 py-12">
+        <SafeAreaView className="flex-1 bg-primary h-full px-6 py-12">
           <TouchableOpacity
             className="absolute left-6 top-8 z-10 mt-10"
             onPress={() => router.back()}
@@ -246,7 +246,7 @@ const Preferences = () => {
               resizeMode="contain"
             />
           </View>
-        </View>
+        </SafeAreaView>
       );
     }
     case "error":

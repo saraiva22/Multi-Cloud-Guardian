@@ -3,35 +3,9 @@ import React from "react";
 import { Link, useRouter } from "expo-router";
 import { FileOutputModel } from "@/services/storage/model/FileOutputModel";
 import { icons } from "@/constants";
+import { formatDate, formatSize } from "@/services/utils/Function";
 
-const months = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
 
-const formatSize = (bytes?: number) => {
-  if (!bytes) return "";
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} Mb`;
-  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} Kb`;
-  return `${bytes} B`;
-};
-
-const formatDate = (date: number) => {
-  const dateObj = new Date(date * 1000);
-  return `${
-    months[dateObj.getMonth()]
-  } ${dateObj.getDate()}, ${dateObj.getFullYear()}`;
-};
 const FileItemComponent = ({ item }: { item: FileOutputModel }) => {
   const router = useRouter();
 

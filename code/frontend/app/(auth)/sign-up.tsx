@@ -134,7 +134,7 @@ const SignUp = () => {
     if (state.tag === "redirect") {
       router.replace("/(modals)/signup-success");
     }
-  });
+  }, [state.tag]);
 
   function handleChange(inputName: string, inputValue: string | number) {
     dispatch({

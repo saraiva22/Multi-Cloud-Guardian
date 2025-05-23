@@ -88,7 +88,7 @@ const SignIn = () => {
     if (state.tag === "redirect") {
       router.replace("/home");
     }
-  });
+  }, [state.tag]);
   function handleChange(inputName: string, inputValue: string) {
     dispatch({
       type: "edit",

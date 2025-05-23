@@ -10,25 +10,16 @@ import React, { useState } from "react";
 import { icons, images } from "../constants";
 import { useRouter } from "expo-router";
 import EmptyState from "./EmptyState";
-
-const formatSize = (bytes?: number) => {
-  if (!bytes) return "";
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} Mb`;
-  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} Kb`;
-  return `${bytes} B`;
-};
+import { formatSize } from "@/services/utils/Function";
 
 const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
   const router = useRouter();
-
   const isActive = activeItem === item.folderId;
 
   const handlePress = () => {
     setActiveItem(item.folderId);
     router.push(`/folders/${item.folderId}`);
   };
-
-  const size = formatSize(item.size);
 
   return (
     <TouchableOpacity
@@ -60,7 +51,7 @@ const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
 
       <View>
         <Text className="text-white text-xs opacity-80">
-          Used: {item.size > 0 ? size : "0 Kb"}
+          Used: {item.size > 0 ? formatSize(item.size) : "0 Kb"}
         </Text>
 
         <Text className="text-white text-xs opacity-80">
@@ -70,6 +61,7 @@ const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
     </TouchableOpacity>
   );
 };
+
 const FolderCard = ({ folders }: any) => {
   const [activeItem, setActiveItem] = useState(folders[0]?.folderId);
 

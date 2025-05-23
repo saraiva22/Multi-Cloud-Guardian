@@ -1,6 +1,7 @@
 import { MEDIA_TYPE_PROBLEM, Problem } from "../media/Problem";
 import {
   createHmacSHA256,
+  decryptData,
   encryptData,
   generateIV,
   generationKeyAES,
@@ -13,6 +14,10 @@ import { Buffer } from "buffer";
 import { FilesListOutputModel } from "./model/FilesListOutputModel";
 import { FileOutputModel } from "./model/FileOutputModel";
 import { FoldersListOutputModel } from "./model/FoldersListOutputModel";
+import { DownloadOutputModel } from "./model/DownloadOutputModel";
+import * as MediaLibrary from "expo-media-library";
+import * as Sharing from "expo-sharing";
+import { Alert, Platform } from "react-native";
 
 const httpService = httpServiceInit();
 
@@ -121,6 +126,73 @@ export async function uploadFile(
   return (await response.json()) as UploadOutput;
 }
 
+export async function downloadFile(
+  fileId: string
+): Promise<DownloadOutputModel> {
+  const path = PREFIX_API + apiRoutes.DOWNLOAD_FILE.replace(":id", fileId);
+  return await httpService.get<DownloadOutputModel>(path);
+}
+
+export async function processAndSaveDownloadedFile(
+  downloadFile: DownloadOutputModel,
+  keyMaster: any
+): Promise<any> {
+  const fileContent = downloadFile.file.fileContent;
+  const fileEncrypted = downloadFile.file.encrypted;
+  const encryptedKeyBase64 = downloadFile.fileKeyEncrypted;
+  const fileName = downloadFile.file.fileName;
+  const mimeType = downloadFile.file.mimeType;
+
+  let finalData: Uint8Array;
+
+  if (fileEncrypted) {
+    //  Extract IV and encrypted data from the file
+    const fileBuffer = Buffer.from(fileContent, "base64");
+
+    // Extract signature (first 32 bytes for SHA-256)
+    const signatureFromFile = fileBuffer.slice(0, 32);
+
+    // Extrair IV + encrypted data
+    const fileIV = fileBuffer.slice(32, 44); // 12 bytes after the signature
+    const encryptedFile = fileBuffer.slice(44); // File Content
+
+    // Decrypt the file's AES key using the masterKey
+    const encryptedKeyBuffer = Buffer.from(encryptedKeyBase64, "base64");
+    const keyIV = encryptedKeyBuffer.slice(0, 12);
+    const encryptedFileKey = encryptedKeyBuffer.slice(12);
+
+    const fileKey = await decryptData(encryptedFileKey, keyMaster, keyIV);
+
+    // Recreate the content that was signed (IV + encrypted)
+    const fileEncryptedWithIV = Buffer.concat([fileIV, encryptedFile]);
+
+    const calculatedSignature = createHmacSHA256(
+      new Uint8Array(fileEncryptedWithIV),
+      new Uint8Array(fileKey)
+    );
+
+    console.log("CALCULATE ", calculatedSignature);
+    console.log("SIGNATURE ", signatureFromFile.toString("hex"));
+
+    if (calculatedSignature !== signatureFromFile.toString("hex")) {
+      console.log("ERROR, invalidSignature");
+      throw new Error("Invalid signature! The file may have been corrupted");
+    } else {
+      console.log("SIGNATURE CORRECT!!!");
+    }
+    // Decrypt the file content
+    const decryptedFile = await decryptData(encryptedFile, fileKey, fileIV);
+
+    finalData = new Uint8Array(decryptedFile);
+  } else {
+    // If the file is not encrypted
+    finalData = new Uint8Array(Buffer.from(fileContent, "base64"));
+  }
+
+  // Save the file locally
+  await saveFileLocally(finalData, fileName);
+}
+
 export async function getFiles(): Promise<FilesListOutputModel> {
   const path = PREFIX_API + apiRoutes.GET_FILES;
   return await httpService.get<FilesListOutputModel>(path);
@@ -134,4 +206,43 @@ export async function getFile(fileId: string): Promise<FileOutputModel> {
 export async function getFolders(): Promise<FoldersListOutputModel> {
   const path = PREFIX_API + apiRoutes.GET_FOLDERS;
   return await httpService.get<FoldersListOutputModel>(path);
+}
+
+// Utils
+
+async function saveFileLocally(data: Uint8Array, fileName: string) {
+  try {
+    const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+    // Write the content to the file
+    await FileSystem.writeAsStringAsync(
+      fileUri,
+      Buffer.from(data).toString("base64"),
+      {
+        encoding: FileSystem.EncodingType.Base64,
+      }
+    );
+
+    if (Platform.OS === "android") {
+      // Save to gallery or downloads folder
+      const permission = await MediaLibrary.requestPermissionsAsync();
+      if (permission.granted) {
+        const asset = await MediaLibrary.createAssetAsync(fileUri);
+        await MediaLibrary.createAlbumAsync("Download", asset, false);
+        return Alert.alert("Save", "Success Download");
+      } else {
+        return Alert.alert("Error", "Permissions not granted to save files");
+      }
+    } else {
+      // iOS: open direct sharing (Files, AirDrop, etc.)
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri);
+      } else {
+        Alert.alert("Error", "Sharing not available");
+      }
+    }
+  } catch (error) {
+    console.error("Error saving the file:", error);
+    Alert.alert("Error", "Could not save the file");
+  }
 }
