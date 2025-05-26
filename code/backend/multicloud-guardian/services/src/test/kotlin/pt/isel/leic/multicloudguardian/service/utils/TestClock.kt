@@ -1,4 +1,4 @@
-package pt.isel.leic.multicloudguardian.service
+package pt.isel.leic.multicloudguardian.service.utils
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant

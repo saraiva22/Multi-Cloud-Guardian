@@ -159,7 +159,7 @@ class UsersController(
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Users.byId(id)
-        val user = userService.getUserById(id)
+        val user = userService.getUserStorageById(id)
         return when (user) {
             is Success ->
                 ResponseEntity

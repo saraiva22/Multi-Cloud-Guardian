@@ -69,7 +69,7 @@ class JdbiUsersRepository(
             .mapTo<Int>()
             .single() == 1
 
-    override fun getUserById(userId: Id): UserStorageInfo? =
+    override fun getUserStorageById(userId: Id): UserStorageInfo? =
         handle
             .createQuery(
                 """
@@ -81,6 +81,16 @@ class JdbiUsersRepository(
                 """.trimIndent(),
             ).bind("id", userId.value)
             .mapTo<UserStorageInfo>()
+            .singleOrNull()
+
+    override fun getUserById(userId: Id): User? =
+        handle
+            .createQuery(
+                """
+                select * from dbo.Users where id = :id
+                """.trimIndent(),
+            ).bind("id", userId.value)
+            .mapTo<User>()
             .singleOrNull()
 
     override fun getUserInfoByUsername(username: Username): UserStorageInfo? =

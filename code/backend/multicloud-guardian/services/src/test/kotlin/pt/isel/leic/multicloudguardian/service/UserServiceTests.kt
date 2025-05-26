@@ -1,33 +1,23 @@
 package pt.isel.leic.multicloudguardian.service
 
-import org.jdbi.v3.core.Jdbi
-import org.postgresql.ds.PGSimpleDataSource
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
 import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
-import pt.isel.leic.multicloudguardian.domain.preferences.PreferencesDomain
-import pt.isel.leic.multicloudguardian.domain.token.Sha256TokenEncoder
-import pt.isel.leic.multicloudguardian.domain.user.UsersDomain
-import pt.isel.leic.multicloudguardian.domain.user.UsersDomainConfig
 import pt.isel.leic.multicloudguardian.domain.utils.Either
-import pt.isel.leic.multicloudguardian.repository.jdbi.JdbiTransactionManager
-import pt.isel.leic.multicloudguardian.repository.jdbi.configureWithAppRequirements
-import pt.isel.leic.multicloudguardian.service.user.UsersService
+import pt.isel.leic.multicloudguardian.service.user.UserCreationError
+import pt.isel.leic.multicloudguardian.service.utils.ServiceTests
+import pt.isel.leic.multicloudguardian.service.utils.TestClock
+import pt.isel.leic.multicloudguardian.service.utils.clearData
 import java.util.Base64
-import kotlin.math.abs
-import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-class UserServiceTests {
+class UserServiceTests : ServiceTests() {
     @Test
     fun `can create user, token, and retrieve by token`() {
         // given: a user service
@@ -39,9 +29,12 @@ class UserServiceTests {
         val username = newTestUserName()
         val password = newTestPassword()
         val email = newTestEmail(username)
+        val salt = newTestSalt()
+        val iteration = newTestIteration()
         val performance = PerformanceType.MEDIUM
         val location = LocationType.EUROPE
-        val createUserResult = userService.createUser(username, email, password, performance, location)
+
+        val createUserResult = userService.createUser(username, email, password, salt, iteration, performance, location)
 
         // then: the creation is successful
         when (createUserResult) {
@@ -71,10 +64,80 @@ class UserServiceTests {
 
         // and: has the expected name
         assertEquals(username, user.username.value)
+
+        // clean up
+        clearData(jdbi, "dbo.Tokens", "user_id", user.id.value)
+        clearData(jdbi, "dbo.Users", "id", user.id.value)
+    }
+
+    @Test
+    fun `create user with invalid password`() {
+        // given: a user service
+        val testClock = TestClock()
+        val userService = createUsersService(testClock)
+        val userAgent = "Mobile"
+
+        // when: creating a user with an invalid password
+        val username = newTestUserName()
+        val passwordValidationInfo = "invalidpassword"
+        val email = newTestEmail(username)
+        val salt = newTestSalt()
+        val iteration = newTestIteration()
+        val performance = PerformanceType.MEDIUM
+        val location = LocationType.EUROPE
+
+        // then: the creation fails
+        val createUserResult =
+            userService.createUser(username, email, passwordValidationInfo, salt, iteration, performance, location)
+
+        when (createUserResult) {
+            is Either.Left -> assertTrue(createUserResult.value is UserCreationError.InsecurePassword)
+            is Either.Right -> fail("Expected failure but got success: $createUserResult")
+        }
     }
 
     @Test
     fun `create user token`() {
+        // given: a user service
+        val testClock = TestClock()
+        val userService = createUsersService(testClock)
+        val userAgent = "Mobile"
+
+        // when: creating a user
+        val username = newTestUserName()
+        val passwordValidationInfo = newTestPassword()
+        val email = newTestEmail(username)
+        val salt = newTestSalt()
+        val iteration = newTestIteration()
+        val performance = PerformanceType.MEDIUM
+        val location = LocationType.EUROPE
+
+        val createUserResult =
+            createUserInService(username, passwordValidationInfo, email, salt, iteration, performance, location)
+
+        // when: creating a token
+        val createTokenResult =
+            userService.createToken(createUserResult.username.value, passwordValidationInfo, userAgent)
+
+        // then: the creation is successful
+        val token =
+            when (createTokenResult) {
+                is Either.Left -> fail(createTokenResult.toString())
+                is Either.Right -> createTokenResult.value.tokenValue
+            }
+
+        // when: retrieving the user by token
+        val user = userService.getUserByToken(token)
+
+        // then: the user is found
+        assertNotNull(user)
+        assertEquals(createUserResult.username, user.username)
+        assertEquals(createUserResult.email, user.email)
+        assertEquals(createUserResult.passwordValidation, user.passwordValidation)
+
+        // finally: clear the data
+        clearData(jdbi, "dbo.Tokens", "user_id", user.id.value)
+        clearData(jdbi, "dbo.Users", "id", user.id.value)
     }
 
     @Test
@@ -89,10 +152,13 @@ class UserServiceTests {
         // when: creating a user
         val username = newTestUserName()
         val password = newTestPassword()
+        val email = newTestEmail(username)
+        val salt = newTestSalt()
+        val iteration = newTestIteration()
         val performance = PerformanceType.MEDIUM
         val location = LocationType.EUROPE
-        val email = newTestEmail(username)
-        val createUserResult = userService.createUser(username, email, password, performance, location)
+
+        val createUserResult = userService.createUser(username, email, password, salt, iteration, performance, location)
 
         // then: the creation is successful
         when (createUserResult) {
@@ -119,10 +185,49 @@ class UserServiceTests {
 
         // then: user is not found only after the absolute TTL has elapsed
         assertTrue((testClock.now() - startInstant) > tokenTtl)
+
+        // clean up
+        clearData(jdbi, "dbo.Tokens", "user_id", createUserResult.value.value)
+        clearData(jdbi, "dbo.Users", "id", createUserResult.value.value)
     }
 
     @Test
     fun `revoke user token`() {
+        // given: a user service
+        val tests = TestClock()
+        val userService = createUsersService(tests)
+        val userAgent = "Mobile"
+
+        // then: creating a user
+        val username = newTestUserName()
+        val password = newTestPassword()
+        val email = newTestEmail(username)
+        val salt = newTestSalt()
+        val iteration = newTestIteration()
+        val performance = PerformanceType.MEDIUM
+        val location = LocationType.EUROPE
+        val createUserResult = createUserInService(username, password, email, salt, iteration, performance, location)
+
+        // when: creating a token
+        val createTokenResult = userService.createToken(username, password, userAgent)
+
+        // then: the creation is successful
+        val token =
+            when (createTokenResult) {
+                is Either.Left -> fail(createTokenResult.toString())
+                is Either.Right -> createTokenResult.value.tokenValue
+            }
+
+        // when: revoking the token
+        userService.revokeToken(token)
+
+        // then: the token is no longer valid
+        val user = userService.getUserByToken(token)
+        assertNull(user, "The token should be revoked and not valid anymore")
+
+        // clean up
+        clearData(jdbi, "dbo.Tokens", "user_id", createUserResult.id.value)
+        clearData(jdbi, "dbo.Users", "id", createUserResult.id.value)
     }
 
     @Test
@@ -137,9 +242,11 @@ class UserServiceTests {
         val username = newTestUserName()
         val password = newTestPassword()
         val email = newTestEmail(username)
+        val salt = newTestSalt()
+        val iteration = newTestIteration()
         val performance = PerformanceType.MEDIUM
         val location = LocationType.EUROPE
-        val createUserResult = userService.createUser(username, email, password, performance, location)
+        val createUserResult = userService.createUser(username, email, password, salt, iteration, performance, location)
 
         // then: the creation is successful
         when (createUserResult) {
@@ -189,6 +296,10 @@ class UserServiceTests {
         (1 until tokens.size).forEach {
             assertNotNull(userService.getUserByToken(tokens[it].tokenValue))
         }
+
+        // clean up
+        clearData(jdbi, "dbo.Tokens", "user_id", createUserResult.value.value)
+        clearData(jdbi, "dbo.Users", "id", createUserResult.value.value)
     }
 
     @Test
@@ -203,9 +314,11 @@ class UserServiceTests {
         val username = newTestUserName()
         val password = newTestPassword()
         val email = newTestEmail(username)
+        val salt = newTestSalt()
+        val iteration = newTestIteration()
         val performance = PerformanceType.MEDIUM
         val location = LocationType.EUROPE
-        val createUserResult = userService.createUser(username, email, password, performance, location)
+        val createUserResult = userService.createUser(username, email, password, salt, iteration, performance, location)
 
         // then: the creation is successful
         when (createUserResult) {
@@ -255,6 +368,10 @@ class UserServiceTests {
                 userService.getUserByToken(it.tokenValue) != null
             },
         )
+
+        // clean up
+        clearData(jdbi, "dbo.Tokens", "user_id", createUserResult.value.value)
+        clearData(jdbi, "dbo.Users", "id", createUserResult.value.value)
     }
 
     @Test
@@ -269,9 +386,11 @@ class UserServiceTests {
         val username = newTestUserName()
         val password = newTestPassword()
         val email = newTestEmail(username)
+        val salt = newTestSalt()
+        val iteration = newTestIteration()
         val performance = PerformanceType.MEDIUM
         val location = LocationType.EUROPE
-        val createUserResult = userService.createUser(username, email, password, performance, location)
+        val createUserResult = userService.createUser(username, email, password, salt, iteration, performance, location)
 
         // then: the creation is successful
         when (createUserResult) {
@@ -302,42 +421,9 @@ class UserServiceTests {
 
         // then: token usage is successful
         assertNull(maybeUser)
-    }
 
-    companion object {
-        private fun createUsersService(
-            testClock: TestClock,
-            tokenTtl: Duration = 30.days,
-            tokenRollingTtl: Duration = 30.minutes,
-            maxTokensPerUser: Int = 3,
-        ) = UsersService(
-            JdbiTransactionManager(jdbi),
-            UsersDomain(
-                BCryptPasswordEncoder(),
-                Sha256TokenEncoder(),
-                UsersDomainConfig(
-                    tokenSizeInBytes = 256 / 8,
-                    tokenTtl = tokenTtl,
-                    tokenRollingTtl,
-                    maxTokensPerUser = maxTokensPerUser,
-                ),
-            ),
-            PreferencesDomain(),
-            testClock,
-        )
-
-        private fun newTestUserName() = "user-${abs(Random.nextLong())}"
-
-        private fun newTestEmail(username: String) = "$username@gmail.com"
-
-        private fun newTestPassword() = "Password@${abs(Random.nextInt())}"
-
-        private val jdbi =
-            Jdbi
-                .create(
-                    PGSimpleDataSource().apply {
-                        setURL("jdbc:postgresql://localhost:5432/db?user=dbuser&password=changeit")
-                    },
-                ).configureWithAppRequirements()
+        // clean up
+        clearData(jdbi, "dbo.Tokens", "user_id", createUserResult.value.value)
+        clearData(jdbi, "dbo.Users", "id", createUserResult.value.value)
     }
 }

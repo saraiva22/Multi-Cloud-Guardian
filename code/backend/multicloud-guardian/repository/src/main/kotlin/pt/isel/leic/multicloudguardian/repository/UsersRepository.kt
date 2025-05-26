@@ -54,7 +54,9 @@ interface UsersRepository {
 
     fun getUserInfoByUsername(username: Username): UserStorageInfo?
 
-    fun getUserById(userId: Id): UserStorageInfo?
+    fun getUserStorageById(userId: Id): UserStorageInfo?
+
+    fun getUserById(userId: Id): User?
 
     fun getUserCredentialsById(userId: Id): Credentials?
 

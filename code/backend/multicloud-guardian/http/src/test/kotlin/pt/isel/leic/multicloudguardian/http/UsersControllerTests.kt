@@ -1,9 +1,22 @@
 package pt.isel.leic.multicloudguardian.http
 
-/*
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.web.server.LocalServerPort
+import org.springframework.test.web.reactive.server.WebTestClient
+import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
+import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
+import pt.isel.leic.multicloudguardian.http.model.TokenResponse
+import kotlin.math.abs
+import kotlin.random.Random
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class UsersControllerTests : ApplicationTests() {
+class UsersControllerTests {
+    // One of the very few places where we use property injection
+    @LocalServerPort
+    var port: Int = 0
+
     @Test
     fun `can create an user`() {
         // given: an HTTP client
@@ -53,6 +66,10 @@ class UsersControllerTests : ApplicationTests() {
         private const val ADMIN_EMAIL = "admin2425@gmail.com"
         private const val ADMIN_PASSWORD = "Test_2425"
 
+        private fun newTestSalt() = "salt-${abs(Random.nextLong())}"
+
+        private fun newTestIteration() = abs(Random.nextInt(15000, 20000))
+
         val PASSWORD = newTestPassword()
 
         private fun getTokenUserAdmin(client: WebTestClient): TokenResponse =
@@ -72,6 +89,3 @@ class UsersControllerTests : ApplicationTests() {
                 .responseBody!!
     }
 }
-
-
- */

@@ -50,24 +50,39 @@ class UsersService(
             } else if (usersRepository.isEmailStoredByEmail(Email(email))) {
                 failure(UserCreationError.EmailAlreadyExists)
             } else {
-                val id = usersRepository.storeUser(Username(username), Email(email), salt, iterations, passwordValidationInfo)
+                val id =
+                    usersRepository.storeUser(
+                        Username(username),
+                        Email(email),
+                        salt,
+                        iterations,
+                        passwordValidationInfo,
+                    )
                 usersRepository.storagePreferences(id, performanceType, locationType, provider)
                 success(id)
             }
         }
     }
 
-    fun getUserById(id: Int): UserSearchResult =
+    fun getUserStorageById(id: Int): UserStorageSearchResult =
         transactionManager.run {
             val usersRepository = it.usersRepository
-            val user = usersRepository.getUserById(Id(id)) ?: return@run failure(UserSearchError.UserNotFound)
+            val user = usersRepository.getUserStorageById(Id(id)) ?: return@run failure(UserSearchError.UserNotFound)
             success(user)
         }
 
-    fun getUserByUsername(username: Username): UserSearchResult =
+    fun getUserById(userId: Int): UserSearchResult =
         transactionManager.run {
             val usersRepository = it.usersRepository
-            val user = usersRepository.getUserInfoByUsername(username) ?: return@run failure(UserSearchError.UserNotFound)
+            val user = usersRepository.getUserById(Id(userId)) ?: return@run failure(UserSearchError.UserNotFound)
+            success(user)
+        }
+
+    fun getUserByUsername(username: Username): UserStorageSearchResult =
+        transactionManager.run {
+            val usersRepository = it.usersRepository
+            val user =
+                usersRepository.getUserInfoByUsername(username) ?: return@run failure(UserSearchError.UserNotFound)
             success(user)
         }
 
