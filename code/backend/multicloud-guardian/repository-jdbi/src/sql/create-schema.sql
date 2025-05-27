@@ -51,7 +51,7 @@ create table dbo.Folders(
     constraint created_before_updated_at check (created_at <= updated_at),
     constraint created_at_is_valid check (created_at > 0),
     constraint updated_at_is_valid check (updated_at > 0),
-    constraint folder_name_min_length check (char_length(folder_name) >= 5),
+    constraint folder_name_min_length check (char_length(folder_name) >= 2),
     constraint folder_name_max_length check (char_length(folder_name) <= 25)
 );
 

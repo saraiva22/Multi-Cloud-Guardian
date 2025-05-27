@@ -41,7 +41,12 @@ interface UsersRepository {
         now: Instant,
     )
 
-    fun searchUsers(username: String): List<UserStorageInfo>
+    fun searchUsers(
+        username: String,
+        limit: Int,
+        offset: Int,
+        sort: String,
+    ): List<UserStorageInfo>
 
     fun createToken(
         token: Token,
@@ -61,4 +66,6 @@ interface UsersRepository {
     fun getUserCredentialsById(userId: Id): Credentials?
 
     fun getProvider(userId: Id): ProviderType
+
+    fun countUsersByUsername(username: String): Long
 }

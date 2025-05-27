@@ -17,7 +17,7 @@ import pt.isel.leic.multicloudguardian.domain.utils.Id
  * */
 
 private const val MAX_FOLDER_NAME_LENGTH = 25
-private const val MIN_FOLDER_NAME_LENGTH = 5
+private const val MIN_FOLDER_NAME_LENGTH = 2
 
 data class Folder(
     val folderId: Id,

@@ -359,16 +359,25 @@ class StorageService(
     ): PageResult<File> =
         transactionManager.run {
             val storageRep = it.storageRepository
-            val totalElements = storageRep.countFiles(user.id)
             val offset = page * limit
             val files = storageRep.getFiles(user.id, limit, offset, sort)
-
+            val totalElements = storageRep.countFiles(user.id)
             PageResult.fromPartialResult(files, totalElements, limit, offset)
         }
 
-    fun getFolder(user: User): List<Folder> =
+    fun getFolder(
+        user: User,
+        limit: Int,
+        page: Int,
+        sort: String,
+    ): PageResult<Folder> =
         transactionManager.run {
-            it.storageRepository.getFolders(user.id)
+            val storageRep = it.storageRepository
+            val totalElements = storageRep.countFolder(user.id)
+            val offset = page * limit
+            val folders = storageRep.getFolders(user.id, limit, offset, sort)
+
+            PageResult.fromPartialResult(folders, totalElements, limit, offset)
         }
 
     fun getFolderById(
@@ -385,14 +394,19 @@ class StorageService(
     fun getFilesInFolder(
         user: User,
         folderId: Id,
+        limit: Int,
+        page: Int,
+        sort: String,
     ): GetFilesInFolderResult =
         transactionManager.run {
-            it.storageRepository.getFolderById(user.id, folderId) ?: return@run failure(
-                GetFilesInFolderError.FolderNotFound,
-            )
+            val folder =
+                it.storageRepository.getFolderById(user.id, folderId) ?: return@run failure(
+                    GetFilesInFolderError.FolderNotFound,
+                )
+            val offset = page * limit
+            val files = it.storageRepository.getFilesInFolder(user.id, folderId, limit, offset, sort)
 
-            val files = it.storageRepository.getFilesInFolder(user.id, folderId)
-            success(files)
+            success(PageResult.fromPartialResult(files, folder.numberFiles.toLong(), limit, offset))
         }
 
     fun getFileInFolder(

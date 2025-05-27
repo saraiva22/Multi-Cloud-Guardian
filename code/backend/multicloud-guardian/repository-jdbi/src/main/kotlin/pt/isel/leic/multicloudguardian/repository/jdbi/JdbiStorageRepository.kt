@@ -199,31 +199,62 @@ class JdbiStorageRepository(
             .mapTo<Long>()
             .one()
 
-    override fun getFolders(userId: Id): List<Folder> =
+    override fun countFolder(userId: Id): Long =
         handle
+            .createQuery(
+                """
+                select count(*) from dbo.Folders where user_id = :userId
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .mapTo<Long>()
+            .one()
+
+    override fun getFolders(
+        userId: Id,
+        limit: Int,
+        offset: Int,
+        sort: String,
+    ): List<Folder> {
+        val order = orderBy(sort, "folder_name")
+        return handle
             .createQuery(
                 """
                 select folder.*, users.username ,users.email 
                 from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.user_id = :userId 
+                order by $order
+                LIMIT :limit OFFSET :offset
                 """.trimIndent(),
             ).bind("userId", userId.value)
+            .bind("limit", limit)
+            .bind("offset", offset)
             .mapTo<Folder>()
             .toList()
+    }
 
     override fun getFilesInFolder(
         userId: Id,
         folderId: Id,
-    ): List<File> =
-        handle
+        limit: Int,
+        offset: Int,
+        sort: String,
+    ): List<File> {
+        val order = orderBy(sort, "file_name")
+
+        return handle
             .createQuery(
                 """
                 select files.*, users.username ,users.email  from dbo.Files inner join dbo.folders on files.folder_id = folders.folder_id 
                 inner join dbo.users on folders.user_id = users.id where folders.folder_id = :folderId and users.id = :userId
+                order by $order
+                LIMIT :limit OFFSET :offset
                 """.trimIndent(),
             ).bind("userId", userId.value)
             .bind("folderId", folderId.value)
+            .bind("limit", limit)
+            .bind("offset", offset)
             .mapTo<File>()
             .toList()
+    }
 
     override fun getPathById(
         userId: Id,

@@ -15,6 +15,7 @@ import pt.isel.leic.multicloudguardian.domain.user.AuthenticatedUser
 import pt.isel.leic.multicloudguardian.domain.user.components.Email
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
+import pt.isel.leic.multicloudguardian.domain.utils.PageResult
 import pt.isel.leic.multicloudguardian.domain.utils.Success
 import pt.isel.leic.multicloudguardian.http.Uris
 import pt.isel.leic.multicloudguardian.http.media.Problem
@@ -34,12 +35,6 @@ import pt.isel.leic.multicloudguardian.service.user.UsersService
 class UsersController(
     private val userService: UsersService,
 ) {
-    companion object {
-        const val HEADER_SET_COOKIE_NAME = "Set-Cookie"
-        const val COOKIE_NAME_LOGIN = "login"
-        const val COOKIE_NAME_TOKEN = "token"
-    }
-
     @PostMapping(Uris.Users.CREATE)
     fun createUser(
         @Validated @RequestBody input: UserCreateInputModel,
@@ -127,11 +122,30 @@ class UsersController(
     fun searchUsers(
         @RequestParam username: String,
         authenticatedUser: AuthenticatedUser,
+        @RequestParam(required = false) size: Int?,
+        @RequestParam(required = false) page: Int?,
     ): ResponseEntity<*> {
-        val user = userService.searchUsers(username)
+        val setLimit = size ?: DEFAULT_LIMIT
+        val setPage = page ?: DEFAULT_PAGE
+        val setSort = DEFAULT_SORT
+        val res = userService.searchUsers(username, setLimit, setPage, setSort)
         return ResponseEntity
             .status(200)
-            .body(UserListOutputModel(user.map { UserHomeOutputModel(it.id.value, it.username.value) }))
+            .body(
+                PageResult(
+                    content =
+                        UserListOutputModel(
+                            res.content.map { UserHomeOutputModel(it.id.value, it.username.value) },
+                        ).users,
+                    pageable = res.pageable,
+                    totalElements = res.totalElements,
+                    totalPages = res.totalPages,
+                    last = res.last,
+                    first = res.first,
+                    size = res.size,
+                    number = res.number,
+                ),
+            )
     }
 
     @PostMapping(Uris.Users.LOGOUT)
@@ -222,4 +236,13 @@ class UsersController(
     @GetMapping(Uris.Users.HOME)
     fun getUserHome(authenticatedUser: AuthenticatedUser): UserHomeOutputModel =
         UserHomeOutputModel(authenticatedUser.user.id.value, authenticatedUser.user.username.value)
+
+    companion object {
+        private const val DEFAULT_LIMIT = 10
+        private const val DEFAULT_PAGE = 0
+        private const val DEFAULT_SORT = "username"
+        const val HEADER_SET_COOKIE_NAME = "Set-Cookie"
+        const val COOKIE_NAME_LOGIN = "login"
+        const val COOKIE_NAME_TOKEN = "token"
+    }
 }

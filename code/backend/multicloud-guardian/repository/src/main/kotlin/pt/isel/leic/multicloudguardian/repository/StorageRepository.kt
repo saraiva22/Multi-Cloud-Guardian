@@ -65,11 +65,21 @@ interface StorageRepository {
 
     fun countFiles(userId: Id): Long
 
-    fun getFolders(userId: Id): List<Folder>
+    fun countFolder(userId: Id): Long
+
+    fun getFolders(
+        userId: Id,
+        limit: Int,
+        offset: Int,
+        sort: String,
+    ): List<Folder>
 
     fun getFilesInFolder(
         userId: Id,
         folderId: Id,
+        limit: Int,
+        offset: Int,
+        sort: String,
     ): List<File>
 
     fun getPathById(

@@ -131,6 +131,17 @@ class JdbiUsersRepository(
             .mapTo<Credentials>()
             .singleOrNull()
 
+    override fun countUsersByUsername(username: String): Long =
+        handle
+            .createQuery(
+                """
+                select count(*) from dbo.Users  
+                where users.username like :username
+                """.trimIndent(),
+            ).bind("username", "$username%")
+            .mapTo<Long>()
+            .one()
+
     override fun storagePreferences(
         userId: Id,
         performanceType: PerformanceType,
@@ -164,7 +175,12 @@ class JdbiUsersRepository(
             .singleOrNull()
             ?.userAndToken
 
-    override fun searchUsers(username: String): List<UserStorageInfo> =
+    override fun searchUsers(
+        username: String,
+        limit: Int,
+        offset: Int,
+        sort: String,
+    ): List<UserStorageInfo> =
         handle
             .createQuery(
                 """
@@ -173,9 +189,12 @@ class JdbiUsersRepository(
                 inner join dbo.Preferences as pref
                 on users.id = pref.user_id
                 where users.username like :username
-                order by username
+                order by $sort
+                LIMIT :limit OFFSET :offset
                 """.trimIndent(),
             ).bind("username", "$username%")
+            .bind("limit", limit)
+            .bind("offset", offset)
             .mapTo<UserStorageInfo>()
             .list()
 

@@ -6,6 +6,7 @@ import pt.isel.leic.multicloudguardian.domain.file.FileDownload
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
 import pt.isel.leic.multicloudguardian.domain.utils.Either
 import pt.isel.leic.multicloudguardian.domain.utils.Id
+import pt.isel.leic.multicloudguardian.domain.utils.PageResult
 
 sealed class CreateContextJCloudError {
     data object InvalidCredential : CreateContextJCloudError()
@@ -122,7 +123,7 @@ sealed class GetFilesInFolderError {
     data object FolderNotFound : GetFilesInFolderError()
 }
 
-typealias GetFilesInFolderResult = Either<GetFilesInFolderError, List<File>>
+typealias GetFilesInFolderResult = Either<GetFilesInFolderError, PageResult<File>>
 
 sealed class GetFileInFolderError {
     data object FolderNotFound : GetFileInFolderError()

@@ -240,11 +240,30 @@ class StorageController(
     }
 
     @GetMapping(Uris.Folders.GET_FOLDERS)
-    fun getFolder(authenticatedUser: AuthenticatedUser): ResponseEntity<*> {
-        val res = storageService.getFolder(authenticatedUser.user)
+    fun getFolder(
+        authenticatedUser: AuthenticatedUser,
+        @RequestParam(required = false) size: Int?,
+        @RequestParam(required = false) page: Int?,
+        @RequestParam(required = false) sort: String?,
+    ): ResponseEntity<*> {
+        val setLimit = size ?: DEFAULT_LIMIT
+        val setPage = page ?: DEFAULT_PAGE
+        val setSort = sort ?: DEFAULT_SORT
+        val res = storageService.getFolder(authenticatedUser.user, setLimit, setPage, setSort)
         return ResponseEntity
             .status(HttpStatus.OK)
-            .body(FoldersListOutputModel(res.map { FolderInfoOutputModel.fromDomain(it) }))
+            .body(
+                PageResult(
+                    content = FoldersListOutputModel(res.content.map { FolderInfoOutputModel.fromDomain(it) }).folders,
+                    pageable = res.pageable,
+                    totalElements = res.totalElements,
+                    totalPages = res.totalPages,
+                    last = res.last,
+                    first = res.first,
+                    size = res.size,
+                    number = res.number,
+                ),
+            )
     }
 
     @PostMapping(Uris.Folders.CREATE_FOLDER_IN_FOLDER)
@@ -309,14 +328,31 @@ class StorageController(
     fun getFilesInFolder(
         @PathVariable @Validated folderId: Int,
         authenticatedUser: AuthenticatedUser,
+        @RequestParam(required = false) size: Int?,
+        @RequestParam(required = false) page: Int?,
+        @RequestParam(required = false) sort: String?,
     ): ResponseEntity<*> {
         val instance = Uris.Folders.filesInFolder(folderId)
-        val res = storageService.getFilesInFolder(authenticatedUser.user, Id(folderId))
+        val setLimit = size ?: DEFAULT_LIMIT
+        val setPage = page ?: DEFAULT_PAGE
+        val setSort = sort ?: DEFAULT_SORT
+        val res = storageService.getFilesInFolder(authenticatedUser.user, Id(folderId), setLimit, setPage, setSort)
         return when (res) {
             is Success ->
                 ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(FilesListOutputModel(res.value.map { FileInfoOutputModel.fromDomain(it) }))
+                    .body(
+                        PageResult(
+                            content = FilesListOutputModel(res.value.content.map { FileInfoOutputModel.fromDomain(it) }).files,
+                            pageable = res.value.pageable,
+                            totalElements = res.value.totalElements,
+                            totalPages = res.value.totalPages,
+                            last = res.value.last,
+                            first = res.value.first,
+                            size = res.value.size,
+                            number = res.value.number,
+                        ),
+                    )
 
             is Failure ->
                 when (res.value) {

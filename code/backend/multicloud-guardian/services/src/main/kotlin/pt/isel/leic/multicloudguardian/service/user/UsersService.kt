@@ -14,6 +14,7 @@ import pt.isel.leic.multicloudguardian.domain.user.components.Email
 import pt.isel.leic.multicloudguardian.domain.user.components.Password
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
 import pt.isel.leic.multicloudguardian.domain.utils.Id
+import pt.isel.leic.multicloudguardian.domain.utils.PageResult
 import pt.isel.leic.multicloudguardian.domain.utils.failure
 import pt.isel.leic.multicloudguardian.domain.utils.success
 import pt.isel.leic.multicloudguardian.repository.TransactionManager
@@ -143,9 +144,18 @@ class UsersService(
         }
     }
 
-    fun searchUsers(username: String): List<UserStorageInfo> =
+    fun searchUsers(
+        username: String,
+        limit: Int,
+        page: Int,
+        sort: String,
+    ): PageResult<UserStorageInfo> =
         transactionManager.run {
-            it.usersRepository.searchUsers(username)
+            val usersRep = it.usersRepository
+            val offset = page * limit
+            val users = usersRep.searchUsers(username, limit, offset, sort)
+            val totalElements = usersRep.countUsersByUsername(username)
+            PageResult.fromPartialResult(users, totalElements, limit, offset)
         }
 
     fun revokeToken(token: String): TokenRevocationResult {
