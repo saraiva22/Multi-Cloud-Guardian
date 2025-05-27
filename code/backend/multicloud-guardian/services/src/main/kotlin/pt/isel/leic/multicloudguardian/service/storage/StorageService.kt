@@ -12,6 +12,7 @@ import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.user.User
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Id
+import pt.isel.leic.multicloudguardian.domain.utils.PageResult
 import pt.isel.leic.multicloudguardian.domain.utils.Success
 import pt.isel.leic.multicloudguardian.domain.utils.failure
 import pt.isel.leic.multicloudguardian.domain.utils.success
@@ -333,6 +334,7 @@ class StorageService(
                         CreateContextJCloudError.ErrorCreatingGlobalBucket -> return@run failure(
                             DeleteFileError.ErrorCreatingGlobalBucket,
                         )
+
                         CreateContextJCloudError.InvalidCredential -> return@run failure(DeleteFileError.InvalidCredential)
                     }
 
@@ -349,9 +351,19 @@ class StorageService(
             }
         }
 
-    fun getFiles(user: User): List<File> =
+    fun getFiles(
+        user: User,
+        limit: Int,
+        page: Int,
+        sort: String,
+    ): PageResult<File> =
         transactionManager.run {
-            it.storageRepository.getFiles(user.id)
+            val storageRep = it.storageRepository
+            val totalElements = storageRep.countFiles(user.id)
+            val offset = page * limit
+            val files = storageRep.getFiles(user.id, limit, offset, sort)
+
+            PageResult.fromPartialResult(files, totalElements, limit, offset)
         }
 
     fun getFolder(user: User): List<Folder> =

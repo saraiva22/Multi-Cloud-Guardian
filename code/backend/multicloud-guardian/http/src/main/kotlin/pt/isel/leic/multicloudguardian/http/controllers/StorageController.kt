@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile
 import pt.isel.leic.multicloudguardian.domain.user.AuthenticatedUser
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Id
+import pt.isel.leic.multicloudguardian.domain.utils.PageResult
 import pt.isel.leic.multicloudguardian.domain.utils.Success
 import pt.isel.leic.multicloudguardian.http.Uris
 import pt.isel.leic.multicloudguardian.http.media.Problem
@@ -95,11 +96,30 @@ class StorageController(
     }
 
     @GetMapping(Uris.Files.GET_FILES)
-    fun getFiles(authenticatedUser: AuthenticatedUser): ResponseEntity<*> {
-        val res = storageService.getFiles(authenticatedUser.user)
+    fun getFiles(
+        authenticatedUser: AuthenticatedUser,
+        @RequestParam(required = false) size: Int?,
+        @RequestParam(required = false) page: Int?,
+        @RequestParam(required = false) sort: String?,
+    ): ResponseEntity<*> {
+        val setLimit = size ?: DEFAULT_LIMIT
+        val setPage = page ?: DEFAULT_PAGE
+        val setSort = sort ?: DEFAULT_SORT
+        val res = storageService.getFiles(authenticatedUser.user, setLimit, setPage, setSort)
+
         return ResponseEntity.status(HttpStatus.OK).body(
-            FilesListOutputModel(
-                res.map { (FileInfoOutputModel.fromDomain(it)) },
+            PageResult(
+                content =
+                    FilesListOutputModel(
+                        res.content.map { FileInfoOutputModel.fromDomain(it) },
+                    ).files,
+                pageable = res.pageable,
+                totalElements = res.totalElements,
+                totalPages = res.totalPages,
+                last = res.last,
+                first = res.first,
+                size = res.size,
+                number = res.number,
             ),
         )
     }
@@ -464,5 +484,11 @@ class StorageController(
                     DeleteFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(folderId, instance)
                 }
         }
+    }
+
+    companion object {
+        private const val DEFAULT_LIMIT = 10
+        private const val DEFAULT_PAGE = 0
+        private const val DEFAULT_SORT = "createdAt"
     }
 }

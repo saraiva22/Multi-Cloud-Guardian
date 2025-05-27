@@ -56,7 +56,14 @@ interface StorageRepository {
         folderId: Id,
     ): Folder?
 
-    fun getFiles(userId: Id): List<File>
+    fun getFiles(
+        userId: Id,
+        limit: Int,
+        offset: Int,
+        sort: String,
+    ): List<File>
+
+    fun countFiles(userId: Id): Long
 
     fun getFolders(userId: Id): List<Folder>
 

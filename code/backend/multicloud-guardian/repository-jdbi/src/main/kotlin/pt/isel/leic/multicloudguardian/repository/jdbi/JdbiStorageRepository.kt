@@ -167,16 +167,37 @@ class JdbiStorageRepository(
             .mapTo<Folder>()
             .singleOrNull()
 
-    override fun getFiles(userId: Id): List<File> =
-        handle
+    override fun getFiles(
+        userId: Id,
+        limit: Int,
+        offset: Int,
+        sort: String,
+    ): List<File> {
+        val order = orderBy(sort, "file_name")
+        return handle
             .createQuery(
                 """
                 select file.*, users.username ,users.email 
                 from dbo.Files file inner join dbo.Users on file.user_id = id where file.user_id = :userId
+                order by $order
+                LIMIT :limit OFFSET :offset
                 """.trimIndent(),
             ).bind("userId", userId.value)
+            .bind("limit", limit)
+            .bind("offset", offset)
             .mapTo<File>()
             .toList()
+    }
+
+    override fun countFiles(userId: Id): Long =
+        handle
+            .createQuery(
+                """
+                select count(*) from dbo.Files where user_id = :userId
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .mapTo<Long>()
+            .one()
 
     override fun getFolders(userId: Id): List<Folder> =
         handle
@@ -273,5 +294,16 @@ class JdbiStorageRepository(
 
     companion object {
         private val logger = LoggerFactory.getLogger(JdbiStorageRepository::class.java)
+
+        fun orderBy(
+            sort: String,
+            attributeName: String,
+        ): String =
+            when (sort) {
+                "name" -> attributeName
+                "created_at" -> "created_at"
+                "size" -> "size"
+                else -> "created_at"
+            }
     }
 }
