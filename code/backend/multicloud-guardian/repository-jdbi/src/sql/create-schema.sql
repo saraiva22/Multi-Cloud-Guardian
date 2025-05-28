@@ -113,3 +113,36 @@ create trigger trigger_update_folder_stats
 after insert or update or delete on dbo.Files
 for each row
 execute function update_folder_stats();
+
+
+
+-- This view summarizes the total storage used by each user, grouping their files into categories:
+-- 'Images', 'Video', 'Documents', or 'Others', and calculates the total size per category.
+CREATE OR REPLACE VIEW user_file_storage_summary AS
+WITH categorized_files AS (
+  SELECT
+    user_id,
+    CASE
+      WHEN content_type LIKE 'image/%' THEN 'Images'
+      WHEN content_type LIKE 'video/%' THEN 'Video'
+      WHEN content_type IN (
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'text/plain'
+      ) THEN 'Documents'
+      ELSE 'Others'
+    END AS category,
+    size
+  FROM dbo.Files
+)
+SELECT
+  user_id,
+  category,
+  SUM(size) AS total_size
+FROM categorized_files
+GROUP BY user_id, category;

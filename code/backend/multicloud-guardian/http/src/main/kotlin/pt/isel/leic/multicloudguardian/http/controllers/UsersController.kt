@@ -24,6 +24,7 @@ import pt.isel.leic.multicloudguardian.http.model.user.UserCreateTokenInputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserCredentialsOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserHomeOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserListOutputModel
+import pt.isel.leic.multicloudguardian.http.model.user.UserStorageDetailsOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserStorageInfoOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserTokenCreateOutputModel
 import pt.isel.leic.multicloudguardian.http.model.utils.IdOutputModel
@@ -220,13 +221,29 @@ class UsersController(
     @GetMapping(Uris.Users.CREDENTIALS)
     fun getCredentials(authenticatedUser: AuthenticatedUser): ResponseEntity<*> {
         val instance = Uris.Users.credentials()
-        val result = userService.getUserCredentialsById(authenticatedUser.user.id.value)
+        val result = userService.getUserCredentialsById(authenticatedUser.user.id)
         return when (result) {
             is Success ->
                 ResponseEntity
                     .status(HttpStatus.OK)
                     .body(
                         UserCredentialsOutputModel.fromDomain(result.value),
+                    )
+
+            is Failure -> Problem.userNotFoundById(authenticatedUser.user.id.value, instance)
+        }
+    }
+
+    @GetMapping(Uris.Users.STORAGE_DETAILS)
+    fun getStorageDetails(authenticatedUser: AuthenticatedUser): ResponseEntity<*> {
+        val instance = Uris.Users.storage()
+        val res = userService.getStorageDetailsByUser(authenticatedUser.user.id)
+        return when (res) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(
+                        UserStorageDetailsOutputModel.toDomain(res.value),
                     )
 
             is Failure -> Problem.userNotFoundById(authenticatedUser.user.id.value, instance)

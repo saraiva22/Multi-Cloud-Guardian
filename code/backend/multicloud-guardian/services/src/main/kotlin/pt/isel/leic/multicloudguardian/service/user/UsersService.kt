@@ -87,13 +87,22 @@ class UsersService(
             success(user)
         }
 
-    fun getUserCredentialsById(userId: Int): UserCredentialsResult =
+    fun getUserCredentialsById(userId: Id): UserCredentialsResult =
         transactionManager.run {
             val usersRepository = it.usersRepository
             val credentials =
-                usersRepository.getUserCredentialsById(Id(userId))
+                usersRepository.getUserCredentialsById(userId)
                     ?: return@run failure(UserCredentialsError.UserNotFound)
             success(credentials)
+        }
+
+    fun getStorageDetailsByUser(userId: Id): UserStorageDetailsResult =
+        transactionManager.run {
+            val usersRepository = it.usersRepository
+            usersRepository.getUserById(userId) ?: return@run failure(UserStorageDetailsError.UserNotFound)
+            val storageDetails =
+                usersRepository.getUserStorageDetails(userId)
+            success(storageDetails)
         }
 
     fun createToken(

@@ -12,6 +12,7 @@ import pt.isel.leic.multicloudguardian.domain.token.Token
 import pt.isel.leic.multicloudguardian.domain.token.TokenValidationInfo
 import pt.isel.leic.multicloudguardian.domain.user.PasswordValidationInfo
 import pt.isel.leic.multicloudguardian.domain.user.User
+import pt.isel.leic.multicloudguardian.domain.user.UserStorageDetails
 import pt.isel.leic.multicloudguardian.domain.user.UserStorageInfo
 import pt.isel.leic.multicloudguardian.domain.user.components.Email
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
@@ -130,6 +131,32 @@ class JdbiUsersRepository(
             ).bind("id", userId.value)
             .mapTo<Credentials>()
             .singleOrNull()
+
+    override fun getUserStorageDetails(userId: Id): UserStorageDetails {
+        val results =
+            handle
+                .createQuery(
+                    """
+                    select category, total_size
+                    from user_file_storage_summary
+                    where user_id = :userId
+                    """.trimIndent(),
+                ).bind("userId", userId.value)
+                .map { rs, _ -> rs.getString("category") to rs.getLong("total_size") }
+                .toMap()
+
+        if (results.isEmpty()) return UserStorageDetails(0, 0, 0, 0, 0)
+
+        val totalSize = results.values.sum()
+
+        return UserStorageDetails(
+            totalSize = totalSize,
+            images = results["Images"] ?: 0L,
+            video = results["Video"] ?: 0L,
+            documents = results["Documents"] ?: 0L,
+            others = results["Others"] ?: 0L,
+        )
+    }
 
     override fun countUsersByUsername(username: String): Long =
         handle

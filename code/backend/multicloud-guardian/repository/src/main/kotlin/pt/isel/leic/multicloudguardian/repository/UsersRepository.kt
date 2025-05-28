@@ -9,6 +9,7 @@ import pt.isel.leic.multicloudguardian.domain.token.Token
 import pt.isel.leic.multicloudguardian.domain.token.TokenValidationInfo
 import pt.isel.leic.multicloudguardian.domain.user.PasswordValidationInfo
 import pt.isel.leic.multicloudguardian.domain.user.User
+import pt.isel.leic.multicloudguardian.domain.user.UserStorageDetails
 import pt.isel.leic.multicloudguardian.domain.user.UserStorageInfo
 import pt.isel.leic.multicloudguardian.domain.user.components.Email
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
@@ -64,6 +65,8 @@ interface UsersRepository {
     fun getUserById(userId: Id): User?
 
     fun getUserCredentialsById(userId: Id): Credentials?
+
+    fun getUserStorageDetails(userId: Id): UserStorageDetails
 
     fun getProvider(userId: Id): ProviderType
 
