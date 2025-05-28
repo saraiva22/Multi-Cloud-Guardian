@@ -27,6 +27,9 @@ import {
 import { removeValueFor } from "@/services/storage/SecureStorage";
 import FolderCard from "@/components/FolderCard";
 import FileItemComponent from "@/components/FileItemComponent";
+import { PageResult } from "@/domain/utils/PageResult";
+import { FileType } from "@/domain/storage/FileType";
+import { FolderType } from "@/domain/storage/FolderType";
 
 // The State
 type State =
@@ -34,8 +37,8 @@ type State =
   | { tag: "loading" }
   | {
       tag: "loaded";
-      files: FilesListOutputModel;
-      folders: FoldersListOutputModel;
+      files: PageResult<FileType>;
+      folders: PageResult<FolderType>;
       refreshing: boolean;
     }
   | { tag: "error"; error: Problem | string };
@@ -45,8 +48,8 @@ type Action =
   | { type: "start-loading" }
   | {
       type: "loading-success";
-      files: FilesListOutputModel;
-      folders: FoldersListOutputModel;
+      files: PageResult<FileType>;
+      folders: PageResult<FolderType>;
     }
   | { type: "loading-error"; error: Problem | string }
   | { type: "refreshing"; refreshing: boolean };
@@ -144,13 +147,13 @@ const HomeScreen = () => {
     state.tag === "loaded"
       ? Array.isArray(state.files)
         ? state.files
-        : state.files.files ?? []
+        : state.files.content ?? []
       : [];
   const folders =
     state.tag === "loaded"
       ? Array.isArray(state.folders)
         ? state.folders
-        : state.folders.folders ?? []
+        : state.folders.content ?? []
       : [];
   const refreshing = state.tag === "loaded" && state.refreshing;
 

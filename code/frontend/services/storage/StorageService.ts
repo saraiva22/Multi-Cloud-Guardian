@@ -18,6 +18,9 @@ import { DownloadOutputModel } from "./model/DownloadOutputModel";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 import { Alert, Platform } from "react-native";
+import { PageResult } from "@/domain/utils/PageResult";
+import { FolderType } from "@/domain/storage/FolderType";
+import { FileType } from "@/domain/storage/FileType";
 
 const httpService = httpServiceInit();
 
@@ -193,9 +196,9 @@ export async function processAndSaveDownloadedFile(
   await saveFileLocally(finalData, fileName);
 }
 
-export async function getFiles(): Promise<FilesListOutputModel> {
+export async function getFiles(): Promise<PageResult<FileType>> {
   const path = PREFIX_API + apiRoutes.GET_FILES;
-  return await httpService.get<FilesListOutputModel>(path);
+  return await httpService.get<PageResult<FileType>>(path);
 }
 
 export async function getFile(fileId: string): Promise<FileOutputModel> {
@@ -203,9 +206,9 @@ export async function getFile(fileId: string): Promise<FileOutputModel> {
   return await httpService.get<FileOutputModel>(path);
 }
 
-export async function getFolders(): Promise<FoldersListOutputModel> {
+export async function getFolders(): Promise<PageResult<FolderType>> {
   const path = PREFIX_API + apiRoutes.GET_FOLDERS;
-  return await httpService.get<FoldersListOutputModel>(path);
+  return await httpService.get<PageResult<FolderType>>(path);
 }
 
 // Utils
