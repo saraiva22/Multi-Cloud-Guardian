@@ -36,20 +36,26 @@ typealias UploadFileResult = Either<UploadFileError, Id>
 
 sealed class GetFileByIdError {
     data object FileNotFound : GetFileByIdError()
-
-    data object InvalidCredential : GetFileByIdError()
-
-    data object ErrorCreatingContext : GetFileByIdError()
-
-    data object ErrorCreatingGlobalBucket : GetFileByIdError()
 }
 
-typealias GetFileResult = Either<GetFileByIdError, Pair<File, String>>
+typealias GetFileResult = Either<GetFileByIdError, File>
+
+sealed class CreateTempUrlFileError {
+    data object FileNotFound : CreateTempUrlFileError()
+
+    data object EncryptedFile : CreateTempUrlFileError()
+
+    data object InvalidCredential : CreateTempUrlFileError()
+
+    data object ErrorCreatingContext : CreateTempUrlFileError()
+
+    data object ErrorCreatingGlobalBucket : CreateTempUrlFileError()
+}
+
+typealias CreateTempUrlFileResult = Either<CreateTempUrlFileError, Pair<File, String>>
 
 sealed class DownloadFileError {
     data object FileNotFound : DownloadFileError()
-
-    data object MetadataNotFound : DownloadFileError()
 
     data object InvalidCredential : DownloadFileError()
 
@@ -58,8 +64,6 @@ sealed class DownloadFileError {
     data object ErrorCreatingGlobalBucket : DownloadFileError()
 
     data object ErrorDownloadingFile : DownloadFileError()
-
-    data object ErrorDecryptingFile : DownloadFileError()
 
     data object InvalidKey : DownloadFileError()
 

@@ -41,12 +41,15 @@ object Uris {
         const val UPLOAD = "$PREFIX/files"
         const val GET_FILES = "$PREFIX/files"
         const val GET_BY_ID = "$PREFIX/files/{fileId}"
+        const val CREATE_URL = "$PREFIX/files/{fileId}/temp-url"
         const val DOWNLOAD_FILE = "$PREFIX/files/{fileId}/download"
         const val DELETE = "$PREFIX/files/{fileId}"
 
         fun uploadFile(): URI = URI(UPLOAD)
 
         fun byId(id: Int): URI = UriTemplate(GET_BY_ID).expand(id)
+
+        fun createUrl(id: Int): URI = UriTemplate(CREATE_URL).expand(id)
 
         fun downloadFile(id: Int): URI = UriTemplate(DOWNLOAD_FILE).expand(id)
 

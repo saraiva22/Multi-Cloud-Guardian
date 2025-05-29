@@ -121,7 +121,7 @@ class Problem(
                 type = unauthorizedRequest,
                 title = "Unauthorized Request",
                 status = HttpStatus.UNAUTHORIZED.value(),
-                detail = "The request has not been applied because it lacks valid authentication credentials for the target resource.",
+                detail = "Session credentials are no longer valid or have expired",
                 instance = instance,
             ).toResponse()
 
@@ -433,7 +433,7 @@ class Problem(
                 type = fileIsEncrypted,
                 title = "File is encrypted",
                 status = HttpStatus.BAD_REQUEST.value(),
-                detail = "File $id is encrypted, so it can only be downloaded with the key",
+                detail = "File $id is encrypted and cannot be shared via temporary URL",
                 instance = instance,
             ).toResponse()
     }

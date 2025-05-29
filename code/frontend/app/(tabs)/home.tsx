@@ -144,21 +144,16 @@ const HomeScreen = () => {
   };
 
   const files =
-    state.tag === "loaded"
-      ? Array.isArray(state.files)
-        ? state.files
-        : state.files.content ?? []
+    state.tag === "loaded" && Array.isArray(state.files.content)
+      ? state.files.content
       : [];
+
   const folders =
-    state.tag === "loaded"
-      ? Array.isArray(state.folders)
-        ? state.folders
-        : state.folders.content ?? []
+    state.tag === "loaded" && Array.isArray(state.folders.content)
+      ? state.folders.content
       : [];
   const refreshing = state.tag === "loaded" && state.refreshing;
 
-  console.log("FolderCard folders", folders);
-  console.log("FileItemComponent files", files);
   return (
     <SafeAreaView className="bg-primary h-full">
       {state.tag === "loaded" ? (

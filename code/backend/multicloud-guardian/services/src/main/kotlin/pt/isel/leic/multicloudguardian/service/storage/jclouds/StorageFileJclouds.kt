@@ -213,12 +213,20 @@ class StorageFileJclouds(
         identity: String,
         blobPath: String,
         location: String,
+        expiresIn: Long,
     ): String =
         when (providerId) {
-            ProviderType.GOOGLE -> googleApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
-            ProviderType.AMAZON -> amazonApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
-            ProviderType.AZURE -> azureApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
-            ProviderType.BACK_BLAZE -> blazeApi.generateSignedUrl(credential, bucketName, blobPath, identity, location)
+            ProviderType.GOOGLE ->
+                googleApi.generateSignedUrl(credential, bucketName, blobPath, identity, location, expiresIn)
+
+            ProviderType.AMAZON ->
+                amazonApi.generateSignedUrl(credential, bucketName, blobPath, identity, location, expiresIn)
+
+            ProviderType.AZURE ->
+                azureApi.generateSignedUrl(credential, bucketName, blobPath, identity, location, expiresIn)
+
+            ProviderType.BACK_BLAZE ->
+                blazeApi.generateSignedUrl(credential, bucketName, blobPath, identity, location, expiresIn)
         }
 
     private fun getCredentialFromJsonKeyFile(filename: String): String? =

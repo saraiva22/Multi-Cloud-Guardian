@@ -119,14 +119,24 @@ class StorageService(
         fileId: Id,
     ): GetFileResult =
         transactionManager.run {
-            val usersRepository = it.usersRepository
             val fileRepository = it.storageRepository
             val file =
                 fileRepository.getFileById(user.id, fileId) ?: return@run failure(GetFileByIdError.FileNotFound)
 
-            if (file.encryption) {
-                success(Pair(file, null))
-            }
+            success(file)
+        }
+
+    fun generateTemporaryFileUrl(
+        user: User,
+        fileId: Id,
+        expiresIn: Long,
+    ): CreateTempUrlFileResult =
+        transactionManager.run {
+            val usersRepository = it.usersRepository
+            val fileRepository = it.storageRepository
+            val file =
+                fileRepository.getFileById(user.id, fileId) ?: return@run failure(CreateTempUrlFileError.FileNotFound)
+            if (file.encryption) return@run failure(CreateTempUrlFileError.EncryptedFile)
 
             val provider = usersRepository.getProvider(user.id)
             val bucketName = providerDomain.getBucketName(provider)
@@ -137,14 +147,17 @@ class StorageService(
             when (val contextStorage = createContextStorage(provider, bucketName)) {
                 is Failure ->
                     when (contextStorage.value) {
-                        CreateContextJCloudError.ErrorCreatingContext -> return@run failure(GetFileByIdError.ErrorCreatingContext)
-                        CreateContextJCloudError.ErrorCreatingGlobalBucket -> return@run failure(GetFileByIdError.ErrorCreatingGlobalBucket)
-                        CreateContextJCloudError.InvalidCredential -> return@run failure(GetFileByIdError.InvalidCredential)
+                        CreateContextJCloudError.ErrorCreatingContext -> return@run failure(CreateTempUrlFileError.ErrorCreatingContext)
+                        CreateContextJCloudError.ErrorCreatingGlobalBucket -> return@run failure(
+                            CreateTempUrlFileError.ErrorCreatingGlobalBucket,
+                        )
+
+                        CreateContextJCloudError.InvalidCredential -> return@run failure(CreateTempUrlFileError.InvalidCredential)
                     }
 
                 is Success -> {
                     val generatedUrl =
-                        jcloudsStorage.generateBlobUrl(provider, bucketName, credential, identity, file.path, location)
+                        jcloudsStorage.generateBlobUrl(provider, bucketName, credential, identity, file.path, location, expiresIn)
                     contextStorage.value.close()
                     success(
                         Pair(file, generatedUrl),

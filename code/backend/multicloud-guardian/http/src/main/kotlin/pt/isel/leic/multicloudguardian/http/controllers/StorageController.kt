@@ -25,7 +25,9 @@ import pt.isel.leic.multicloudguardian.http.model.storage.FilesListOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FolderCreateInputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FolderInfoOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FoldersListOutputModel
+import pt.isel.leic.multicloudguardian.http.model.storage.GenerateTempUrlInputModel
 import pt.isel.leic.multicloudguardian.http.model.utils.IdOutputModel
+import pt.isel.leic.multicloudguardian.service.storage.CreateTempUrlFileError
 import pt.isel.leic.multicloudguardian.service.storage.CreationFolderError
 import pt.isel.leic.multicloudguardian.service.storage.DeleteFileError
 import pt.isel.leic.multicloudguardian.service.storage.DeleteFolderError
@@ -135,16 +137,36 @@ class StorageController(
             is Success ->
                 ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(
-                        FileInfoOutputModel.fromDomain(res.value.first, res.value.second),
-                    )
+                    .body(FileInfoOutputModel.fromDomain(res.value))
 
             is Failure ->
                 when (res.value) {
                     GetFileByIdError.FileNotFound -> Problem.fileNotFound(fileId, instance)
-                    GetFileByIdError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
-                    GetFileByIdError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
-                    GetFileByIdError.InvalidCredential -> Problem.invalidCredential(instance)
+                }
+        }
+    }
+
+    @PostMapping(Uris.Files.CREATE_URL)
+    fun generateTemporaryFileUrl(
+        @Validated @PathVariable fileId: Int,
+        @RequestBody input: GenerateTempUrlInputModel,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Files.createUrl(fileId)
+        val res = storageService.generateTemporaryFileUrl(authenticatedUser.user, Id(fileId), input.expiresIn)
+        return when (res) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(FileInfoOutputModel.fromDomain(res.value.first, res.value.second))
+
+            is Failure ->
+                when (res.value) {
+                    CreateTempUrlFileError.FileNotFound -> Problem.fileNotFound(fileId, instance)
+                    CreateTempUrlFileError.EncryptedFile -> Problem.fileIsEncrypted(fileId, instance)
+                    CreateTempUrlFileError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
+                    CreateTempUrlFileError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
+                    CreateTempUrlFileError.InvalidCredential -> Problem.invalidCredential(instance)
                 }
         }
     }
@@ -180,10 +202,8 @@ class StorageController(
                     DownloadFileError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
                     DownloadFileError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
                     DownloadFileError.InvalidCredential -> Problem.invalidCredential(instance)
-                    DownloadFileError.ErrorDecryptingFile -> Problem.invalidDecryptFile(instance)
                     DownloadFileError.InvalidKey -> Problem.invalidKey(instance)
                     DownloadFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(0, instance)
-                    DownloadFileError.MetadataNotFound -> Problem.metadataNotFound(fileId, instance)
                 }
         }
     }
@@ -472,10 +492,8 @@ class StorageController(
                     DownloadFileError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
                     DownloadFileError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
                     DownloadFileError.InvalidCredential -> Problem.invalidCredential(instance)
-                    DownloadFileError.ErrorDecryptingFile -> Problem.invalidDecryptFile(instance)
                     DownloadFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(folderId, instance)
                     DownloadFileError.InvalidKey -> Problem.invalidKey(instance)
-                    DownloadFileError.MetadataNotFound -> Problem.metadataNotFound(fileId, instance)
                 }
         }
     }

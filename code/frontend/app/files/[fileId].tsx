@@ -192,8 +192,8 @@ const FileDetails = () => {
   const fetchFileDetails = async () => {
     dispatch({ type: "start-loading" });
     try {
-      console.log("PEDIDO GETFILE")
       const details = await getFile(fileId.toString());
+      console.log("DETAILS ", details);
       dispatch({ type: "loading-success", details });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
