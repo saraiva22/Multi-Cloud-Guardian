@@ -44,9 +44,74 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
     if (System.getenv("DB_URL") == null) {
-        environment("DB_URL", "jdbc:postgresql://localhost:5432/db?user=dbuser&password=changeit")
+        environment("DB_URL", "jdbc:postgresql://multi-cloud-guardian-tests:5432/db?user=dbuser&password=changeit")
     }
+    dependsOn(":multicloud-guardian:repository-jdbi:dbTestsWait")
+    finalizedBy(":multicloud-guardian:repository-jdbi:dbTestsDown")
 }
 kotlin {
     jvmToolchain(21)
+}
+
+/**
+ * Docker related tasks
+ */
+task<Copy>("extractUberJar") {
+    dependsOn("assemble")
+    // opens the JAR containing everything...
+    from(
+        zipTree(
+            layout.buildDirectory
+                .file("libs/host-$version.jar")
+                .get()
+                .toString(),
+        ),
+    )
+    // ... into the 'build/dependency' folder
+    into("build/dependency")
+}
+
+val dockerImageTagJvm = "multi-cloud-guardian-jvm"
+val dockerImageTagNginx = "multi-cloud-guardian-nginx"
+val dockerImageTagPostgresTest = "multi-cloud-guardian-postgres-test"
+val dockerImageTagUbuntu = "multi-cloud-guardian-ubuntu"
+
+task<Exec>("buildImageJvm") {
+    dependsOn("extractUberJar")
+    commandLine("docker", "build", "-t", dockerImageTagJvm, "-f", "tests/Dockerfile-jvm", ".")
+}
+
+task<Exec>("buildImageNginx") {
+    commandLine("docker", "build", "-t", dockerImageTagNginx, "-f", "tests/Dockerfile-nginx", ".")
+}
+
+task<Exec>("buildImagePostgresTest") {
+    commandLine(
+        "docker",
+        "build",
+        "-t",
+        dockerImageTagPostgresTest,
+        "-f",
+        "tests/Dockerfile-postgres-test",
+        "../repository-jdbi",
+    )
+}
+
+task<Exec>("buildImageUbuntu") {
+    commandLine("docker", "build", "-t", dockerImageTagUbuntu, "-f", "tests/Dockerfile-ubuntu", ".")
+}
+
+task("buildImageAll") {
+    dependsOn("buildImageJvm")
+    dependsOn("buildImageNginx")
+    dependsOn("buildImagePostgresTest")
+    dependsOn("buildImageUbuntu")
+}
+
+task<Exec>("allUp") {
+    commandLine("docker", "compose", "up", "--force-recreate", "-d")
+}
+
+task<Exec>("allDown") {
+    commandLine("docker", "compose", "down")
 }
