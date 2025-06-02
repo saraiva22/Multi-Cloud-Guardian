@@ -46,8 +46,6 @@ tasks.test {
     if (System.getenv("DB_URL") == null) {
         environment("DB_URL", "jdbc:postgresql://multi-cloud-guardian-tests:5432/db?user=dbuser&password=changeit")
     }
-    dependsOn(":multicloud-guardian:repository-jdbi:dbTestsWait")
-    finalizedBy(":multicloud-guardian:repository-jdbi:dbTestsDown")
 }
 kotlin {
     jvmToolchain(21)

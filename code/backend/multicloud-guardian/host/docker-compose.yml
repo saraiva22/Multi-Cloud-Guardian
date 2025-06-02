@@ -23,7 +23,7 @@ services:
         - 8082:8082
 
 
-      # Just a machine running ubuntu, with 'dig' installed so that we can observe the docker compose environment.
+    # Just a machine running ubuntu, with 'dig' installed so that we can observe the docker compose environment.
     ubuntu:
       container_name: ubuntu
       image: multi-cloud-guardian-ubuntu

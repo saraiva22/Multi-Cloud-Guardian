@@ -10,3 +10,25 @@ services:
       - POSTGRES_DB=db
     ports:
       - 5432:5432
+
+  #  multi-cloud-guardian-jvm-1 and  multi-cloud-guardian-jvm-2 are used to illustrate scenarios with a fixed number of servers
+  # with static and well know names.
+  multi-cloud-guardian-jvm-1:
+    image: multi-cloud-guardian-jvm
+    hostname: multi-cloud-guardian-jvm
+    build:
+      context: ./host
+      dockerfile: ./tests/Dockerfile-jvm
+    env_file:
+      - ./host/.env
+    ports:
+      - 8080:8080
+
+  # Just a machine running ubuntu, with 'dig' installed so that we can observe the docker compose environment.
+  ubuntu:
+    container_name: ubuntu
+    image: multi-cloud-guardian-ubuntu
+    build:
+      context: ./host
+      dockerfile: ./tests/Dockerfile-ubuntu
+    tty: true
