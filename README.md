@@ -24,17 +24,14 @@
 
 ## 📑 Table of Contents
 
-- [About the Project](#about-the-project)
-  - [Main Features](#main-features)
+- [About the Project](#-about-the-project)
+  - [Main Features](#-main-features)
   - [Built With](#built-with)
   - [Backend Documentation](#-backend-documentation)
   - [Frontend Documentation](#-frontend-documentation)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [Usage](#usage)
-- [Architecture](#architecture)
-- [License](#license)
+- [Getting Started](#-getting-started)
+  - [Prerequisites](#-prerequisites)
+  - [Installation](#-installation)
 - [Contact](#contact)
 
 ---
