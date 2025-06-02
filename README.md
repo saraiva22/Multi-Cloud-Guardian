@@ -26,7 +26,6 @@
 
 - [About the Project](#-about-the-project)
   - [Main Features](#-main-features)
-  - [Built With](#built-with)
   - [Backend Documentation](#-backend-documentation)
   - [Frontend Documentation](#-frontend-documentation)
 - [Getting Started](#-getting-started)
@@ -70,8 +69,6 @@ This section provides links and context for exploring the frontend codebase and 
 
 - [**Frontend Source Code**](./code/frontend/)  
   Contains all the frontend code.
-
-
 
 ---
 
@@ -121,6 +118,13 @@ git clone https://github.com/saraiva22/Multi-Cloud-Guardian.git
 cd Multi-Cloud-Guardian/code/backend/multicloud-guardian
 docker-compose up -d
 ```
+
+> ⚠️ **Important**: To run the backend, you will need a valid `.env` file located at:  
+> [./code/backend/multicloud-guardian/host/](./code/backend/multicloud-guardian/host/)
+>
+> Please contact **Francisco Saraiva (Developer)** to request access to this file.
+>
+> 📧 [a49462@alunos.isel.pt](mailto:a49462@alunos.isel.pt) to request access to this file.
 
 #### Frontend
 
