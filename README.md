@@ -70,6 +70,9 @@ This section provides links and context for exploring the frontend codebase and 
 - [**Frontend Source Code**](./code/frontend/)  
   Contains all the frontend code.
 
+- [**Frontend Architecture Overview**](./code/frontend/docs/frontend-impl.md)  
+  Overview of the backend structure and module responsibilities.
+
 ---
 
 ## 🛠️ Built With
