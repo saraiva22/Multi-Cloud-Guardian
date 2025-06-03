@@ -4,6 +4,7 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 multicloud-guardian/host/.env
+multicloud-guardian/host/json-key.json
 
 ### IntelliJ IDEA ###
 .idea/
@@ -41,3 +42,5 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Credentials ###
