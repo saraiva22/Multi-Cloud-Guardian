@@ -38,6 +38,12 @@ const ProfileScreen = () => {
       router.push("/(modals)/preferences");
     }
   };
+
+  const handleStorageDetails = async () => {
+    if (username) {
+      router.push("/(modals)/storage-details");
+    }
+  };
   return (
     <SafeAreaView className="bg-primary h-full">
       <View className="items-center mt-16">
@@ -71,7 +77,10 @@ const ProfileScreen = () => {
           <Text className="text-[22px] text-gray-200">{">"}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity className="flex-row items-center justify-between py-3 bg-primary rounded-lg">
+        <TouchableOpacity
+          onPress={handleStorageDetails}
+          className="flex-row items-center justify-between py-3 bg-primary rounded-lg"
+        >
           <View className="flex-row items-center space-x-4">
             <Image
               source={icons.storage}

@@ -1,6 +1,6 @@
 import { MEDIA_TYPE_PROBLEM, Problem } from "../media/Problem";
 
-const LOCAL_IP = "localhost";
+const LOCAL_IP = "192.168.1.107";
 const PORT = "8080";
 
 export const PREFIX_API = `http://${LOCAL_IP}:${PORT}/api`;
@@ -13,6 +13,7 @@ export const apiRoutes = {
   GET_USER_BY_ID: "/users/:id",
   GET_USER_BY_USERNAME: "/users/info",
   GET_USER_CREDENTIALS: "/users/credentials",
+  GET_STORAGE_DETAILS: "/users/storage",
   SEARCH_USERS: "/users",
   HOME: "/me",
 
@@ -22,7 +23,6 @@ export const apiRoutes = {
   GET_FILE_BY_ID: "/files/:id",
   DOWNLOAD_FILE: "/files/:id/download",
   DELETE_FILE: "/files/:id",
-
 
   // Folders
   CREATE_FOLDER: "/folders",

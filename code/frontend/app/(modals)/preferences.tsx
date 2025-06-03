@@ -86,50 +86,43 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-async function fetchPreferences(
-  username: string,
-  isFetching: boolean,
-  setIsFetching: (isFetching: boolean) => void,
-  dispatch: (action: Action) => void
-) {
-  if (isFetching) return;
-
-  const params = new URLSearchParams({ username }).toString();
-  const path = `${PREFIX_API}${apiRoutes.GET_USER_BY_USERNAME}?${params}`;
-  setIsFetching(true);
-  dispatch({ type: "start-loading", url: path });
-  try {
-    const res = await getUserByUsername(username);
-
-    const locationInfo = LocationTypeInfo[res.locationType as LocationType];
-    const performanceInfo =
-      PerformanceTypeInfo[res.performanceType as PerformanceType];
-
-    dispatch({
-      type: "loading-success",
-      userInfo: res,
-      locationInfo,
-      performanceInfo,
-    });
-  } catch (error) {
-    console.log("Error fetching preferences:", error);
-    dispatch({ type: "loading-error", error: error });
-  } finally {
-    setIsFetching(false);
-  }
-}
-
 const firstState: State = { tag: "begin" };
 const KEY_NAME = "user_info";
 
 const Preferences = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
   const { username, setIsLogged, setUsername } = useAuthentication();
-  const [isFetching, setIsFetching] = useState(false);
+
+  async function handlePreferences(
+    username: string,
+    dispatch: (action: Action) => void
+  ) {
+    const params = new URLSearchParams({ username }).toString();
+    const path = `${PREFIX_API}${apiRoutes.GET_USER_BY_USERNAME}?${params}`;
+
+    dispatch({ type: "start-loading", url: path });
+    try {
+      const res = await getUserByUsername(username);
+
+      const locationInfo = LocationTypeInfo[res.locationType as LocationType];
+      const performanceInfo =
+        PerformanceTypeInfo[res.performanceType as PerformanceType];
+
+      dispatch({
+        type: "loading-success",
+        userInfo: res,
+        locationInfo,
+        performanceInfo,
+      });
+    } catch (error) {
+      console.log("Error fetching preferences:", error);
+      dispatch({ type: "loading-error", error: error });
+    }
+  }
 
   useEffect(() => {
     if (state.tag == "begin" && username !== undefined) {
-      fetchPreferences(username, isFetching, setIsFetching, dispatch);
+      handlePreferences(username, dispatch);
     }
 
     if (state.tag === "error") {
@@ -148,7 +141,7 @@ const Preferences = () => {
       removeValueFor(KEY_NAME);
       router.replace("/sign-in");
     }
-  }, [isFetching, setIsFetching, state]);
+  }, [state]);
   switch (state.tag) {
     case "begin":
       return (

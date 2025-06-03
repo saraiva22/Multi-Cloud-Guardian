@@ -6,6 +6,7 @@ import { PerformanceType } from "@/domain/preferences/PerformanceType";
 import { LocationType } from "@/domain/preferences/LocationType";
 import { CreateUserOutputModel } from "./models/CredentialOutputMode";
 import { UserInfoOutputModel } from "./models/UserInfoOutuputModel";
+import { StorageDetailsOutputModel } from "./models/StorageDetailsOutputModel";
 
 const httpService = httpServiceInit();
 
@@ -63,4 +64,9 @@ export async function getUserByUsername(
   const params = new URLSearchParams({ username }).toString();
   const path = `${PREFIX_API}${apiRoutes.GET_USER_BY_USERNAME}?${params}`;
   return await httpService.get<UserInfoOutputModel>(path);
+}
+
+export async function getStorageDetails(): Promise<StorageDetailsOutputModel> {
+  const path = PREFIX_API + apiRoutes.GET_STORAGE_DETAILS;
+  return await httpService.get<StorageDetailsOutputModel>(path);
 }

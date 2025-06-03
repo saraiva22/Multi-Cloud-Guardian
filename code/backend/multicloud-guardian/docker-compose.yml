@@ -21,6 +21,8 @@ services:
       dockerfile: ./tests/Dockerfile-jvm
     env_file:
       - ./host/.env
+    volumes:
+      - ./host/json-key.json:/app/creds/json-key.json:ro
     ports:
       - 8080:8080
 

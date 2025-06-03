@@ -1,9 +1,9 @@
 import { months } from "@/constants/months";
 
 export const formatSize = (bytes?: number) => {
-  if (!bytes) return "";
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} Mb`;
-  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} Kb`;
+  if (!bytes) return "0 Kb";
+  if (bytes >= 1000 * 1000) return `${(bytes / (1000 * 1000)).toFixed(1)} Mb`;
+  if (bytes >= 1000) return `${(bytes / 1000).toFixed(1)} Kb`;
   return `${bytes} B`;
 };
 
