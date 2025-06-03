@@ -18,7 +18,7 @@ import { StorageDetailsOutputModel } from "@/services/users/models/StorageDetail
 import { getStorageDetails } from "@/services/users/UserService";
 import { router } from "expo-router";
 import { useEffect, useReducer } from "react";
-import { icons } from "@/constants";
+import { colors, icons } from "@/constants";
 import { formatSize } from "@/services/utils/Function";
 import StorageUsageChart from "@/components/StorageDonutChart";
 import StorageBarItem from "@/components/StorageBarItem";
@@ -123,18 +123,22 @@ const StorageDetails = () => {
         {
           label: "Images",
           value: state.storageDetails.images,
-          color: "#557CFF",
+          color: colors.Images,
         },
-        { label: "Video", value: state.storageDetails.video, color: "#30F27F" },
+        {
+          label: "Videos",
+          value: state.storageDetails.video,
+          color: colors.Video,
+        },
         {
           label: "Documents",
           value: state.storageDetails.documents,
-          color: "#F4C042",
+          color: colors.Documents,
         },
         {
           label: "Others",
           value: state.storageDetails.others,
-          color: "#FF474C",
+          color: colors.Others,
         },
       ];
       return (
@@ -167,35 +171,21 @@ const StorageDetails = () => {
             </Text>
           </View>
           <View className="mb-6 mt-2">
-            <StorageBarItem
-              label="Images"
-              value={state.storageDetails.images}
-              total={state.storageDetails.totalSize}
-              color="#F4C042"
-            />
-            <StorageBarItem
-              label="Video"
-              value={state.storageDetails.video}
-              total={state.storageDetails.totalSize}
-              color="#30F27F"
-            />
-            <StorageBarItem
-              label="Documents"
-              value={state.storageDetails.documents}
-              total={state.storageDetails.totalSize}
-              color="#557CFF"
-            />
-            <StorageBarItem
-              label="Others"
-              value={state.storageDetails.others}
-              total={state.storageDetails.totalSize}
-              color="#FF474C"
-            />
+            <View className="mb-6 mt-2">
+              {chartData.map((item) => (
+                <StorageBarItem
+                  key={item.label}
+                  label={item.label}
+                  value={item.value}
+                  total={state.storageDetails.totalSize}
+                  color={item.color}
+                />
+              ))}
+            </View>
           </View>
         </SafeAreaView>
       );
     }
-
     case "error":
       return (
         <SafeAreaView className="bg-primary flex-1">
