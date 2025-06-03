@@ -9,5 +9,5 @@ export type FileOutputModel = {
   size: number;
   createdAt: number;
   encryption: boolean;
-  url: string;
+  url: string | null;
 };

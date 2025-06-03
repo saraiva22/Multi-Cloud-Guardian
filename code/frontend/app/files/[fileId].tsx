@@ -11,6 +11,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import {
   deleteFile,
   downloadFile,
+  generateTemporaryUrl,
   getFile,
   processAndSaveDownloadedFile,
 } from "@/services/storage/StorageService";
@@ -27,6 +28,7 @@ import { icons } from "@/constants";
 import CustomButton from "@/components/CustomButton";
 import { formatDate, formatSize } from "@/services/utils/Function";
 import { DownloadOutputModel } from "@/services/storage/model/DownloadOutputModel";
+import * as Clipboard from "expo-clipboard";
 
 // The State
 type State =
@@ -46,6 +48,7 @@ type Action =
   | { type: "loading-success"; details: FileOutputModel }
   | { type: "loading-error"; error: Problem | string }
   | { type: "download-loading"; details: FileOutputModel }
+  | { type: "url-loading"; details: FileOutputModel }
   | { type: "delete-loading" }
   | { type: "success-delete" };
 
@@ -81,6 +84,8 @@ function reducer(state: State, action: Action): State {
     case "loaded":
       if (action.type === "download-loading") {
         return { tag: "loading" };
+      } else if (action.type === "url-loading") {
+        return { tag: "loading" };
       } else if (action.type === "delete-loading") {
         return { tag: "loading" };
       } else {
@@ -107,6 +112,7 @@ type FileInfoProps = {
   state: State;
   handleDownload: () => Promise<any>;
   handleDelete: () => Promise<any>;
+  handleGenerateTemporaryUrl: () => Promise<any>;
 };
 
 const FileInfo = ({
@@ -114,6 +120,7 @@ const FileInfo = ({
   state,
   handleDownload,
   handleDelete,
+  handleGenerateTemporaryUrl,
 }: FileInfoProps) => (
   <SafeAreaView className="flex-1 bg-primary h-full px-6 py-12">
     <TouchableOpacity
@@ -170,6 +177,16 @@ const FileInfo = ({
         isLoading={state.tag === "loading"}
         color="border-secondary"
       />
+      {fileInfo.encryption === false && (
+        <CustomButton
+          title="Generate Temporary URL "
+          handlePress={handleGenerateTemporaryUrl}
+          containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
+          textStyles="text-black text-center font-bold"
+          isLoading={state.tag === "loading"}
+          color="border-secondary"
+        />
+      )}
       <CustomButton
         title="Delete"
         handlePress={handleDelete}
@@ -179,6 +196,29 @@ const FileInfo = ({
         color="border-secondary"
       />
     </View>
+    {state.tag === "loaded" &&
+      fileInfo.encryption === false &&
+      fileInfo.url !== null && (
+        <View className="w-full mb-4 rounded-lg py-4">
+          <Text className="text-white text-center text-xl mb-2 font-medium">
+            Temporary access link generated
+          </Text>
+          <TouchableOpacity
+            onPress={async () => {
+              await Clipboard.setStringAsync(`${fileInfo.url}`);
+              Alert.alert(
+                "Link Copied",
+                "You can now paste the link anywhere to share temporary access to this file."
+              );
+            }}
+            className="bg-tertiary rounded-xl py-3 px-6 active:opacity-80"
+          >
+            <Text className="text-white text-center font-bold text-xl">
+              📋 Copy Link
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
   </SafeAreaView>
 );
 
@@ -206,6 +246,19 @@ const FileDetails = () => {
     try {
       await deleteFile(fileId.toString());
       dispatch({ type: "success-delete" });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
+  }
+
+  async function handleGenerateTemporaryUrl() {
+    if (state.tag !== "loaded") return;
+    dispatch({ type: "url-loading", details: state.details });
+    try {
+      const defaultTime = 15; // 15 minutes
+      const value = await generateTemporaryUrl(fileId.toString(), defaultTime);
+      console.log("VALUE ", value);
+      dispatch({ type: "loading-success", details: value });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
     }
@@ -283,6 +336,7 @@ const FileDetails = () => {
           state={state}
           handleDownload={handleDownload}
           handleDelete={handleDelete}
+          handleGenerateTemporaryUrl={handleGenerateTemporaryUrl}
         />
       );
     }

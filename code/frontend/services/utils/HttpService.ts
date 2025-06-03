@@ -23,6 +23,7 @@ export const apiRoutes = {
   GET_FILE_BY_ID: "/files/:id",
   DOWNLOAD_FILE: "/files/:id/download",
   DELETE_FILE: "/files/:id",
+  CREATE_TEMP_URL: "/files/:id/temp-url",
 
   // Folders
   CREATE_FOLDER: "/folders",

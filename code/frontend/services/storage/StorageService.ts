@@ -141,6 +141,19 @@ export async function deleteFile(fileId: string): Promise<void> {
   return await httpService.delete<void>(path);
 }
 
+export async function generateTemporaryUrl(
+  fileId: string,
+  minutes: number
+): Promise<FileOutputModel> {
+  const path = PREFIX_API + apiRoutes.CREATE_TEMP_URL.replace(":id", fileId);
+  return await httpService.post<FileOutputModel>(
+    path,
+    JSON.stringify({
+      expiresIn: minutes,
+    })
+  );
+}
+
 export async function processAndSaveDownloadedFile(
   downloadFile: DownloadOutputModel,
   keyMaster: any
