@@ -136,6 +136,11 @@ export async function downloadFile(
   return await httpService.get<DownloadOutputModel>(path);
 }
 
+export async function deleteFile(fileId: string): Promise<void> {
+  const path = PREFIX_API + apiRoutes.DELETE_FILE.replace(":id", fileId);
+  return await httpService.delete<void>(path);
+}
+
 export async function processAndSaveDownloadedFile(
   downloadFile: DownloadOutputModel,
   keyMaster: any

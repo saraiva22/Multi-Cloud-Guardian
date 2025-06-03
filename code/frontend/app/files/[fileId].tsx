@@ -9,6 +9,7 @@ import {
 import React, { useEffect, useReducer } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import {
+  deleteFile,
   downloadFile,
   getFile,
   processAndSaveDownloadedFile,
@@ -105,9 +106,15 @@ type FileInfoProps = {
   fileInfo: FileOutputModel;
   state: State;
   handleDownload: () => Promise<any>;
+  handleDelete: () => Promise<any>;
 };
 
-const FileInfo = ({ fileInfo, state, handleDownload }: FileInfoProps) => (
+const FileInfo = ({
+  fileInfo,
+  state,
+  handleDownload,
+  handleDelete,
+}: FileInfoProps) => (
   <SafeAreaView className="flex-1 bg-primary h-full px-6 py-12">
     <TouchableOpacity
       className="absolute left-6 top-8 z-10 mt-10"
@@ -163,6 +170,14 @@ const FileInfo = ({ fileInfo, state, handleDownload }: FileInfoProps) => (
         isLoading={state.tag === "loading"}
         color="border-secondary"
       />
+      <CustomButton
+        title="Delete"
+        handlePress={handleDelete}
+        containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
+        textStyles="text-black text-center font-bold"
+        isLoading={state.tag === "loading"}
+        color="border-secondary"
+      />
     </View>
   </SafeAreaView>
 );
@@ -187,6 +202,13 @@ const FileDetails = () => {
 
   async function handleDelete() {
     if (state.tag !== "loaded") return;
+    dispatch({ type: "delete-loading" });
+    try {
+      await deleteFile(fileId.toString());
+      dispatch({ type: "success-delete" });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
   }
 
   const fetchFileDetails = async () => {
@@ -219,6 +241,9 @@ const FileDetails = () => {
   useEffect(() => {
     if (state.tag === "begin") {
       fetchFileDetails();
+    }
+    if (state.tag === "redirect") {
+      router.replace("/files");
     }
 
     if (state.tag === "error") {
@@ -257,6 +282,7 @@ const FileDetails = () => {
           fileInfo={state.details}
           state={state}
           handleDownload={handleDownload}
+          handleDelete={handleDelete}
         />
       );
     }
