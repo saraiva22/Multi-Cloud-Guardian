@@ -11,13 +11,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import EmptyState from "@/components/EmptyState";
 import SearchBar from "@/components/SearchBar";
-import { icons, images } from "@/constants";
+import { icons } from "@/constants";
 import { useAuthentication } from "@/context/AuthProvider";
 import React, { useEffect, useReducer, useState } from "react";
 import { useRouter } from "expo-router";
 import { getFiles, getFolders } from "@/services/storage/StorageService";
-import { FilesListOutputModel } from "@/services/storage/model/FilesListOutputModel";
-import { FoldersListOutputModel } from "@/services/storage/model/FoldersListOutputModel";
 
 import {
   getProblemMessage,
@@ -108,6 +106,7 @@ const HomeScreen = () => {
   const loadData = async () => {
     try {
       dispatch({ type: "start-loading" });
+      console.log("ENTROU AQUI");
       const files = await getFiles();
       const folders = await getFolders();
       dispatch({

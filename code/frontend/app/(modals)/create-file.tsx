@@ -78,7 +78,7 @@ function reducer(state: State, action: Action): State {
         return {
           tag: "editing",
           error: action.message,
-          inputs: { fileName: state.fileName, encryption: false, file: null },
+          inputs: { fileName: "", encryption: false, file: null },
         };
       } else {
         logUnexpectedAction(state, action);

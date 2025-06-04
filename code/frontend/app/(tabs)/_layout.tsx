@@ -1,18 +1,11 @@
-import {
-  View,
-  Text,
-  Image,
-  Platform,
-  useColorScheme,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
-import { router, Tabs } from "expo-router";
+import { View, Text, Image, TouchableOpacity } from "react-native";
+import { Tabs } from "expo-router";
 import { icons } from "../../constants";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { NavigationContainer } from "@react-navigation/native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import HomeScreen from "./home";
+import BottomSheet from "@gorhom/bottom-sheet";
+import PlusSheet from "@/components/PlusSheet";
+import { useRef } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const AvailableRoutes = [
   { key: "home", title: "Home", icon: icons.home },
@@ -58,102 +51,108 @@ function TabsLayout() {
   // const tabBarBackground = colorScheme !== "dark" ? "#232533" : "#fff";
   // const tabBarBorder = colorScheme !== "dark" ? "#2C2C38" : "#eee";
   const insets = useSafeAreaInsets();
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  const openBottomSheet = () => {
+    bottomSheetRef.current?.expand();
+  };
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarShowLabel: false,
-        tabBarActiveTintColor: "#FFA001",
-        tabBarInactiveTintColor: "#CDCDE0",
-        tabBarItemStyle: {
-          width: "100%",
-          height: "100%",
-          justifyContent: "center",
-          alignItems: "center",
-        },
-        tabBarStyle: {
-          backgroundColor: "#1E1E2D",
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: 78 + insets.bottom,
-          paddingTop: 15,
-          paddingBottom: insets.bottom,
-          borderTopWidth: 0,
-        },
-      }}
-      backBehavior="history"
-    >
-      {AvailableRoutes.map((route, index) => {
-        const isPlus = route.key === "plus";
-        if (isPlus) {
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Tabs
+        screenOptions={{
+          tabBarShowLabel: false,
+          tabBarActiveTintColor: "#FFA001",
+          tabBarInactiveTintColor: "#CDCDE0",
+          tabBarItemStyle: {
+            width: "100%",
+            height: "100%",
+            justifyContent: "center",
+            alignItems: "center",
+          },
+          tabBarStyle: {
+            backgroundColor: "#1E1E2D",
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 78 + insets.bottom,
+            paddingTop: 15,
+            paddingBottom: insets.bottom,
+            borderTopWidth: 0,
+          },
+        }}
+        backBehavior="history"
+      >
+        {AvailableRoutes.map((route) => {
+          const isPlus = route.key === "plus";
+          if (isPlus) {
+            return (
+              <Tabs.Screen
+                key={route.key}
+                name={route.key}
+                options={{
+                  headerShown: false,
+                  tabBarButton: (props) => (
+                    <TouchableOpacity
+                      {...props}
+                      onPress={openBottomSheet}
+                      style={{
+                        top: -45,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        ...props.style,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 60,
+                          height: 60,
+                          borderRadius: 35,
+                          backgroundColor: "#FFA001",
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Image
+                          source={route.icon}
+                          resizeMode="contain"
+                          style={{
+                            width: 24,
+                            height: 24,
+                            tintColor: "white",
+                          }}
+                        />
+                      </View>
+                    </TouchableOpacity>
+                  ),
+                }}
+              />
+            );
+          }
           return (
             <Tabs.Screen
               key={route.key}
               name={route.key}
               options={{
                 headerShown: false,
-                tabBarButton: (props) => (
-                  <TouchableOpacity
-                    {...props}
-                    onPress={() => {
-                      router.push("/(modals)/create");
-                    }}
-                    style={{
-                      top: -45,
-                      justifyContent: "center",
-                      alignItems: "center",
-                      ...props.style,
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 60,
-                        height: 60,
-                        borderRadius: 35,
-                        backgroundColor: "#FFA001",
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Image
-                        source={route.icon}
-                        resizeMode="contain"
-                        style={{
-                          width: 24,
-                          height: 24,
-                          tintColor: "white",
-                        }}
-                      />
-                    </View>
-                  </TouchableOpacity>
+                tabBarItemStyle: { marginLeft: "auto" },
+
+                tabBarIcon: ({ color, focused }) => (
+                  <TabIcon
+                    icon={route.icon}
+                    color={color}
+                    name={route.title}
+                    focused={focused}
+                  />
                 ),
               }}
             />
           );
-        }
-        return (
-          <Tabs.Screen
-            key={route.key}
-            name={route.key}
-            options={{
-              headerShown: false,
-              tabBarItemStyle: { marginLeft: "auto" },
-
-              tabBarIcon: ({ color, focused }) => (
-                <TabIcon
-                  icon={route.icon}
-                  color={color}
-                  name={route.title}
-                  focused={focused}
-                />
-              ),
-            }}
-          />
-        );
-      })}
-    </Tabs>
+        })}
+      </Tabs>
+      <PlusSheet ref={bottomSheetRef} />
+    </GestureHandlerRootView>
   );
 }
 
