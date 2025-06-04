@@ -22,6 +22,7 @@ import {
 } from "@/services/media/Problem";
 import { uploadFile } from "@/services/storage/StorageService";
 
+// The State
 type State =
   | {
       tag: "editing";
@@ -40,6 +41,7 @@ type State =
     }
   | { tag: "redirect" };
 
+// The Action
 type Action =
   | { type: "edit"; inputName: string; inputValue: string | boolean | any }
   | { type: "submit" }
@@ -104,7 +106,7 @@ const CreateFile = () => {
     if (state.tag === "redirect") {
       router.replace("/files");
     }
-  });
+  }, [state]);
 
   // Handle input changes
   function handleChange(inputName: string, inputValue: string | boolean | any) {
@@ -166,7 +168,7 @@ const CreateFile = () => {
 
     if (!fileName?.trim() || !file) {
       Alert.alert("Error", "Please fill in all fields");
-      dispatch({ type: "error", message: "Invalid username or password" });
+      dispatch({ type: "error", message: "Please fill in all field" });
       return;
     }
 

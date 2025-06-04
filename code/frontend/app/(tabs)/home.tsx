@@ -81,7 +81,7 @@ function reducer(state: State, action: Action): State {
         return state;
       }
     case "error":
-      return { tag: "error", error: action.error };
+      return { tag: "error", error: state.error };
     case "loaded":
       if (action.type === "refreshing") {
         return { tag: "begin", refreshing: action.refreshing };

@@ -224,6 +224,16 @@ export async function getFile(fileId: string): Promise<FileOutputModel> {
   return await httpService.get<FileOutputModel>(path);
 }
 
+export async function createFolder(folderName: string): Promise<any> {
+  const path = PREFIX_API + apiRoutes.CREATE_FOLDER;
+  return await httpService.post<void>(
+    path,
+    JSON.stringify({
+      folderName: folderName,
+    })
+  );
+}
+
 export async function getFolders(): Promise<PageResult<FolderType>> {
   const path = PREFIX_API + apiRoutes.GET_FOLDERS;
   return await httpService.get<PageResult<FolderType>>(path);
