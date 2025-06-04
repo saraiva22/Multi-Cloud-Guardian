@@ -39,7 +39,7 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
     if (System.getenv("DB_URL") == null) {
-        environment("DB_URL", "jdbc:postgresql://multi-cloud-guardian-tests:5432/db?user=dbuser&password=changeit")
+        environment("DB_URL", "jdbc:postgresql://localhost:5432/db?user=dbuser&password=changeit")
     }
 }
 kotlin {

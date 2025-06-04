@@ -11,9 +11,8 @@ services:
     ports:
       - 5432:5432
 
-  #  multi-cloud-guardian-jvm-1 and  multi-cloud-guardian-jvm-2 are used to illustrate scenarios with a fixed number of servers
-  # with static and well know names.
-  multi-cloud-guardian-jvm-1:
+
+  multi-cloud-guardian-jvm:
     image: multi-cloud-guardian-jvm
     hostname: multi-cloud-guardian-jvm
     build:
