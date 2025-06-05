@@ -158,7 +158,7 @@ const HomeScreen = () => {
       {state.tag === "loaded" ? (
         <FlatList
           data={files}
-          keyExtractor={(item, index) => String(item.fileId || index)}
+          keyExtractor={(item) => String(item.fileId)}
           renderItem={({ item }) => <FileItemComponent item={item} />}
           contentContainerStyle={{ paddingBottom: 80 }}
           ListHeaderComponent={() => (

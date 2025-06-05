@@ -3,15 +3,15 @@ import React from "react";
 import { Link, useRouter } from "expo-router";
 import { icons } from "@/constants";
 import { formatDate, formatSize } from "@/services/utils/Function";
-import { FileType } from "@/domain/storage/FileType";
+import { FolderType } from "@/domain/storage/FolderType";
 
-const FileItemComponent = ({ item }: { item: FileType }) => {
+const FolderItemComponent = ({ item }: { item: FolderType }) => {
   const router = useRouter();
 
   return (
-    <Link href={`/files/${item.fileId}`} asChild>
+    <Link href={`/folders/${item.folderId}`} asChild>
       <TouchableOpacity
-        onPress={() => router.push(`/files/${item.fileId}`)}
+        onPress={() => router.push(`/folders/${item.folderId}`)}
         style={{
           flexDirection: "row",
           alignItems: "center",
@@ -22,18 +22,18 @@ const FileItemComponent = ({ item }: { item: FileType }) => {
         }}
       >
         <Image
-          source={icons.image_icon}
+          source={icons.folder}
           className="w-7 h-7 mr-5"
           resizeMode="contain"
         />
 
         <View style={{ flex: 1 }}>
           <Text className="text-white text-xl" numberOfLines={1}>
-            {item.name}
+            {item.folderName}
           </Text>
           <Text className="text-gray-400 text-base">
             {item.size ? `${formatSize(item.size)}, ` : ""}
-            created on {formatDate(item.createdAt)}
+            Modified {formatDate(item.createdAt)}
           </Text>
         </View>
         <TouchableOpacity>
@@ -52,4 +52,4 @@ const FileItemComponent = ({ item }: { item: FileType }) => {
   );
 };
 
-export default FileItemComponent;
+export default FolderItemComponent;

@@ -22,6 +22,7 @@ import { FolderType } from "@/domain/storage/FolderType";
 import { useRouter } from "expo-router";
 import { getFolders } from "@/services/storage/StorageService";
 import { removeValueFor } from "@/services/storage/SecureStorage";
+import FolderItemComponent from "@/components/FolderItemComponent";
 
 // The State
 type State =
@@ -136,41 +137,42 @@ const FoldersScreen = () => {
 
   return (
     <SafeAreaView className="bg-primary h-full">
-      <FlatList
-        data={[]}
-        contentContainerStyle={{ flexGrow: 1 }}
-        keyExtractor={(item, index) => String(item || index)}
-        renderItem={({ item }) => (
-          <View>
-            <Text>{item}</Text>
-          </View>
-        )}
-        ListHeaderComponent={() => (
-          <View className="my-6 px-4 space-y-6">
-            <View className="justify-between items-start flex-row mb-6">
-              <Text className="text-2xl font-psemibold text-white">
-                Folders
-              </Text>
-              <View className="mt-1.5 flex-row gap-2">
-                <Image
-                  source={icons.filter_white}
-                  className="w-[18px] h-[20px]"
-                />
-                <Image source={icons.org_white} className="w-[18px] h-[20px]" />
+      {state.tag === "loaded" ? (
+        <FlatList
+          data={folders}
+          keyExtractor={(item, index) => String(item.folderId || index)}
+          renderItem={({ item }) => <FolderItemComponent item={item} />}
+          contentContainerStyle={{ paddingBottom: 80 }}
+          ListHeaderComponent={() => (
+            <View className="my-6 px-4 space-y-6">
+              <View className="justify-between items-start flex-row mb-6">
+                <Text className="text-2xl font-psemibold text-white">
+                  Folders
+                </Text>
+                <View className="mt-1.5 flex-row gap-2">
+                  <Image
+                    source={icons.filter_white}
+                    className="w-[18px] h-[20px]"
+                  />
+                  <Image
+                    source={icons.org_white}
+                    className="w-[18px] h-[20px]"
+                  />
+                </View>
               </View>
+              <SearchInput />
             </View>
-            <SearchInput />
-          </View>
-        )}
-        ListEmptyComponent={() => (
-          <EmptyState
-            title="No folders found"
-            subtitle="Try creating a new folder or adjust your search"
-            page="/(modals)/create-folder"
-            titleButton="Create Folder"
-          />
-        )}
-      />
+          )}
+          ListEmptyComponent={() => (
+            <EmptyState
+              title="No folders found"
+              subtitle="Try creating a new folder or adjust your search"
+              page="/(modals)/create-folder"
+              titleButton="Create Folder"
+            />
+          )}
+        />
+      ) : null}
     </SafeAreaView>
   );
 };

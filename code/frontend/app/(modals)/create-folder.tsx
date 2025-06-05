@@ -6,37 +6,58 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from "react-native";
-import React, { useEffect, useReducer } from "react";
+import React, { act, useEffect, useReducer } from "react";
 import {
   getProblemMessage,
   isProblem,
   Problem,
 } from "@/services/media/Problem";
 import { router } from "expo-router";
-import { createFolder } from "@/services/storage/StorageService";
+import { createFolder, getFolders } from "@/services/storage/StorageService";
 import FormField from "@/components/FormField";
 import { icons } from "@/constants";
 import CustomButton from "@/components/CustomButton";
 import SearchInput from "@/components/SearchBar";
+import { FolderType } from "@/domain/storage/FolderType";
+import { PageResult } from "@/domain/utils/PageResult";
+import FolderItemComponent from "@/components/FolderItemComponent";
 
 // The State
 type State =
+  | { tag: "begin" }
+  | { tag: "loading" }
   | {
       tag: "editing";
       error?: Problem | string;
       inputs: {
         folderName: string;
+        parentFolderId: number | null;
       };
+      folders: PageResult<FolderType>;
     }
-  | { tag: "submitting"; folderName: string }
+  | { tag: "error"; error: Problem | string }
+  | {
+      tag: "submitting";
+      folderName: string;
+      parentFolderId: number | null;
+      folders: PageResult<FolderType>;
+    }
   | { tag: "redirect" };
 
 // The Action
 type Action =
-  | { type: "edit"; inputName: string; inputValue: string }
+  | { type: "start-loading" }
+  | { type: "loading-success"; folders: PageResult<FolderType> }
+  | { type: "loading-error"; error: Problem | string }
+  | {
+      type: "edit";
+      inputName: string | number;
+      inputValue: string | number;
+    }
   | { type: "submit" }
-  | { type: "error"; message: Problem | string }
+  | { type: "error"; error: Problem | string }
   | { type: "success" };
 
 function logUnexpectedAction(state: State, action: Action) {
@@ -45,17 +66,48 @@ function logUnexpectedAction(state: State, action: Action) {
 
 function reducer(state: State, action: Action): State {
   switch (state.tag) {
+    case "begin":
+      if (action.type === "start-loading") {
+        return { tag: "loading" };
+      } else {
+        logUnexpectedAction(state, action);
+        return state;
+      }
+    case "loading":
+      if (action.type === "loading-success") {
+        return {
+          tag: "editing",
+          inputs: {
+            folderName: "",
+            parentFolderId: null,
+          },
+          folders: action.folders,
+        };
+      } else if (action.type === "loading-error") {
+        return {
+          tag: "error",
+          error: action.error,
+        };
+      } else {
+        logUnexpectedAction(state, action);
+        return state;
+      }
+    case "error":
+      return state;
     case "editing":
       if (action.type === "edit") {
         return {
           tag: "editing",
           error: undefined,
           inputs: { ...state.inputs, [action.inputName]: action.inputValue },
+          folders: state.folders,
         };
       } else if (action.type === "submit") {
         return {
           tag: "submitting",
           folderName: state.inputs.folderName,
+          parentFolderId: state.inputs.parentFolderId,
+          folders: state.folders,
         };
       } else {
         logUnexpectedAction(state, action);
@@ -70,8 +122,9 @@ function reducer(state: State, action: Action): State {
       } else if (action.type === "error") {
         return {
           tag: "editing",
-          error: action.message,
-          inputs: { folderName: "" },
+          error: action.error,
+          inputs: { folderName: "", parentFolderId: null },
+          folders: state.folders,
         };
       } else {
         logUnexpectedAction(state, action);
@@ -84,15 +137,17 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-const firstState: State = {
-  tag: "editing",
-  inputs: { folderName: "" },
-};
+const firstState: State = { tag: "begin" };
 
 const CreateFolder = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
 
   useEffect(() => {
+    if (state.tag === "begin") {
+      dispatch({ type: "start-loading" });
+      handleGetFolder();
+    }
+
     if (state.tag === "redirect") {
       router.replace("/folders");
     }
@@ -107,6 +162,21 @@ const CreateFolder = () => {
     });
   }
 
+  // Handle FetchRecentFolders()
+  async function handleGetFolder() {
+    try {
+      const folders = await getFolders();
+      console.log("FETCH RECENT FOLDERs");
+      dispatch({ type: "loading-success", folders });
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        `${isProblem(error) ? getProblemMessage(error) : error}`
+      );
+      dispatch({ type: "loading-error", error: error });
+    }
+  }
+
   // Handle form submission
   async function handleSubmit() {
     if (state.tag !== "editing") return;
@@ -117,7 +187,7 @@ const CreateFolder = () => {
 
     if (!folderName?.trim()) {
       Alert.alert("Error", "Please fill in all fields");
-      dispatch({ type: "error", message: "Please fill in all field" });
+      dispatch({ type: "error", error: "Please fill in all field" });
       return;
     }
 
@@ -130,7 +200,7 @@ const CreateFolder = () => {
         "Error",
         `${isProblem(error) ? getProblemMessage(error) : error}`
       );
-      dispatch({ type: "error", message: error });
+      dispatch({ type: "error", error: error });
     }
   }
 
@@ -185,24 +255,19 @@ const CreateFolder = () => {
             />
           </View>
 
-          <TouchableOpacity
-            className="flex-row items-center py-3 px-2 rounded-lg"
-            style={{ backgroundColor: "#181820" }}
-            activeOpacity={0.8}
-          >
-            <Image
-              source={icons.folder}
-              className="w-7 h-7 mr-3"
-              resizeMode="contain"
-              tintColor="#b39ddb"
-            />
-            <View>
-              <Text className="text-white font-medium">CMR Documents</Text>
-              <Text className="text-xs" style={{ color: "#b0b0b8" }}>
-                Modified Mar 25, 2023
+          {state.tag === "loading" && (
+            <View className="flex-1 items-center justify-center">
+              <ActivityIndicator size="large" color="#FFFFFF" />
+              <Text className="mt-4 text-white text-base">
+                Loading files...
               </Text>
             </View>
-          </TouchableOpacity>
+          )}
+
+          {state.tag === "editing" &&
+            state.folders.content.map((folder) => (
+              <FolderItemComponent key={folder.folderId} item={folder} />
+            ))}
         </View>
 
         <CustomButton
