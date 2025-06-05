@@ -15,7 +15,11 @@ import {
   Problem,
 } from "@/services/media/Problem";
 import { router } from "expo-router";
-import { createFolder, getFolders } from "@/services/storage/StorageService";
+import {
+  createFolder,
+  createSubFolder,
+  getFolders,
+} from "@/services/storage/StorageService";
 import FormField from "@/components/FormField";
 import { icons } from "@/constants";
 import CustomButton from "@/components/CustomButton";
@@ -184,6 +188,7 @@ const CreateFolder = () => {
     dispatch({ type: "submit" });
 
     const folderName = state.inputs.folderName;
+    const parentFolderId = state.inputs.parentFolderId;
 
     if (!folderName?.trim()) {
       Alert.alert("Error", "Please fill in all fields");
@@ -192,7 +197,11 @@ const CreateFolder = () => {
     }
 
     try {
-      await createFolder(folderName);
+      if (parentFolderId !== null) {
+        await createSubFolder(parentFolderId.toString(), folderName);
+      } else {
+        await createFolder(folderName);
+      }
 
       dispatch({ type: "success" });
     } catch (error) {
@@ -266,7 +275,11 @@ const CreateFolder = () => {
 
           {state.tag === "editing" &&
             state.folders.content.map((folder) => (
-              <FolderItemComponent key={folder.folderId} item={folder} />
+              <FolderItemComponent
+                key={folder.folderId}
+                item={folder}
+                onPress={(folderId) => handleChange("parentFolderId", folderId)}
+              />
             ))}
         </View>
 

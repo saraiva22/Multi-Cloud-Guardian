@@ -234,6 +234,20 @@ export async function createFolder(folderName: string): Promise<any> {
   );
 }
 
+export async function createSubFolder(
+  folderId: string,
+  folderName: string
+): Promise<any> {
+  const path =
+    PREFIX_API + apiRoutes.CREATE_FOLDER_IN_FOLDER.replace(":id", folderId);
+  return await httpService.post<any>(
+    path,
+    JSON.stringify({
+      folderName: folderName,
+    })
+  );
+}
+
 export async function getFolders(): Promise<PageResult<FolderType>> {
   const path = PREFIX_API + apiRoutes.GET_FOLDERS;
   return await httpService.get<PageResult<FolderType>>(path);

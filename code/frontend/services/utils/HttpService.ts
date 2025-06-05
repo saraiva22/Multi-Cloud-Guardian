@@ -28,6 +28,7 @@ export const apiRoutes = {
   // Folders
   CREATE_FOLDER: "/folders",
   GET_FOLDERS: "/folders",
+  CREATE_FOLDER_IN_FOLDER: "/folders/:id",
 };
 
 export default function httpService() {
