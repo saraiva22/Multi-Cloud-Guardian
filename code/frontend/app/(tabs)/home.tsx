@@ -192,7 +192,7 @@ const HomeScreen = () => {
                   </Text>
                   <Text className="text-lg font-pregular text-secondary-200 mb-3">
                     <TouchableOpacity
-                      onPress={() => console.log("Create Folder")}
+                      onPress={() => router.push("/create-folder")}
                     >
                       <Image
                         source={icons.plus_folder_black}

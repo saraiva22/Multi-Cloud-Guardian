@@ -18,6 +18,7 @@ import { createFolder } from "@/services/storage/StorageService";
 import FormField from "@/components/FormField";
 import { icons } from "@/constants";
 import CustomButton from "@/components/CustomButton";
+import SearchInput from "@/components/SearchBar";
 
 // The State
 type State =
@@ -140,8 +141,8 @@ const CreateFolder = () => {
 
   return (
     <SafeAreaView className="bg-primary h-full">
-      <ScrollView className="px-4 my-6 mt-12">
-        <View className="flex-row items-center mb-6 mt-2">
+      <ScrollView className="px-6 py-12">
+        <View className="flex-row items-center mb-8">
           <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
             <Image
               source={icons.back}
@@ -150,33 +151,66 @@ const CreateFolder = () => {
               tintColor="white"
             />
           </TouchableOpacity>
-          <Text className="text-2xl text-white font-psemibold ml-32">
+          <Text className="text-2xl text-white font-psemibold ml-28">
             Create Folder
           </Text>
         </View>
 
+        <SearchInput />
+        <View
+          style={{ height: 1, backgroundColor: "#23232a", marginVertical: 18 }}
+        />
         <FormField
           title="Folder Name"
           value={folderName}
           placeholder="Enter a title for your folder..."
           handleChangeText={(text) => handleChange("folderName", text)}
-          otherStyles="mt-7"
+          otherStyles="mt-5"
         />
 
         <View
-          style={{ height: 0.5, backgroundColor: "#F8F8F8", marginTop: 20 }}
+          style={{ height: 1, backgroundColor: "#23232a", marginVertical: 18 }}
         />
 
-        <View
-          style={{ height: 0.5, backgroundColor: "#F8F8F8", marginTop: 20 }}
-        />
+        <View className="mt-2">
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-xl text-white font-semibold">
+              Recent Folders
+            </Text>
+            <Image
+              source={icons.filter_black1}
+              className="w-10 h-7"
+              resizeMode="contain"
+              tintColor="#fff"
+            />
+          </View>
+
+          <TouchableOpacity
+            className="flex-row items-center py-3 px-2 rounded-lg"
+            style={{ backgroundColor: "#181820" }}
+            activeOpacity={0.8}
+          >
+            <Image
+              source={icons.folder}
+              className="w-7 h-7 mr-3"
+              resizeMode="contain"
+              tintColor="#b39ddb"
+            />
+            <View>
+              <Text className="text-white font-medium">CMR Documents</Text>
+              <Text className="text-xs" style={{ color: "#b0b0b8" }}>
+                Modified Mar 25, 2023
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
 
         <CustomButton
           title="Create Folder"
           handlePress={handleSubmit}
-          containerStyles="mt-7"
+          containerStyles="mt-10 rounded-lg"
           isLoading={state.tag === "submitting"}
-          textStyles={""}
+          textStyles="text-base font-semibold"
           color="bg-secondary"
         />
       </ScrollView>

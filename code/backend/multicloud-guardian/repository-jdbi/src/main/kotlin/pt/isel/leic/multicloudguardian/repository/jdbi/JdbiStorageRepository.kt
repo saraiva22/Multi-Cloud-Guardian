@@ -334,6 +334,7 @@ class JdbiStorageRepository(
                 "name" -> attributeName
                 "created_at" -> "created_at"
                 "size" -> "size"
+                "last_created" -> "created_at desc"
                 else -> "created_at"
             }
     }

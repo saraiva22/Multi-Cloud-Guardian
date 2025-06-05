@@ -1,6 +1,6 @@
 import { MEDIA_TYPE_PROBLEM, Problem } from "../media/Problem";
 
-const LOCAL_IP = "10.11.75.133";
+const LOCAL_IP = "192.168.1.107";
 const PORT = "8080";
 
 export const PREFIX_API = `http://${LOCAL_IP}:${PORT}/api`;

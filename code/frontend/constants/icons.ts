@@ -20,6 +20,8 @@ import upload from "../assets/icons/upload.png";
 import logout from "../assets/icons/logout.png";
 import filter_white from "../assets/icons/filter_white.png";
 import filter_black from "../assets/icons/filter_black.png";
+import filter_white1 from "../assets/icons/filter_white1.png";
+import filter_black1 from "../assets/icons/filter_black1.png";
 import org_white from "../assets/icons/org_white.png";
 import org_black from "../assets/icons/org_black.png";
 import notificiation_black from "../assets/icons/notificiation_black.png";
@@ -37,6 +39,7 @@ import plus_folder_white from "../assets/icons/plus_folder_white.png";
 import plus_folder_black from "../assets/icons/plus_folder_black.png";
 import image_icon from "../assets/icons/image_icon.png";
 import dots_vertical from "../assets/icons/dots_vertical.png";
+import folder from "../assets/icons/folder1.png";
 
 export default {
   europe,
@@ -78,4 +81,7 @@ export default {
   plus_folder_black,
   image_icon,
   dots_vertical,
+  filter_white1,
+  filter_black1,
+  folder,
 };
