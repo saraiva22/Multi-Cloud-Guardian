@@ -1,6 +1,6 @@
 name: Continuous Check
 
-on: [ push ]
+on: [push]
 
 permissions:
   contents: read
@@ -19,4 +19,6 @@ jobs:
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x ./code/backend/gradlew
       - name: Build with Gradle
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
         run: ./code/backend/gradlew -p code/backend check --info
