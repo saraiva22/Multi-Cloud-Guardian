@@ -142,7 +142,11 @@ const FileInfo = ({
 
     <View className="items-center mb-12">
       <Image
-        source={icons.image_icon}
+        source={
+          fileInfo.contentType.startsWith("image")
+            ? icons.image_icon
+            : icons.document
+        }
         className="w-[100px] h-[100px] mb-8"
         resizeMode="contain"
       />
@@ -268,7 +272,7 @@ const FileDetails = () => {
     dispatch({ type: "start-loading" });
     try {
       const details = await getFile(fileId.toString());
-      console.log("DETAILS ", details);
+      console.log("DETAILS ", details.contentType);
       dispatch({ type: "loading-success", details });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });

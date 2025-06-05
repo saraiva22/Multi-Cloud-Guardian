@@ -5,6 +5,7 @@ import {
   Text,
   Image,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import EmptyState from "@/components/EmptyState";
@@ -163,16 +164,26 @@ const FoldersScreen = () => {
               <SearchInput />
             </View>
           )}
-          ListEmptyComponent={() => (
-            <EmptyState
-              title="No folders found"
-              subtitle="Try creating a new folder or adjust your search"
-              page="/(modals)/create-folder"
-              titleButton="Create Folder"
-            />
-          )}
+          ListEmptyComponent={() =>
+            state.tag === "loaded" ? (
+              <EmptyState
+                title="No folders found"
+                subtitle="Try creating a new folder or adjust your search"
+                page="/(modals)/create-folder"
+                titleButton="Create Folder"
+              />
+            ) : null
+          }
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
-      ) : null}
+      ) : (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#FFFFFF" />
+          <Text className="mt-4 text-white text-base">Loading files...</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 };

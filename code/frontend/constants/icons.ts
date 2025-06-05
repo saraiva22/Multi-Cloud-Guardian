@@ -40,6 +40,7 @@ import plus_folder_black from "../assets/icons/plus_folder_black.png";
 import image_icon from "../assets/icons/image_icon.png";
 import dots_vertical from "../assets/icons/dots_vertical.png";
 import folder from "../assets/icons/folder1.png";
+import document from "../assets/icons/document_icon.png";
 
 export default {
   europe,
@@ -84,4 +85,5 @@ export default {
   filter_white1,
   filter_black1,
   folder,
+  document,
 };

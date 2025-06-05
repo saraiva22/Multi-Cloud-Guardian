@@ -22,7 +22,11 @@ const FileItemComponent = ({ item }: { item: FileType }) => {
         }}
       >
         <Image
-          source={icons.image_icon}
+          source={
+            item.contentType.startsWith("image")
+              ? icons.image_icon
+              : icons.document
+          }
           className="w-7 h-7 mr-5"
           resizeMode="contain"
         />
