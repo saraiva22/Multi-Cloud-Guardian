@@ -20,7 +20,7 @@ services:
     env_file:
       - ./.env
     volumes:
-      - ./host/json-key.json:/app/creds/json-key.json:ro
+      - ./json-key.json:/app/creds/json-key.json:ro
 
   nginx:
     container_name: mcg-nginx
