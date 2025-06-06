@@ -231,6 +231,45 @@ class JdbiStorageRepository(
             .toList()
     }
 
+    override fun getFoldersInFolder(
+        userId: Id,
+        folderId: Id,
+        limit: Int,
+        offset: Int,
+        sort: String,
+    ): Pair<List<Folder>, Long> {
+        val order = orderBy(sort, "folder_name")
+        val totalElements =
+            handle
+                .createQuery(
+                    """
+                    select count(*) from dbo.Folders where user_id = :userId 
+                    and parent_folder_id = :folderId
+                    """.trimIndent(),
+                ).bind("userId", userId.value)
+                .bind("folderId", folderId.value)
+                .mapTo<Long>()
+                .one()
+        val folders =
+            handle
+                .createQuery(
+                    """
+                    select folder.*, users.username ,users.email 
+                    from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.user_id = :userId 
+                    and folder.parent_folder_id = :folderId
+                    order by $order
+                    LIMIT :limit OFFSET :offset
+                    """.trimIndent(),
+                ).bind("userId", userId.value)
+                .bind("folderId", folderId.value)
+                .bind("limit", limit)
+                .bind("offset", offset)
+                .mapTo<Folder>()
+                .toList()
+
+        return Pair(folders, totalElements)
+    }
+
     override fun getFilesInFolder(
         userId: Id,
         folderId: Id,

@@ -404,6 +404,23 @@ class StorageService(
             success(folder)
         }
 
+    fun getFoldersInFolder(
+        user: User,
+        folderId: Id,
+        limit: Int,
+        page: Int,
+        sort: String,
+    ): GetFoldersInFolderResult =
+        transactionManager.run {
+            val storageRep = it.storageRepository
+            storageRep.getFolderById(user.id, folderId) ?: return@run failure(GetFoldersInFolderError.FolderNotFound)
+            val offset = page * limit
+            val result = storageRep.getFoldersInFolder(user.id, folderId, limit, offset, sort)
+            val folders = result.first
+            val totalElements = result.second
+            success(PageResult.fromPartialResult(folders, totalElements, limit, offset))
+        }
+
     fun getFilesInFolder(
         user: User,
         folderId: Id,

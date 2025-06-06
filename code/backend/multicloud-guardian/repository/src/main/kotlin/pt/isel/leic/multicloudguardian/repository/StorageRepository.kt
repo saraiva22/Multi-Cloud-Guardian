@@ -74,6 +74,14 @@ interface StorageRepository {
         sort: String,
     ): List<Folder>
 
+    fun getFoldersInFolder(
+        userId: Id,
+        folderId: Id,
+        limit: Int,
+        offset: Int,
+        sort: String,
+    ): Pair<List<Folder>, Long>
+
     fun getFilesInFolder(
         userId: Id,
         folderId: Id,

@@ -36,6 +36,7 @@ import pt.isel.leic.multicloudguardian.service.storage.GetFileByIdError
 import pt.isel.leic.multicloudguardian.service.storage.GetFileInFolderError
 import pt.isel.leic.multicloudguardian.service.storage.GetFilesInFolderError
 import pt.isel.leic.multicloudguardian.service.storage.GetFolderByIdError
+import pt.isel.leic.multicloudguardian.service.storage.GetFoldersInFolderError
 import pt.isel.leic.multicloudguardian.service.storage.StorageService
 import pt.isel.leic.multicloudguardian.service.storage.UploadFileError
 
@@ -340,6 +341,42 @@ class StorageController(
             is Failure ->
                 when (res.value) {
                     GetFolderByIdError.FolderNotFound -> Problem.folderNotFound(folderId, instance)
+                }
+        }
+    }
+
+    @GetMapping(Uris.Folders.GET_FOLDERS_IN_FOLDER)
+    fun getFoldersInFolder(
+        @PathVariable @Validated folderId: Int,
+        authenticatedUser: AuthenticatedUser,
+        @RequestParam(required = false) size: Int?,
+        @RequestParam(required = false) page: Int?,
+        @RequestParam(required = false) sort: String?,
+    ): ResponseEntity<*> {
+        val instance = Uris.Folders.folderById(folderId)
+        val setLimit = size ?: DEFAULT_LIMIT
+        val setPage = page ?: DEFAULT_PAGE
+        val setSort = sort ?: DEFAULT_SORT
+        val res = storageService.getFoldersInFolder(authenticatedUser.user, Id(folderId), setLimit, setPage, setSort)
+        return when (res) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(
+                        PageResult(
+                            content = FoldersListOutputModel(res.value.content.map { FolderInfoOutputModel.fromDomain((it)) }).folders,
+                            pageable = res.value.pageable,
+                            totalElements = res.value.totalElements,
+                            totalPages = res.value.totalPages,
+                            last = res.value.last,
+                            first = res.value.first,
+                            size = res.value.size,
+                            number = res.value.number,
+                        ),
+                    )
+            is Failure ->
+                when (res.value) {
+                    GetFoldersInFolderError.FolderNotFound -> Problem.folderNotFound(folderId, instance)
                 }
         }
     }

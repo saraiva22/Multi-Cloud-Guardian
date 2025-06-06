@@ -123,12 +123,6 @@ sealed class GetFolderByIdError {
 
 typealias GetFolderResult = Either<GetFolderByIdError, Folder>
 
-sealed class GetFilesInFolderError {
-    data object FolderNotFound : GetFilesInFolderError()
-}
-
-typealias GetFilesInFolderResult = Either<GetFilesInFolderError, PageResult<File>>
-
 sealed class GetFileInFolderError {
     data object FolderNotFound : GetFileInFolderError()
 
@@ -136,3 +130,15 @@ sealed class GetFileInFolderError {
 }
 
 typealias GetFileInFolderResult = Either<GetFileInFolderError, File>
+
+sealed class GetFilesInFolderError {
+    data object FolderNotFound : GetFilesInFolderError()
+}
+
+typealias GetFilesInFolderResult = Either<GetFilesInFolderError, PageResult<File>>
+
+sealed class GetFoldersInFolderError {
+    data object FolderNotFound : GetFoldersInFolderError()
+}
+
+typealias GetFoldersInFolderResult = Either<GetFoldersInFolderError, PageResult<Folder>>
