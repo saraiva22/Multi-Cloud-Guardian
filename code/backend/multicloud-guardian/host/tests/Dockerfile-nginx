@@ -1,2 +1,3 @@
 FROM nginx
-COPY ./tests/nginx/nginx.conf /etc/nginx
+ARG HOST_PATH=multicloud-guardian/host
+COPY ${HOST_PATH}/tests/nginx/nginx.conf /etc/nginx

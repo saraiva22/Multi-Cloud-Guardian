@@ -1,6 +1,6 @@
 services:
   db-tests:
-    container_name: db-tests_multicloud
+    container_name: db-tests
     build:
       context: ./repository-jdbi
       dockerfile: ./tests/Dockerfile-db-test
@@ -10,26 +10,3 @@ services:
       - POSTGRES_DB=db
     ports:
       - 5432:5432
-
-
-  multi-cloud-guardian-jvm:
-    image: multi-cloud-guardian-jvm
-    hostname: multi-cloud-guardian-jvm
-    build:
-      context: ./host
-      dockerfile: ./tests/Dockerfile-jvm
-    env_file:
-      - ./host/.env
-    volumes:
-      - ./host/json-key.json:/app/creds/json-key.json:ro
-    ports:
-      - 8080:8080
-
-  # Just a machine running ubuntu, with 'dig' installed so that we can observe the docker compose environment.
-  ubuntu:
-    container_name: ubuntu
-    image: multi-cloud-guardian-ubuntu
-    build:
-      context: ./host
-      dockerfile: ./tests/Dockerfile-ubuntu
-    tty: true

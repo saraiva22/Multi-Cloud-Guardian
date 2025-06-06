@@ -1,30 +1,43 @@
 services:
-    multi-cloud-guardian-tests:
-      container_name: mcg-postgres-tests
-      image: multi-cloud-guardian-postgres-test
-      environment:
-        - POSTGRES_USER=dbuser
-        - POSTGRES_PASSWORD=changeit
-        - POSTGRES_DB=db
-      ports:
-        - 5432:5432
+  multi-cloud-guardian-tests:
+    container_name: mcg-postgres-tests
+    image: multi-cloud-guardian-postgres-test
+    build:
+      context: ./
+      dockerfile: ./tests/Dockerfile-postgres-test
+    env_file:
+      - ./.env
+    ports:
+      - 5432:5432
 
-    #  multi-cloud-guardian-jvm-1 and  multi-cloud-guardian-jvm-2 are used to illustrate scenarios with a fixed number of servers
-    # with static and well know names.
-    multi-cloud-guardian-jvm-1:
-      image: multi-cloud-guardian-jvm
-      hostname: multi-cloud-guardian-jvm
-      env_file:
-        - .env
-      environment:
-        DB_URL: "jdbc:postgresql://mcg-postgres-tests:5432/db?user=dbuser&password=changeit"
-      ports:
-        - 8080:8080
-        - 8082:8082
+  multi-cloud-guardian-jvm:
+    image: multi-cloud-guardian-jvm
+    container_name: mcg-jvm
+    hostname: mcg-dynamic
+    build:
+      context: ./
+      dockerfile: ./tests/Dockerfile-jvm
+    env_file:
+      - ./.env
+    volumes:
+      - ./host/json-key.json:/app/creds/json-key.json:ro
 
+  nginx:
+    container_name: mcg-nginx
+    image: multi-cloud-guardian-nginx
+    build:
+      context: ./
+      dockerfile: ./tests/Dockerfile-nginx
+    ports:
+      - 8080:8080
+      - 8088:8088
+    depends_on:
+      - multi-cloud-guardian-jvm
 
-    # Just a machine running ubuntu, with 'dig' installed so that we can observe the docker compose environment.
-    ubuntu:
-      container_name: ubuntu
-      image: multi-cloud-guardian-ubuntu
-      tty: true
+  ubuntu:
+    container_name: ubuntu
+    image: multi-cloud-guardian-ubuntu
+    build:
+      context: ./
+      dockerfile: ./tests/Dockerfile-ubuntu
+    tty: true

@@ -74,42 +74,39 @@ val dockerImageTagNginx = "multi-cloud-guardian-nginx"
 val dockerImageTagPostgresTest = "multi-cloud-guardian-postgres-test"
 val dockerImageTagUbuntu = "multi-cloud-guardian-ubuntu"
 
-task<Exec>("buildImageJvm") {
+tasks.register<Exec>("buildImageJvm") {
     dependsOn("extractUberJar")
-    commandLine("docker", "build", "-t", dockerImageTagJvm, "-f", "tests/Dockerfile-jvm", ".")
+    commandLine("docker", "build", "-t", dockerImageTagJvm, "-f", "multicloudguardian/host/tests/Dockerfile-jvm", ".")
 }
 
-task<Exec>("buildImageNginx") {
-    commandLine("docker", "build", "-t", dockerImageTagNginx, "-f", "tests/Dockerfile-nginx", ".")
+tasks.register<Exec>("buildImageNginx") {
+    commandLine("docker", "build", "-t", dockerImageTagNginx, "-f", "multicloudguardian/host/tests/Dockerfile-nginx", ".")
 }
 
-task<Exec>("buildImagePostgresTest") {
+tasks.register<Exec>("buildImagePostgresTest") {
     commandLine(
         "docker",
         "build",
         "-t",
         dockerImageTagPostgresTest,
         "-f",
-        "tests/Dockerfile-postgres-test",
-        "../repository-jdbi",
+        "multicloudguardian/host/tests/Dockerfile-postgres-test",
+        ".",
     )
 }
 
-task<Exec>("buildImageUbuntu") {
-    commandLine("docker", "build", "-t", dockerImageTagUbuntu, "-f", "tests/Dockerfile-ubuntu", ".")
+tasks.register<Exec>("buildImageUbuntu") {
+    commandLine("docker", "build", "-t", dockerImageTagUbuntu, "-f", "multicloudguardian/host/tests/Dockerfile-ubuntu", ".")
 }
 
-task("buildImageAll") {
-    dependsOn("buildImageJvm")
-    dependsOn("buildImageNginx")
-    dependsOn("buildImagePostgresTest")
-    dependsOn("buildImageUbuntu")
+tasks.register("buildImageAll") {
+    dependsOn("buildImageJvm", "buildImageNginx", "buildImagePostgresTest", "buildImageUbuntu")
 }
 
-task<Exec>("allUp") {
+tasks.register<Exec>("allUp") {
     commandLine("docker", "compose", "up", "--force-recreate", "-d")
 }
 
-task<Exec>("allDown") {
+tasks.register<Exec>("allDown") {
     commandLine("docker", "compose", "down")
 }
