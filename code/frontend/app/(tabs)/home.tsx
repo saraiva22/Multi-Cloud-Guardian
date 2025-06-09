@@ -13,7 +13,7 @@ import EmptyState from "@/components/EmptyState";
 import SearchBar from "@/components/SearchBar";
 import { icons } from "@/constants";
 import { useAuthentication } from "@/context/AuthProvider";
-import React, { useEffect, useReducer, useState } from "react";
+import React, { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useRouter } from "expo-router";
 import { getFiles, getFolders } from "@/services/storage/StorageService";
 
@@ -28,16 +28,22 @@ import FileItemComponent from "@/components/FileItemComponent";
 import { PageResult } from "@/domain/utils/PageResult";
 import { FileType } from "@/domain/storage/FileType";
 import { FolderType } from "@/domain/storage/FolderType";
+import BottomSheet from "@gorhom/bottom-sheet";
+import SortSelector, {
+  SortOption,
+  sortOptions,
+} from "@/components/SortSelector";
 
 // The State
 type State =
-  | { tag: "begin"; refreshing: boolean }
-  | { tag: "loading" }
+  | { tag: "begin"; refreshing: boolean; sort: SortOption }
+  | { tag: "loading"; refreshing: boolean; sort: SortOption }
   | {
       tag: "loaded";
       files: PageResult<FileType>;
       folders: PageResult<FolderType>;
       refreshing: boolean;
+      sort: SortOption;
     }
   | { tag: "error"; error: Problem | string };
 
@@ -50,7 +56,7 @@ type Action =
       folders: PageResult<FolderType>;
     }
   | { type: "loading-error"; error: Problem | string }
-  | { type: "refreshing"; refreshing: boolean };
+  | { type: "refreshing"; refreshing: boolean; sort: SortOption };
 
 function logUnexpectedAction(state: State, action: Action) {
   console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
@@ -61,7 +67,7 @@ function reducer(state: State, action: Action): State {
   switch (state.tag) {
     case "begin":
       if (action.type === "start-loading") {
-        return { tag: "loading" };
+        return { tag: "loading", refreshing: false, sort: state.sort };
       } else {
         logUnexpectedAction(state, action);
         return state;
@@ -73,6 +79,7 @@ function reducer(state: State, action: Action): State {
           files: action.files,
           folders: action.folders,
           refreshing: false,
+          sort: state.sort,
         };
       } else if (action.type === "loading-error") {
         return { tag: "error", error: action.error };
@@ -84,7 +91,11 @@ function reducer(state: State, action: Action): State {
       return { tag: "error", error: state.error };
     case "loaded":
       if (action.type === "refreshing") {
-        return { tag: "begin", refreshing: action.refreshing };
+        return {
+          tag: "begin",
+          refreshing: action.refreshing,
+          sort: action.sort,
+        };
       }
       return state;
   }
@@ -93,6 +104,7 @@ function reducer(state: State, action: Action): State {
 const firstState: State = {
   tag: "begin",
   refreshing: false,
+  sort: sortOptions[0],
 };
 
 // User info key
@@ -102,12 +114,25 @@ const HomeScreen = () => {
   const { username, setUsername, setIsLogged } = useAuthentication();
   const [state, dispatch] = useReducer(reducer, firstState);
   const router = useRouter();
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  const sort = state.tag === "error" ? sortOptions[0] : state.sort;
+
+
+  const openSortSheet = () => {
+    bottomSheetRef.current?.expand();
+  };
+
+  const handleSelectSort = (sort: SortOption) => {
+    bottomSheetRef.current?.close();
+    dispatch({ type: "refreshing", refreshing: true, sort: sort });
+  };
 
   const loadData = async () => {
     try {
       dispatch({ type: "start-loading" });
-      console.log("ENTROU AQUI");
-      const files = await getFiles();
+
+      const files = await getFiles(sort.sortBy);
       const folders = await getFolders();
       dispatch({
         type: "loading-success",
@@ -139,7 +164,7 @@ const HomeScreen = () => {
   }, [state]);
 
   const onRefresh = async () => {
-    dispatch({ type: "refreshing", refreshing: true });
+    dispatch({ type: "refreshing", refreshing: true, sort: sort });
   };
 
   const files =
@@ -187,10 +212,10 @@ const HomeScreen = () => {
 
               <View className="w-full flex-1 pt-5 pb-8">
                 <View className="flex-row items-center justify-between mb-3">
-                  <Text className="text-xl font-bold text-gray-100 mb-3">
+                  <Text className="text-2xl font-bold text-gray-100 mb-3">
                     Folders
                   </Text>
-                  <Text className="text-lg font-pregular text-secondary-200 mb-3">
+                  <Text className="text-xl font-pregular text-secondary-200 mb-3">
                     <TouchableOpacity
                       onPress={() => router.push("/create-folder")}
                     >
@@ -206,10 +231,29 @@ const HomeScreen = () => {
 
                 <FolderCard folders={folders} />
               </View>
-              <View className="w-full flex-1 pt-5 pb-8">
-                <Text className="text-xl font-bold text-gray-100 mb-3">
+              <View className="w-full flex-1 pt-2">
+                <Text className="text-2xl font-bold text-gray-100">
                   My Files
                 </Text>
+                <View className="flex-row justify-between items-center my-3 mx-2">
+                  <View className="border border-gray-200 rounded-full bg-white px-4 py-2 flex-row items-center">
+                    <Text className="text-lg text-gray-900 font-medium">
+                      {sort.label}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={openSortSheet}
+                    className="borderrounded-full p-2 ml-2"
+                    activeOpacity={0.85}
+                  >
+                    <Image
+                      className="w-[44px] h-[32px]"
+                      source={icons.filter_black1}
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           )}
@@ -233,6 +277,7 @@ const HomeScreen = () => {
           <Text className="mt-4 text-white text-base">Loading files...</Text>
         </View>
       )}
+      <SortSelector ref={bottomSheetRef} onSortChange={handleSelectSort} />
     </SafeAreaView>
   );
 };

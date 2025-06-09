@@ -370,10 +370,12 @@ class JdbiStorageRepository(
             attributeName: String,
         ): String =
             when (sort) {
-                "name" -> attributeName
-                "created_at" -> "created_at"
-                "size" -> "size"
-                "last_created" -> "created_at desc"
+                "name_desc" -> "$attributeName desc"
+                "name_asc" -> "$attributeName asc"
+                "created_desc" -> "created_at desc"
+                "created_asc" -> "created_at asc"
+                "size_desc" -> "size desc"
+                "size_asc" -> "size asc"
                 else -> "created_at"
             }
     }

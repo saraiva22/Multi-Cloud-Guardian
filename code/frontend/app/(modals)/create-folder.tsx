@@ -170,7 +170,6 @@ const CreateFolder = () => {
   async function handleGetFolder() {
     try {
       const folders = await getFolders();
-      console.log("FETCH RECENT FOLDERs");
       dispatch({ type: "loading-success", folders });
     } catch (error) {
       Alert.alert(

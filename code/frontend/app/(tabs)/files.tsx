@@ -6,13 +6,14 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import EmptyState from "@/components/EmptyState";
 import SearchInput from "@/components/SearchBar";
 import { icons } from "@/constants";
 import { useAuthentication } from "@/context/AuthProvider";
-import React, { useEffect, useReducer, useState } from "react";
+import React, { useEffect, useReducer, useRef, useState } from "react";
 import { PageResult } from "@/domain/utils/PageResult";
 import { FileType } from "@/domain/storage/FileType";
 import {
@@ -24,15 +25,21 @@ import { useRouter } from "expo-router";
 import { getFiles } from "@/services/storage/StorageService";
 import { removeValueFor } from "@/services/storage/SecureStorage";
 import FileItemComponent from "@/components/FileItemComponent";
+import SortSelector, {
+  SortOption,
+  sortOptions,
+} from "@/components/SortSelector";
+import BottomSheet from "@gorhom/bottom-sheet";
 
 // The State
 type State =
-  | { tag: "begin"; refreshing: boolean }
-  | { tag: "loading" }
+  | { tag: "begin"; refreshing: boolean; sort: SortOption }
+  | { tag: "loading"; refreshing: boolean; sort: SortOption }
   | {
       tag: "loaded";
       files: PageResult<FileType>;
       refreshing: boolean;
+      sort: SortOption;
     }
   | { tag: "error"; error: Problem | string };
 
@@ -44,7 +51,7 @@ type Action =
       files: PageResult<FileType>;
     }
   | { type: "loading-error"; error: Problem | string }
-  | { type: "refreshing"; refreshing: boolean };
+  | { type: "refreshing"; refreshing: boolean; sort: SortOption };
 
 function logUnexpectedAction(state: State, action: Action) {
   console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
@@ -55,7 +62,7 @@ function reducer(state: State, action: Action): State {
   switch (state.tag) {
     case "begin":
       if (action.type === "start-loading") {
-        return { tag: "loading" };
+        return { tag: "loading", refreshing: false, sort: state.sort };
       } else {
         logUnexpectedAction(state, action);
         return state;
@@ -66,6 +73,7 @@ function reducer(state: State, action: Action): State {
           tag: "loaded",
           files: action.files,
           refreshing: false,
+          sort: state.sort,
         };
       } else if (action.type === "loading-error") {
         return { tag: "error", error: action.error };
@@ -77,7 +85,11 @@ function reducer(state: State, action: Action): State {
       return { tag: "error", error: state.error };
     case "loaded":
       if (action.type === "refreshing") {
-        return { tag: "begin", refreshing: action.refreshing };
+        return {
+          tag: "begin",
+          refreshing: action.refreshing,
+          sort: action.sort,
+        };
       }
       return state;
   }
@@ -86,6 +98,7 @@ function reducer(state: State, action: Action): State {
 const firstState: State = {
   tag: "begin",
   refreshing: false,
+  sort: sortOptions[0],
 };
 
 // User info key
@@ -95,12 +108,22 @@ const FilesScreen = () => {
   const { username, setUsername, setIsLogged } = useAuthentication();
   const [state, dispatch] = useReducer(reducer, firstState);
   const router = useRouter();
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
+  const sort = state.tag === "error" ? sortOptions[0] : state.sort;
+
+  const openSortSheet = () => {
+    bottomSheetRef.current?.expand();
+  };
+
+  const handleSelectSort = (sort: SortOption) => {
+    bottomSheetRef.current?.close();
+    dispatch({ type: "refreshing", refreshing: true, sort: sort });
+  };
   const loadData = async () => {
     try {
       dispatch({ type: "start-loading" });
-      console.log("FILE API GETFILE");
-      const files = await getFiles();
+      const files = await getFiles(sort.sortBy);
       dispatch({ type: "loading-success", files });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
@@ -127,7 +150,7 @@ const FilesScreen = () => {
   }, [state]);
 
   const onRefresh = async () => {
-    dispatch({ type: "refreshing", refreshing: true });
+    dispatch({ type: "refreshing", refreshing: true, sort: sort });
   };
 
   const files =
@@ -155,11 +178,17 @@ const FilesScreen = () => {
                 </View>
 
                 <View className="mt-1.5">
-                  <Image
-                    source={icons.filter_white}
-                    className="w-[18px] h-[20px]"
-                    resizeMode="contain"
-                  />
+                  <TouchableOpacity
+                    onPress={openSortSheet}
+                    className="borderrounded-full p-2 ml-2"
+                    activeOpacity={0.85}
+                  >
+                    <Image
+                      source={icons.filter_white}
+                      className="w-[18px] h-[20px]"
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
                 </View>
               </View>
               <SearchInput />
@@ -185,6 +214,7 @@ const FilesScreen = () => {
           <Text className="mt-4 text-white text-base">Loading files...</Text>
         </View>
       )}
+      <SortSelector ref={bottomSheetRef} onSortChange={handleSelectSort} />
     </SafeAreaView>
   );
 };

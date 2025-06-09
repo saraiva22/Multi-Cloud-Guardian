@@ -192,14 +192,9 @@ export async function processAndSaveDownloadedFile(
       new Uint8Array(fileKey)
     );
 
-    console.log("CALCULATE ", calculatedSignature);
-    console.log("SIGNATURE ", signatureFromFile.toString("hex"));
-
     if (calculatedSignature !== signatureFromFile.toString("hex")) {
       console.log("ERROR, invalidSignature");
       throw new Error("Invalid signature! The file may have been corrupted");
-    } else {
-      console.log("SIGNATURE CORRECT!!!");
     }
     // Decrypt the file content
     const decryptedFile = await decryptData(encryptedFile, fileKey, fileIV);
@@ -214,9 +209,17 @@ export async function processAndSaveDownloadedFile(
   await saveFileLocally(finalData, fileName);
 }
 
-export async function getFiles(): Promise<PageResult<FileType>> {
+export async function getFiles(
+  sortBy: string,
+  page: number = 0,
+  size: number = 10
+): Promise<PageResult<FileType>> {
   const path = PREFIX_API + apiRoutes.GET_FILES;
-  return await httpService.get<PageResult<FileType>>(path);
+  return await httpService.get<PageResult<FileType>>(path, {
+    sort: sortBy,
+    page: String(page),
+    size: String(size),
+  });
 }
 
 export async function getFile(fileId: string): Promise<FileOutputModel> {
@@ -248,9 +251,17 @@ export async function createSubFolder(
   );
 }
 
-export async function getFolders(): Promise<PageResult<FolderType>> {
+export async function getFolders(
+  sortBy: string = "created_at",
+  page: number = 0,
+  size: number = 10
+): Promise<PageResult<FolderType>> {
   const path = PREFIX_API + apiRoutes.GET_FOLDERS;
-  return await httpService.get<PageResult<FolderType>>(path);
+  return await httpService.get<PageResult<FolderType>>(path, {
+    sort: sortBy,
+    page: String(page),
+    size: String(size),
+  });
 }
 
 // Utils

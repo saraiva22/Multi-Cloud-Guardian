@@ -40,6 +40,15 @@ export default function httpService() {
     patch: patch,
   };
 
+  function buildUrl(path: string, params?: Record<string, string>): string {
+    if (!params || Object.keys(params).length === 0) {
+      return path;
+    }
+
+    const queryString = new URLSearchParams(params).toString();
+    return `${path}?${queryString}`;
+  }
+
   async function processRequest<T>(
     uri: string,
     method: string,
@@ -53,7 +62,7 @@ export default function httpService() {
       },
       body: body,
     };
-
+    console.log("URI ", uri);
     const response = await fetch(uri, config);
 
     if (!response.ok) {
@@ -70,24 +79,47 @@ export default function httpService() {
 
     return (await response.json()) as T;
   }
-
-  async function get<T>(path: string): Promise<T> {
-    return processRequest<T>(path, "GET", undefined);
+  async function get<T>(
+    path: string,
+    params?: Record<string, string>
+  ): Promise<T> {
+    const url = buildUrl(path, params);
+    return processRequest<T>(url, "GET");
   }
 
-  async function post<T>(path: string, body?: string): Promise<T> {
-    return processRequest<T>(path, "POST", body);
+  async function post<T>(
+    path: string,
+    body?: string,
+    params?: Record<string, string>
+  ): Promise<T> {
+    const url = buildUrl(path, params);
+    return processRequest<T>(url, "POST", body);
   }
 
-  async function put<T>(path: string, body?: string): Promise<T> {
-    return processRequest<T>(path, "PUT", body);
+  async function put<T>(
+    path: string,
+    body?: string,
+    params?: Record<string, string>
+  ): Promise<T> {
+    const url = buildUrl(path, params);
+    return processRequest<T>(url, "PUT", body);
   }
 
-  async function del<T>(path: string, body?: string): Promise<T> {
-    return processRequest<T>(path, "DELETE", body);
+  async function del<T>(
+    path: string,
+    body?: string,
+    params?: Record<string, string>
+  ): Promise<T> {
+    const url = buildUrl(path, params);
+    return processRequest<T>(url, "DELETE", body);
   }
 
-  async function patch<T>(path: string, body?: string): Promise<T> {
-    return processRequest<T>(path, "PATCH", body);
+  async function patch<T>(
+    path: string,
+    body?: string,
+    params?: Record<string, string>
+  ): Promise<T> {
+    const url = buildUrl(path, params);
+    return processRequest<T>(url, "PATCH", body);
   }
 }

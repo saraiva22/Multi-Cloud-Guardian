@@ -74,7 +74,6 @@ const StorageDetails = () => {
     dispatch({ type: "start-loading" });
     try {
       const res = await getStorageDetails();
-      console.log("Storage Details ", res);
       dispatch({ type: "loading-success", storageDetails: res });
     } catch (error) {
       console.log("Error fetching storage details:", error);

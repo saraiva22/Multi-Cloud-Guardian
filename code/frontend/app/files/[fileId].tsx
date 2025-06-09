@@ -261,7 +261,6 @@ const FileDetails = () => {
     try {
       const defaultTime = 15; // 15 minutes
       const value = await generateTemporaryUrl(fileId.toString(), defaultTime);
-      console.log("VALUE ", value);
       dispatch({ type: "loading-success", details: value });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
@@ -272,7 +271,6 @@ const FileDetails = () => {
     dispatch({ type: "start-loading" });
     try {
       const details = await getFile(fileId.toString());
-      console.log("DETAILS ", details.contentType);
       dispatch({ type: "loading-success", details });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
