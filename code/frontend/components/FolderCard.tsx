@@ -11,6 +11,7 @@ import { icons, images } from "../constants";
 import { useRouter } from "expo-router";
 import EmptyState from "./EmptyState";
 import { formatSize } from "@/services/utils/Function";
+import { MaterialIcons } from "@expo/vector-icons";
 
 const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
   const router = useRouter();
@@ -35,9 +36,7 @@ const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
           className="w-8 h-8"
           resizeMode="contain"
         />
-        <Text className="text-white text-3xl font-bold bottom-safe-offset-5">
-          …
-        </Text>
+         <MaterialIcons name="more-vert" size={22} color="white" />
       </View>
 
       <View>

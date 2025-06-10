@@ -141,7 +141,7 @@ const StorageDetails = () => {
         },
       ];
       return (
-        <SafeAreaView className="flex-1 bg-primary h-full px-6 py-12">
+        <SafeAreaView className="flex-1 bg-primary h-full px-2 py-12">
           <TouchableOpacity
             className="absolute left-6 top-8 z-10 mt-10"
             onPress={() => router.back()}
@@ -169,8 +169,8 @@ const StorageDetails = () => {
               {formatSize(state.storageDetails.totalSize)}
             </Text>
           </View>
-          <View className="mb-6 mt-2">
-            <View className="mb-6 mt-2">
+          <View className="mb-6 mt-2 px-4">
+            <View className="mb-6 mt-2 px-2">
               {chartData.map((item) => (
                 <StorageBarItem
                   key={item.label}

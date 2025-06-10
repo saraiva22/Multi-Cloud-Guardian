@@ -4,6 +4,7 @@ import { Link, useRouter } from "expo-router";
 import { icons } from "@/constants";
 import { formatDate, formatSize } from "@/services/utils/Function";
 import { FolderType } from "@/domain/storage/FolderType";
+import { MaterialIcons } from "@expo/vector-icons";
 
 type Props = {
   item: FolderType;
@@ -48,17 +49,7 @@ const FolderItemComponent = ({ item, onPress }: Props) => {
           Modified {formatDate(item.createdAt)}
         </Text>
       </View>
-      <TouchableOpacity>
-        <Image
-          source={icons.dots_vertical}
-          style={{
-            width: 24,
-            height: 24,
-            tintColor: "#666",
-          }}
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
+      <MaterialIcons name="more-vert" size={22} color="white" />
     </TouchableOpacity>
   );
 };

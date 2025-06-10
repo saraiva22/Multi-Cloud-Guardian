@@ -5,6 +5,7 @@ import { images } from "@/constants";
 import { formatSize } from "@/services/utils/Function";
 import { useRouter } from "expo-router";
 import { FolderType } from "@/domain/storage/FolderType";
+import { MaterialIcons } from '@expo/vector-icons';
 
 type Props = {
   item: FolderType;
@@ -31,9 +32,7 @@ const FolderGridItemComponent = ({ item }: Props) => {
           className="w-10 h-10"
           resizeMode="contain"
         />
-        <Text className="text-white text-3xl font-bold bottom-safe-offset-5">
-          …
-        </Text>
+          <MaterialIcons name="more-vert" size={24} color="white" />
       </View>
 
       <View>

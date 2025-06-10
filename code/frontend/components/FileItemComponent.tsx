@@ -4,6 +4,7 @@ import { Link, useRouter } from "expo-router";
 import { icons } from "@/constants";
 import { formatDate, formatSize } from "@/services/utils/Function";
 import { FileType } from "@/domain/storage/FileType";
+import { MaterialIcons } from "@expo/vector-icons";
 
 const FileItemComponent = ({ item }: { item: FileType }) => {
   const router = useRouter();
@@ -40,17 +41,7 @@ const FileItemComponent = ({ item }: { item: FileType }) => {
             created on {formatDate(item.createdAt)}
           </Text>
         </View>
-        <TouchableOpacity>
-          <Image
-            source={icons.dots_vertical}
-            style={{
-              width: 24,
-              height: 24,
-              tintColor: "#666",
-            }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
+        <MaterialIcons name="more-vert" size={22} color="white" />
       </TouchableOpacity>
     </Link>
   );
