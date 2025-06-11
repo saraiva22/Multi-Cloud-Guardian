@@ -30,6 +30,7 @@ const SearchInput = ({
 }: SearchInputProps) => {
   const pathname = usePathname();
   const [query, setQuery] = useState("");
+
   return (
     <View
       className="flex-row items-center px-5 py-2 bg-black-100 
@@ -51,9 +52,9 @@ const SearchInput = ({
       </TouchableOpacity>
 
       <TextInput
-        className="text-base mt-0.5 text-white flex-1 font-pregular"
+        className="text-base ml-2 text-white flex-1 font-pregular"
         value={query}
-        placeholder="Search"
+        placeholder={`Search ${placeholder ? placeholder : ""}`}
         placeholderTextColor="#CDCDE0"
         onChangeText={(e) => setQuery(e)}
       ></TextInput>

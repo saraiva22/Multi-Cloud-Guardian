@@ -5,6 +5,7 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useReducer, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,10 +21,15 @@ import {
   isProblem,
   Problem,
 } from "@/services/media/Problem";
-import { uploadFile } from "@/services/storage/StorageService";
+import { getFolders, uploadFile } from "@/services/storage/StorageService";
+import { PageResult } from "@/domain/utils/PageResult";
+import { FolderType } from "@/domain/storage/FolderType";
+import FolderItemComponent from "@/components/FolderItemComponent";
 
 // The State
 type State =
+  | { tag: "begin" }
+  | { tag: "loading" }
   | {
       tag: "editing";
       error?: Problem | string;
@@ -31,18 +37,26 @@ type State =
         fileName: string;
         encryption: boolean;
         file: any;
+        parentFolderId: number | null;
       };
+      folders: PageResult<FolderType>;
     }
+  | { tag: "error"; error: Problem | string }
   | {
       tag: "submitting";
       fileName: string;
       encryption: boolean;
       file: any;
+      parentFolderId: number | null;
+      folders: PageResult<FolderType>;
     }
   | { tag: "redirect" };
 
 // The Action
 type Action =
+  | { type: "start-loading" }
+  | { type: "loading-success"; folders: PageResult<FolderType> }
+  | { type: "loading-error"; error: Problem | string }
   | { type: "edit"; inputName: string; inputValue: string | boolean | any }
   | { type: "submit" }
   | { type: "error"; message: Problem | string }
@@ -54,12 +68,43 @@ function logUnexpectedAction(state: State, action: Action) {
 
 function reducer(state: State, action: Action): State {
   switch (state.tag) {
+    case "begin":
+      if (action.type === "start-loading") {
+        return { tag: "loading" };
+      } else {
+        logUnexpectedAction(state, action);
+        return state;
+      }
+    case "loading":
+      if (action.type === "loading-success") {
+        return {
+          tag: "editing",
+          inputs: {
+            fileName: "",
+            encryption: false,
+            file: null,
+            parentFolderId: null,
+          },
+          folders: action.folders,
+        };
+      } else if (action.type === "loading-error") {
+        return {
+          tag: "error",
+          error: action.error,
+        };
+      } else {
+        logUnexpectedAction(state, action);
+        return state;
+      }
+    case "error":
+      return state;
     case "editing":
       if (action.type === "edit") {
         return {
           tag: "editing",
           error: undefined,
           inputs: { ...state.inputs, [action.inputName]: action.inputValue },
+          folders: state.folders,
         };
       } else if (action.type === "submit") {
         return {
@@ -67,6 +112,8 @@ function reducer(state: State, action: Action): State {
           fileName: state.inputs.fileName,
           encryption: state.inputs.encryption,
           file: state.inputs.file,
+          parentFolderId: state.inputs.parentFolderId,
+          folders: state.folders,
         };
       } else {
         logUnexpectedAction(state, action);
@@ -80,7 +127,13 @@ function reducer(state: State, action: Action): State {
         return {
           tag: "editing",
           error: action.message,
-          inputs: { fileName: "", encryption: false, file: null },
+          inputs: {
+            fileName: "",
+            encryption: false,
+            file: null,
+            parentFolderId: null,
+          },
+          folders: state.folders,
         };
       } else {
         logUnexpectedAction(state, action);
@@ -94,15 +147,21 @@ function reducer(state: State, action: Action): State {
 }
 
 const firstState: State = {
-  tag: "editing",
-  inputs: { fileName: "", encryption: false, file: null },
+  tag: "begin",
 };
+
+const sortBy = "lasted_at";
 
 const CreateFile = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
   const { keyMaster } = useAuthentication();
 
   useEffect(() => {
+    if (state.tag === "begin") {
+      dispatch({ type: "start-loading" });
+      handleGetFolder();
+    }
+
     if (state.tag === "redirect") {
       router.replace("/files");
     }
@@ -115,6 +174,19 @@ const CreateFile = () => {
       inputName,
       inputValue,
     });
+  }
+
+  async function handleGetFolder() {
+    try {
+      const folders = await getFolders(sortBy);
+      dispatch({ type: "loading-success", folders });
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        `${isProblem(error) ? getProblemMessage(error) : error}`
+      );
+      dispatch({ type: "loading-error", error: error });
+    }
   }
 
   // Handle file picker
@@ -165,6 +237,7 @@ const CreateFile = () => {
     const fileName = state.inputs.fileName;
     const encryption = state.inputs.encryption;
     const file = state.inputs.file;
+    const parentFolderId = state.inputs.parentFolderId;
 
     if (!fileName?.trim() || !file) {
       Alert.alert("Error", "Please fill in all fields");
@@ -173,7 +246,17 @@ const CreateFile = () => {
     }
 
     try {
-      await uploadFile(file, fileName, encryption, keyMaster);
+      if (parentFolderId !== null) {
+        await uploadFile(
+          file,
+          fileName,
+          encryption,
+          keyMaster,
+          parentFolderId.toString()
+        );
+      } else {
+        await uploadFile(file, fileName, encryption, keyMaster);
+      }
 
       dispatch({ type: "success" });
     } catch (error) {
@@ -266,6 +349,37 @@ const CreateFile = () => {
           </TouchableOpacity>
         </View>
 
+        <View className="mt-2">
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-xl text-white font-semibold">
+              Recent Folders
+            </Text>
+            <Image
+              source={icons.filter_black1}
+              className="w-10 h-7"
+              resizeMode="contain"
+              tintColor="#fff"
+            />
+          </View>
+
+          {state.tag === "loading" && (
+            <View className="flex-1 items-center justify-center">
+              <ActivityIndicator size="large" color="#FFFFFF" />
+              <Text className="mt-4 text-white text-base">
+                Loading files...
+              </Text>
+            </View>
+          )}
+
+          {state.tag === "editing" &&
+            state.folders.content.map((folder) => (
+              <FolderItemComponent
+                key={folder.folderId}
+                item={folder}
+                onPress={(folderId) => handleChange("parentFolderId", folderId)}
+              />
+            ))}
+        </View>
         <CustomButton
           title="Submit & Publish"
           handlePress={handleSubmit}

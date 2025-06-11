@@ -234,7 +234,7 @@ const CreateFolder = () => {
           </Text>
         </View>
 
-        <SearchInput />
+        <SearchInput placeholder="Folders" />
         <View
           style={{ height: 1, backgroundColor: "#23232a", marginVertical: 18 }}
         />

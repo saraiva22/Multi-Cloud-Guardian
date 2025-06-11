@@ -159,7 +159,7 @@ const Preferences = () => {
       return (
         <SafeAreaView className="flex-1 bg-primary h-full px-6 py-12">
           <TouchableOpacity
-            className="absolute left-6 top-8 z-10 mt-10"
+            className="absolute left-6 top-6 z-10 mt-16"
             onPress={() => router.back()}
             hitSlop={12}
           >

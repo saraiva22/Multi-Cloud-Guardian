@@ -29,9 +29,14 @@ export async function uploadFile(
   file: any,
   fileName: string,
   encryption: boolean,
-  keyMaster: any
+  keyMaster: any,
+  parentFolderId?: string
 ): Promise<UploadOutput> {
-  const path = PREFIX_API + apiRoutes.UPLOAD_FILE;
+  const apiRoute = parentFolderId
+    ? apiRoutes.UPLOAD_FILE_IN_FOLDER.replace(":id", parentFolderId)
+    : apiRoutes.UPLOAD_FILE;
+
+  const path = PREFIX_API + apiRoute;
 
   const formData = new FormData();
 
