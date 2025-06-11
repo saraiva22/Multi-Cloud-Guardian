@@ -190,8 +190,12 @@ class StorageFileJclouds(
 
             val blobs =
                 blobStore
-                    .list(bucketName, ListContainerOptions.Builder.prefix(folderPath))
-                    .map { it.name }
+                    .list(
+                        bucketName,
+                        ListContainerOptions.Builder
+                            .prefix(folderPath)
+                            .recursive(),
+                    ).map { it.name }
             logger.info("Blobs to delete: $blobs")
             if (blobs.isNotEmpty()) {
                 blobStore.removeBlobs(bucketName, blobs)

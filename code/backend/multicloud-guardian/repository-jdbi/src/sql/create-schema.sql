@@ -58,7 +58,7 @@ create table dbo.Folders(
 create table dbo.Files(
     file_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT REFERENCES dbo.Users(id) on delete cascade on update cascade,
-    folder_id INT REFERENCES dbo.Folders(folder_id) on delete set null default null, 
+    folder_id INT REFERENCES dbo.Folders(folder_id) ON DELETE CASCADE,
     file_name VARCHAR(30) not null,
     path VARCHAR(255) not null,
     size bigint not null,

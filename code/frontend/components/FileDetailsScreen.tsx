@@ -5,41 +5,26 @@ import {
   View,
   Image,
   TouchableOpacity,
-  SafeAreaView,
-  FlatList,
 } from "react-native";
 import React, { useEffect, useReducer } from "react";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import {
-  deleteFile,
-  deleteFolder,
-  downloadFile,
   generateTemporaryUrl,
-  getFile,
-  getFiles,
-  getFilesInFolder,
-  getFolder,
-  getFolders,
-  getFoldersInFolder,
   processAndSaveDownloadedFile,
 } from "@/services/storage/StorageService";
-import { FolderOutputModel } from "@/services/storage/model/FolderOutputModel";
+import { FileOutputModel } from "@/services/storage/model/FileOutputModel";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   getProblemMessage,
   isProblem,
   Problem,
 } from "@/services/media/Problem";
-import CustomButton from "@/components/CustomButton";
-import icons from "@/constants/icons";
-import { formatDate, formatSize } from "@/services/utils/Function";
-import { removeValueFor } from "@/services/storage/SecureStorage";
 import { useAuthentication } from "@/context/AuthProvider";
-import { FileType } from "@/domain/storage/FileType";
-import { PageResult } from "@/domain/utils/PageResult";
-import { FolderType } from "@/domain/storage/FolderType";
-import FileItemComponent from "@/components/FileItemComponent";
-import FolderCard from "@/components/FolderCard";
-import EmptyState from "@/components/EmptyState";
+import { removeValueFor } from "@/services/storage/SecureStorage";
+import { icons } from "@/constants";
+import CustomButton from "@/components/CustomButton";
+import { formatDate, formatSize } from "@/services/utils/Function";
+import * as Clipboard from "expo-clipboard";
 
 // The State
 type State =
@@ -47,9 +32,7 @@ type State =
   | { tag: "loading" }
   | {
       tag: "loaded";
-      details: FolderOutputModel;
-      files: PageResult<FileType>;
-      folders: PageResult<FolderType>;
+      details: FileOutputModel;
     }
   | { tag: "redirect" }
   | { tag: "error"; error: Problem | string };
@@ -57,15 +40,10 @@ type State =
 // The Action
 type Action =
   | { type: "start-loading" }
-  | {
-      type: "loading-success";
-      details: FolderOutputModel;
-      files: PageResult<FileType>;
-      folders: PageResult<FolderType>;
-    }
+  | { type: "loading-success"; details: FileOutputModel }
   | { type: "loading-error"; error: Problem | string }
-  | { type: "download-loading"; details: FolderOutputModel }
-  | { type: "url-loading"; details: FolderOutputModel }
+  | { type: "download-loading"; details: FileOutputModel }
+  | { type: "url-loading"; details: FileOutputModel }
   | { type: "delete-loading" }
   | { type: "success-delete" };
 
@@ -88,8 +66,6 @@ function reducer(state: State, action: Action): State {
         return {
           tag: "loaded",
           details: action.details,
-          files: action.files,
-          folders: action.folders,
         };
       } else if (action.type === "loading-error") {
         return { tag: "error", error: action.error };
@@ -126,16 +102,24 @@ const firstState: State = {
 
 const KEY_NAME = "user_info";
 
-type FolderInfoProps = {
-  folderInfo: FolderOutputModel;
+type FileInfoProps = {
+  fileInfo: FileOutputModel;
   state: State;
-  handleDelete: () => Promise<any>;
+  handleDownload: (func: () => void) => Promise<any>;
+  handleDelete: (func: () => void) => Promise<any>;
+  handleGenerateTemporaryUrl: () => Promise<any>;
 };
 
-const FolderInfo = ({ folderInfo, state, handleDelete }: FolderInfoProps) => (
-  <>
+const FileInfo = ({
+  fileInfo,
+  state,
+  handleDownload,
+  handleDelete,
+  handleGenerateTemporaryUrl,
+}: FileInfoProps) => (
+  <SafeAreaView className="flex-1 bg-primary h-full px-6 py-12">
     <TouchableOpacity
-      className="absolute left-6 z-10 mt-6"
+      className="absolute left-6 top-6 z-10 mt-28"
       onPress={() => router.back()}
       hitSlop={12}
     >
@@ -148,33 +132,55 @@ const FolderInfo = ({ folderInfo, state, handleDelete }: FolderInfoProps) => (
     </TouchableOpacity>
 
     <Text className="text-[24px] font-semibold text-white text-center mb-16 mt-4">
-      Folder Details
+      File Details
     </Text>
 
     <View className="items-center mb-12">
       <Image
-        source={icons.folder}
-        className="w-20 h-20 mb-8"
+        source={
+          fileInfo.contentType.startsWith("image")
+            ? icons.image_icon
+            : icons.document
+        }
+        className="w-[100px] h-[100px] mb-8"
         resizeMode="contain"
       />
       <Text className="text-[24px] font-semibold text-white mb-4">
-        Created Folder: {folderInfo.user.username}
+        Created File: {fileInfo.user.username}
       </Text>
       <Text className="text-[16px] text-zinc-300">
-        Folder Name: {folderInfo.folderName}
+        File Name: {fileInfo.name}
       </Text>
       <Text className="text-[16px] text-zinc-300">
-        Folder Size: {formatSize(folderInfo.size)}
+        File Size: {formatSize(fileInfo.size)}
       </Text>
       <Text className="text-[16px] text-zinc-300">
-        Numbers File: {folderInfo.numberFile}
+        Created At: {formatDate(fileInfo.createdAt)}
       </Text>
       <Text className="text-[16px] text-zinc-300">
-        Created At: {formatDate(folderInfo.createdAt)}
+        Encrypted: {fileInfo.encryption ? "Yes" : "No"}
       </Text>
     </View>
 
     <View>
+      <CustomButton
+        title="Download"
+        handlePress={handleDownload}
+        containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
+        textStyles="text-black text-center font-bold"
+        isLoading={state.tag === "loading"}
+        color="border-secondary"
+      />
+      {fileInfo.encryption === false && (
+        <CustomButton
+          title="Generate Temporary URL "
+          handlePress={handleGenerateTemporaryUrl}
+          containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
+          textStyles="text-black text-center font-bold"
+          isLoading={state.tag === "loading"}
+          color="border-secondary"
+        />
+      )}
       <CustomButton
         title="Delete"
         handlePress={handleDelete}
@@ -184,21 +190,53 @@ const FolderInfo = ({ folderInfo, state, handleDelete }: FolderInfoProps) => (
         color="border-secondary"
       />
     </View>
-  </>
+    {state.tag === "loaded" &&
+      fileInfo.encryption === false &&
+      fileInfo.url !== null && (
+        <View className="w-full mb-4 rounded-lg py-4">
+          <Text className="text-white text-center text-xl mb-2 font-medium">
+            Temporary access link generated
+          </Text>
+          <TouchableOpacity
+            onPress={async () => {
+              await Clipboard.setStringAsync(`${fileInfo.url}`);
+              Alert.alert(
+                "Link Copied",
+                "You can now paste the link anywhere to share temporary access to this file."
+              );
+            }}
+            className="bg-tertiary rounded-xl py-3 px-6 active:opacity-80"
+          >
+            <Text className="text-white text-center font-bold text-xl">
+              📋 Copy Link
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+  </SafeAreaView>
 );
 
-const FolderDetails = () => {
-  const { folderId } = useLocalSearchParams();
+type Props = {
+  fileId: string;
+  getFileFunc: (fileId: string) => Promise<FileOutputModel>;
+  downloadFunc: (fileId: string) => Promise<any>;
+  deleteFunc: (fileId: string) => Promise<any>;
+};
+
+const FileDetailsScreen = ({
+  fileId,
+  getFileFunc,
+  downloadFunc,
+  deleteFunc,
+}: Props) => {
   const [state, dispatch] = useReducer(reducer, firstState);
-  const { keyMaster, setIsLogged, setUsername } = useAuthentication();
+  const { keyMaster, setUsername, setIsLogged } = useAuthentication();
 
   const fetchFileDetails = async () => {
     dispatch({ type: "start-loading" });
     try {
-      const details = await getFolder(folderId.toString());
-      const files = await getFilesInFolder(folderId.toString());
-      const folders = await getFoldersInFolder(folderId.toString());
-      dispatch({ type: "loading-success", details, files, folders });
+      const details = await getFileFunc(fileId);
+      dispatch({ type: "loading-success", details });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
       if (state.tag === "error") {
@@ -220,12 +258,37 @@ const FolderDetails = () => {
     }
   };
 
+  async function handleDownload() {
+    if (state.tag !== "loaded") return;
+    dispatch({ type: "download-loading", details: state.details });
+
+    try {
+      const result = await downloadFunc(fileId);
+      await processAndSaveDownloadedFile(result, keyMaster);
+      dispatch({ type: "loading-success", details: state.details });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
+  }
+
   async function handleDelete() {
     if (state.tag !== "loaded") return;
     dispatch({ type: "delete-loading" });
     try {
-      await deleteFolder(folderId.toString());
+      await deleteFunc(fileId);
       dispatch({ type: "success-delete" });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
+  }
+
+  async function handleGenerateTemporaryUrl() {
+    if (state.tag !== "loaded") return;
+    dispatch({ type: "url-loading", details: state.details });
+    try {
+      const defaultTime = 15; // 15 minutes
+      const value = await generateTemporaryUrl(fileId, defaultTime);
+      dispatch({ type: "loading-success", details: value });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
     }
@@ -236,7 +299,7 @@ const FolderDetails = () => {
       fetchFileDetails();
     }
     if (state.tag === "redirect") {
-      router.replace("/folders");
+      router.replace("/files");
     }
 
     if (state.tag === "error") {
@@ -250,7 +313,7 @@ const FolderDetails = () => {
             : state.error
         }`
       );
-      router.replace(`/folders/${folderId}`);
+      router.replace(`/files/${fileId}`);
     }
   }, [state.tag]);
 
@@ -271,50 +334,16 @@ const FolderDetails = () => {
 
     case "loaded": {
       return (
-        <SafeAreaView className="flex-1 bg-primary h-full px-6 py-12">
-          <FlatList
-            data={state.files.content}
-            keyExtractor={(item) => String(item.fileId)}
-            renderItem={({ item }) => <FileItemComponent item={item} />}
-            contentContainerStyle={{ paddingBottom: 80 }}
-            ListHeaderComponent={() => (
-              <View className="my-6 px-4 space-y-6">
-                <FolderInfo
-                  folderInfo={state.details}
-                  state={state}
-                  handleDelete={handleDelete}
-                />
-                <View className="w-full flex-1 pt-5 pb-8">
-                  <View className="flex-row items-center justify-between mb-3">
-                    <Text className="text-2xl font-bold text-gray-100 mb-3">
-                      Folders in {`${state.details.folderName}`}
-                    </Text>
-                  </View>
-
-                  <FolderCard folders={state.folders.content} />
-                </View>
-                <View className="w-full flex-1 pt-2">
-                  <Text className="text-2xl font-bold text-gray-100">
-                    Files in {`${state.details.folderName}`}
-                  </Text>
-                </View>
-              </View>
-            )}
-            ListEmptyComponent={() =>
-              state.tag === "loaded" ? (
-                <EmptyState
-                  title="No Files Found"
-                  subtitle="Be the first one to upload a file"
-                  page="/(modals)/create-file"
-                  titleButton="Upload File"
-                />
-              ) : null
-            }
-          />
-        </SafeAreaView>
+        <FileInfo
+          fileInfo={state.details}
+          state={state}
+          handleDownload={handleDownload}
+          handleDelete={handleDelete}
+          handleGenerateTemporaryUrl={handleGenerateTemporaryUrl}
+        />
       );
     }
   }
 };
 
-export default FolderDetails;
+export default FileDetailsScreen;
