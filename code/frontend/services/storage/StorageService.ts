@@ -21,6 +21,7 @@ import { Alert, Platform } from "react-native";
 import { PageResult } from "@/domain/utils/PageResult";
 import { FolderType } from "@/domain/storage/FolderType";
 import { FileType } from "@/domain/storage/FileType";
+import { FolderOutputModel } from "./model/FolderOutputModel";
 
 const httpService = httpServiceInit();
 
@@ -136,8 +137,34 @@ export async function downloadFile(
   return await httpService.get<DownloadOutputModel>(path);
 }
 
+export async function downloadFileInFolder(
+  folderId: string,
+  fileId: string
+): Promise<DownloadOutputModel> {
+  const path =
+    PREFIX_API +
+    apiRoutes.DOWNLOAD_FILE_IN_FOLDER.replace(":folderId", folderId).replace(
+      ":fileId",
+      fileId
+    );
+  return await httpService.get<DownloadOutputModel>(path);
+}
+
 export async function deleteFile(fileId: string): Promise<void> {
   const path = PREFIX_API + apiRoutes.DELETE_FILE.replace(":id", fileId);
+  return await httpService.delete<void>(path);
+}
+
+export async function deleteFileInFolder(
+  folderId: string,
+  fileId: string
+): Promise<void> {
+  const path =
+    PREFIX_API +
+    apiRoutes.DELETE_FILE_IN_FOLDER.replace(":folderId", folderId).replace(
+      ":fileId",
+      fileId
+    );
   return await httpService.delete<void>(path);
 }
 
@@ -209,8 +236,26 @@ export async function processAndSaveDownloadedFile(
   await saveFileLocally(finalData, fileName);
 }
 
+export async function getFile(fileId: string): Promise<FileOutputModel> {
+  const path = PREFIX_API + apiRoutes.GET_FILE_BY_ID.replace(":id", fileId);
+  return await httpService.get<FileOutputModel>(path);
+}
+
+export async function getFileInFolder(
+  folderId: string,
+  fileId: string
+): Promise<FileOutputModel> {
+  const path =
+    PREFIX_API +
+    apiRoutes.GET_FILE_IN_FOLDER.replace(":folderId", folderId).replace(
+      ":fileId",
+      fileId
+    );
+  return await httpService.get<FileOutputModel>(path);
+}
+
 export async function getFiles(
-  sortBy: string,
+  sortBy: string = "created_at",
   page: number = 0,
   size: number = 10
 ): Promise<PageResult<FileType>> {
@@ -222,11 +267,53 @@ export async function getFiles(
   });
 }
 
-export async function getFile(fileId: string): Promise<FileOutputModel> {
-  const path = PREFIX_API + apiRoutes.GET_FILE_BY_ID.replace(":id", fileId);
-  return await httpService.get<FileOutputModel>(path);
+export async function getFilesInFolder(
+  fileId: string,
+  sortBy: string = "created_at",
+  page: number = 0,
+  size: number = 10
+): Promise<PageResult<FileType>> {
+  const path =
+    PREFIX_API + apiRoutes.GET_FILES_IN_FOLDER.replace(":id", fileId);
+  return await httpService.get<PageResult<FileType>>(path, {
+    sort: sortBy,
+    page: String(page),
+    size: String(size),
+  });
 }
 
+export async function getFolder(folderId: string): Promise<FolderOutputModel> {
+  const path = PREFIX_API + apiRoutes.GET_FOLDER_BY_ID.replace(":id", folderId);
+  return await httpService.get<FolderOutputModel>(path);
+}
+
+export async function getFolders(
+  sortBy: string = "created_at",
+  page: number = 0,
+  size: number = 10
+): Promise<PageResult<FolderType>> {
+  const path = PREFIX_API + apiRoutes.GET_FOLDERS;
+  return await httpService.get<PageResult<FolderType>>(path, {
+    sort: sortBy,
+    page: String(page),
+    size: String(size),
+  });
+}
+
+export async function getFoldersInFolder(
+  folderId: string,
+  sortBy: string = "created_at",
+  page: number = 0,
+  size: number = 10
+): Promise<PageResult<FolderType>> {
+  const path =
+    PREFIX_API + apiRoutes.GET_FOLDERS_IN_FOLDER.replace(":id", folderId);
+  return await httpService.get<PageResult<FolderType>>(path, {
+    sort: sortBy,
+    page: String(page),
+    size: String(size),
+  });
+}
 export async function createFolder(folderName: string): Promise<any> {
   const path = PREFIX_API + apiRoutes.CREATE_FOLDER;
   return await httpService.post<void>(
@@ -251,17 +338,9 @@ export async function createSubFolder(
   );
 }
 
-export async function getFolders(
-  sortBy: string = "created_at",
-  page: number = 0,
-  size: number = 10
-): Promise<PageResult<FolderType>> {
-  const path = PREFIX_API + apiRoutes.GET_FOLDERS;
-  return await httpService.get<PageResult<FolderType>>(path, {
-    sort: sortBy,
-    page: String(page),
-    size: String(size),
-  });
+export async function deleteFolder(folderId: string): Promise<void> {
+  const path = PREFIX_API + apiRoutes.DELETE_FOLDER.replace(":id", folderId);
+  return await httpService.delete<void>(path);
 }
 
 // Utils

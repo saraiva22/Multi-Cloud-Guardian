@@ -1,6 +1,6 @@
 import { MEDIA_TYPE_PROBLEM, Problem } from "../media/Problem";
 
-const LOCAL_IP = "10.21.2.107";
+const LOCAL_IP = "192.168.1.107";
 const PORT = "8088";
 
 export const PREFIX_API = `http://${LOCAL_IP}:${PORT}/api`;
@@ -21,14 +21,22 @@ export const apiRoutes = {
   UPLOAD_FILE: "/files",
   GET_FILES: "/files",
   GET_FILE_BY_ID: "/files/:id",
+  CREATE_TEMP_URL: "/files/:id/temp-url",
   DOWNLOAD_FILE: "/files/:id/download",
   DELETE_FILE: "/files/:id",
-  CREATE_TEMP_URL: "/files/:id/temp-url",
 
   // Folders
   CREATE_FOLDER: "/folders",
-  GET_FOLDERS: "/folders",
   CREATE_FOLDER_IN_FOLDER: "/folders/:id",
+  GET_FOLDERS: "/folders",
+  GET_FOLDER_BY_ID: "/folders/:id",
+  GET_FOLDERS_IN_FOLDER: "/folders/:id/folders",
+  GET_FILES_IN_FOLDER: "/folders/:id/files",
+  GET_FILE_IN_FOLDER: "/folders/:folderId/files/:fileId",
+  UPLOAD_FILE_IN_FOLDER: "/folders/:id/files",
+  DOWNLOAD_FILE_IN_FOLDER: "/folders/:folderId/files/:fileId/download",
+  DELETE_FOLDER: "/folders/:id",
+  DELETE_FILE_IN_FOLDER: "/folders/:folderId/files/:fileId",
 };
 
 export default function httpService() {

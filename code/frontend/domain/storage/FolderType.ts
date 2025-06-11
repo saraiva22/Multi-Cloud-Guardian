@@ -3,7 +3,7 @@ import { UserInfo } from "../user/UserInfo";
 export interface FolderType {
   folderId: number;
   user: UserInfo;
-  parentId: number | null;
+  parentFolderId: number | null;
   folderName: string;
   size: number;
   numberFile: number;

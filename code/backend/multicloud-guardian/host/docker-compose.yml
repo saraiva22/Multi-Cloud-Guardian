@@ -21,6 +21,7 @@ services:
       - ./.env
     volumes:
       - ./json-key.json:/app/creds/json-key.json:ro
+      - ./src/main/resources/application.properties:/app/application.properties:ro
 
   nginx:
     container_name: mcg-nginx

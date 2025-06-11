@@ -4,6 +4,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
 import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.preferences.PreferencesDomain
+import pt.isel.leic.multicloudguardian.domain.provider.ProviderDomainConfig
 import pt.isel.leic.multicloudguardian.domain.token.Sha256TokenEncoder
 import pt.isel.leic.multicloudguardian.domain.user.User
 import pt.isel.leic.multicloudguardian.domain.user.UsersDomain
@@ -11,6 +12,8 @@ import pt.isel.leic.multicloudguardian.domain.user.UsersDomainConfig
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Success
 import pt.isel.leic.multicloudguardian.repository.jdbi.JdbiTransactionManager
+import pt.isel.leic.multicloudguardian.service.storage.StorageService
+import pt.isel.leic.multicloudguardian.service.storage.jclouds.StorageFileJclouds
 import pt.isel.leic.multicloudguardian.service.user.UsersService
 import kotlin.test.fail
 import kotlin.time.Duration
@@ -39,6 +42,18 @@ open class ServiceTests : ApplicationTests() {
             PreferencesDomain(),
             testClock,
         )
+
+        fun storageService(
+            jcloudsStorage: StorageFileJclouds,
+            providerDomain: ProviderDomainConfig,
+            clock: TestClock,
+        ): StorageService =
+            StorageService(
+                JdbiTransactionManager(jdbi),
+                jcloudsStorage,
+                providerDomain,
+                clock,
+            )
 
         fun createUserInService(
             userName: String,
