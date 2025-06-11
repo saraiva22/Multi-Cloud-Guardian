@@ -31,8 +31,6 @@ import SortSelector, {
 } from "@/components/SortSelector";
 import BottomSheet from "@gorhom/bottom-sheet";
 import FolderItemGrid from "@/components/FolderItemGrid";
-import FolderCard from "@/components/FolderCard";
-
 // The State
 type State =
   | { tag: "begin"; refreshing: boolean; sort: SortOption }
