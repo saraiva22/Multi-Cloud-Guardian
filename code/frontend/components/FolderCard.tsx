@@ -36,7 +36,7 @@ const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
           className="w-8 h-8"
           resizeMode="contain"
         />
-         <MaterialIcons name="more-vert" size={22} color="white" />
+        <MaterialIcons name="more-vert" size={22} color="white" />
       </View>
 
       <View>
