@@ -1,10 +1,5 @@
-import {
-  getProblemMessage,
-  isProblem,
-  Problem,
-} from "@/services/media/Problem";
+import { Problem } from "@/services/media/Problem";
 import { useEffect, useReducer } from "react";
-import { Alert } from "react-native";
 
 // The State
 type State =
@@ -66,10 +61,6 @@ export function useFetch(url: string): UseFetchResult {
           dispatch({ type: "loading-success", payload: json, url: url });
         }
       } catch (error) {
-        Alert.alert(
-          "Error",
-          `${isProblem(error) ? getProblemMessage(error) : error}`
-        );
         if (!cancelled) {
           dispatch({ type: "loading-error", error: error });
         }

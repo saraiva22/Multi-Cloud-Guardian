@@ -277,6 +277,7 @@ const FolderDetails = () => {
             keyExtractor={(item) => String(item.fileId)}
             renderItem={({ item }) => <FileItemComponent item={item} />}
             contentContainerStyle={{ paddingBottom: 80 }}
+            showsVerticalScrollIndicator={false}
             ListHeaderComponent={() => (
               <View className="my-6 px-4 space-y-6">
                 <FolderInfo

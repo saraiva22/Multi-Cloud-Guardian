@@ -15,4 +15,4 @@ docker build -t multi-cloud-guardian-ubuntu -f ./multicloud-guardian/host/tests/
 
 echo ""
 echo "[4/5] Starting all services using docker-compose..."
-docker compose -f ./multicloud-guardian/host/docker-compose.yml up --force-recreate -d
+docker compose -f ./multicloud-guardian/host/docker-compose.yml up -d

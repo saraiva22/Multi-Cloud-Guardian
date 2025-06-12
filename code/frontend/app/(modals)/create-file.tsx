@@ -150,7 +150,7 @@ const firstState: State = {
   tag: "begin",
 };
 
-const sortBy = "lasted_at";
+const sortBy = "created_desc  ";
 
 const CreateFile = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
