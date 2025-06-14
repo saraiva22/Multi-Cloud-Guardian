@@ -14,6 +14,7 @@ import pt.isel.leic.multicloudguardian.domain.provider.AzureStorageConfig
 import pt.isel.leic.multicloudguardian.domain.provider.BackBlazeStorageConfig
 import pt.isel.leic.multicloudguardian.domain.provider.GoogleCloudStorageConfig
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderDomainConfig
+import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.token.Sha256TokenEncoder
 import pt.isel.leic.multicloudguardian.domain.user.User
 import pt.isel.leic.multicloudguardian.domain.user.UserInfo
@@ -29,6 +30,7 @@ import pt.isel.leic.multicloudguardian.service.storage.apis.BackBlazeApi
 import pt.isel.leic.multicloudguardian.service.storage.apis.GoogleApi
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.StorageFileJclouds
 import pt.isel.leic.multicloudguardian.service.user.UsersService
+import java.util.Base64
 import kotlin.math.abs
 import kotlin.random.Random
 import kotlin.test.fail
@@ -86,19 +88,29 @@ open class ServiceTests : ApplicationTests() {
             }
         }
 
-        fun fileCreation(): FileCreate {
+        fun fileCreation(encryption: Boolean = false): FileCreate {
             val randomNumber = Random.nextInt(1, 1_000_000)
             val blobName = "test-file-$randomNumber.txt"
             val fileContent = "This is a test file content for $blobName ${abs(Random.nextLong())}"
             val contentType = "text/plain"
             val size = fileContent.toByteArray().size.toLong()
+
+            val encryptedKey =
+                if (encryption) {
+                    val keyWithIV = ByteArray(32)
+                    Random.nextBytes(keyWithIV)
+                    Base64.getEncoder().encodeToString(keyWithIV)
+                } else {
+                    ""
+                }
+
             return FileCreate(
                 blobName = blobName,
                 fileContent = fileContent.toByteArray(),
                 contentType = contentType,
                 size = size,
-                encryption = false,
-                encryptedKey = null,
+                encryption = encryption,
+                encryptedKey = encryptedKey,
             )
         }
 
@@ -131,6 +143,15 @@ open class ServiceTests : ApplicationTests() {
         }
 
         val testClock = TestClock()
+
+        fun getCredentials(providerType: ProviderType) = providerDomain.getCredential(providerType)
+
+        fun getIdentity(providerType: ProviderType) = providerDomain.getIdentity(providerType)
+
+        fun getLocation(providerType: ProviderType) = providerDomain.getLocation(providerType)
+
+        fun getBucketName(providerType: ProviderType) = providerDomain.getBucketName(providerType)
+
         private val userServices = createUsersService(testClock)
 
         private val providerDomain =
@@ -173,7 +194,7 @@ open class ServiceTests : ApplicationTests() {
         private val amazonApi = AmazonApi()
         private val backBlazeApi = BackBlazeApi()
 
-        private val jcloudsStorage = StorageFileJclouds(azureApi, googleApi, amazonApi, backBlazeApi)
+        val jcloudsStorage = StorageFileJclouds(azureApi, googleApi, amazonApi, backBlazeApi)
 
         lateinit var testUser: User
         lateinit var testUser2: User
