@@ -4,6 +4,8 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import pt.isel.leic.multicloudguardian.Environment
+import pt.isel.leic.multicloudguardian.domain.file.File
+import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
 import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.preferences.PreferencesDomain
@@ -27,6 +29,8 @@ import pt.isel.leic.multicloudguardian.service.storage.apis.BackBlazeApi
 import pt.isel.leic.multicloudguardian.service.storage.apis.GoogleApi
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.StorageFileJclouds
 import pt.isel.leic.multicloudguardian.service.user.UsersService
+import kotlin.math.abs
+import kotlin.random.Random
 import kotlin.test.fail
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
@@ -55,14 +59,6 @@ open class ServiceTests : ApplicationTests() {
             testClock,
         )
 
-        fun createStorageService(): StorageService =
-            StorageService(
-                JdbiTransactionManager(jdbi),
-                jcloudsStorage,
-                providerDomain,
-                testClock,
-            )
-
         fun createUserInService(
             userName: String,
             password: String,
@@ -90,7 +86,51 @@ open class ServiceTests : ApplicationTests() {
             }
         }
 
-        private val testClock = TestClock()
+        fun fileCreation(): FileCreate {
+            val randomNumber = Random.nextInt(1, 1_000_000)
+            val blobName = "test-file-$randomNumber.txt"
+            val fileContent = "This is a test file content for $blobName ${abs(Random.nextLong())}"
+            val contentType = "text/plain"
+            val size = fileContent.toByteArray().size.toLong()
+            return FileCreate(
+                blobName = blobName,
+                fileContent = fileContent.toByteArray(),
+                contentType = contentType,
+                size = size,
+                encryption = false,
+                encryptedKey = null,
+            )
+        }
+
+        fun createFile(
+            user: User,
+            fileCreate: FileCreate,
+        ): File {
+            val file = fileCreate
+
+            val createFie = createStorageService().uploadFile(file, file.encryption, user)
+
+            val fileId =
+                when (createFie) {
+                    is Failure -> {
+                        fail("Unexpected $createFie")
+                    }
+                    is Success -> createFie
+                }
+
+            val getFileResult =
+                createStorageService()
+                    .getFileById(user, fileId.value)
+
+            return when (getFileResult) {
+                is Failure -> {
+                    fail("Unexpected $getFileResult")
+                }
+                is Success -> getFileResult.value
+            }
+        }
+
+        val testClock = TestClock()
         private val userServices = createUsersService(testClock)
 
         private val providerDomain =
@@ -140,6 +180,18 @@ open class ServiceTests : ApplicationTests() {
 
         lateinit var testUserInfo: UserInfo
         lateinit var testUserInfo2: UserInfo
+
+        const val DEFAULT_LIMIT = 10
+        const val DEFAULT_PAGE = 0
+        const val DEFAULT_SORT = "created_asc"
+
+        fun createStorageService(clock: TestClock = testClock): StorageService =
+            StorageService(
+                JdbiTransactionManager(jdbi),
+                jcloudsStorage,
+                providerDomain,
+                clock,
+            )
 
         @JvmStatic
         @BeforeAll

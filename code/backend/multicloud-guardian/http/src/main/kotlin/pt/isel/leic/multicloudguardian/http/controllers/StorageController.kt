@@ -580,6 +580,6 @@ class StorageController(
     companion object {
         private const val DEFAULT_LIMIT = 10
         private const val DEFAULT_PAGE = 0
-        private const val DEFAULT_SORT = "createdAt"
+        private const val DEFAULT_SORT = "created_asc"
     }
 }

@@ -15,6 +15,7 @@ interface StorageRepository {
         folderId: Id?,
         encryption: Boolean,
         createdAt: Instant,
+        updatedAt: Instant?,
     ): Id
 
     fun getFileNamesInFolder(
@@ -98,6 +99,7 @@ interface StorageRepository {
     fun deleteFile(
         userId: Id,
         file: File,
+        updatedAt: Instant?,
     )
 
     fun deleteFolder(

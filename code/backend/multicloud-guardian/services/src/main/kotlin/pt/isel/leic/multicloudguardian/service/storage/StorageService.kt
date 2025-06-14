@@ -105,6 +105,7 @@ class StorageService(
                                     folderId,
                                     encryption,
                                     clock.now(),
+                                    updatedAt = if (folderId != null) clock.now() else null,
                                 )
                             contextStorage.value.close()
                             success(fileId)
@@ -273,7 +274,7 @@ class StorageService(
                         is Failure -> return@run failure(DeleteFileError.ErrorDeletingFile)
 
                         is Success -> {
-                            fileRepository.deleteFile(user.id, file)
+                            fileRepository.deleteFile(user.id, file, if (file.folderId != null) clock.now() else null)
                             success(true)
                         }
                     }
@@ -356,7 +357,7 @@ class StorageService(
                         is Failure -> return@run failure(DeleteFileError.ErrorDeletingFile)
 
                         is Success -> {
-                            fileRepository.deleteFile(user.id, file)
+                            fileRepository.deleteFile(user.id, file, if (file.folderId != null) clock.now() else null)
                             success(true)
                         }
                     }

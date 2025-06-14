@@ -21,6 +21,7 @@ class JdbiStorageRepository(
         folderId: Id?,
         encryption: Boolean,
         createdAt: Instant,
+        updatedAt: Instant?,
     ): Id {
         val fileId =
             handle
@@ -43,6 +44,21 @@ class JdbiStorageRepository(
                 .one()
 
         logger.info("{} file stored in the database", file.blobName)
+
+        if (updatedAt != null && folderId != null) {
+            handle
+                .createUpdate(
+                    """
+                    update dbo.Folders
+                    set updated_at = :updated_at
+                    where folder_id = :folder_id
+                    """.trimIndent(),
+                ).bind("updated_at", updatedAt.epochSeconds)
+                .bind("folder_id", folderId.value)
+                .execute()
+        }
+
+        logger.info("Folder updated at: {}", updatedAt)
 
         return Id(fileId)
     }
@@ -312,6 +328,7 @@ class JdbiStorageRepository(
     override fun deleteFile(
         userId: Id,
         file: File,
+        updatedAt: Instant?,
     ) {
         handle
             .createUpdate(
@@ -321,6 +338,20 @@ class JdbiStorageRepository(
             ).bind("fileId", file.fileId.value)
             .bind("userId", userId.value)
             .execute()
+
+        val folderId = file.folderId
+        if (updatedAt != null && folderId != null) {
+            handle
+                .createUpdate(
+                    """
+                    update dbo.Folders
+                    set updated_at = :updated_at
+                    where folder_id = :folder_id
+                    """.trimIndent(),
+                ).bind("updated_at", updatedAt.epochSeconds)
+                .bind("folder_id", folderId.value)
+                .execute()
+        }
     }
 
     override fun deleteFolder(
@@ -374,6 +405,8 @@ class JdbiStorageRepository(
                 "name_asc" -> "$attributeName asc"
                 "created_desc" -> "created_at desc"
                 "created_asc" -> "created_at asc"
+                "updated_desc" -> "updated_at desc"
+                "updated_asc" -> "updated_at asc"
                 "size_desc" -> "size desc"
                 "size_asc" -> "size asc"
                 else -> "created_at"
