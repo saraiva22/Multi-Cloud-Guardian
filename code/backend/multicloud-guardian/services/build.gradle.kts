@@ -1,5 +1,7 @@
 plugins {
     kotlin("jvm")
+    id("org.springframework.boot")
+    id("io.spring.dependency-management")
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
 }
 
@@ -44,6 +46,11 @@ dependencies {
     implementation("com.backblaze.b2:b2-sdk-httpclient:6.3.0")
     implementation("com.backblaze.b2:b2-sdk-core:6.3.0")
 
+    testImplementation(kotlin("test"))
+    testImplementation(project(":multicloud-guardian:host"))
+    // To use WebTestClient on tests
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
     testImplementation(kotlin("test"))
 }
 

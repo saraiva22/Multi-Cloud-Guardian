@@ -1,18 +1,30 @@
 package pt.isel.leic.multicloudguardian.service.utils
 
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import pt.isel.leic.multicloudguardian.Environment
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
 import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.preferences.PreferencesDomain
+import pt.isel.leic.multicloudguardian.domain.provider.AmazonS3StorageConfig
+import pt.isel.leic.multicloudguardian.domain.provider.AzureStorageConfig
+import pt.isel.leic.multicloudguardian.domain.provider.BackBlazeStorageConfig
+import pt.isel.leic.multicloudguardian.domain.provider.GoogleCloudStorageConfig
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderDomainConfig
 import pt.isel.leic.multicloudguardian.domain.token.Sha256TokenEncoder
 import pt.isel.leic.multicloudguardian.domain.user.User
+import pt.isel.leic.multicloudguardian.domain.user.UserInfo
 import pt.isel.leic.multicloudguardian.domain.user.UsersDomain
 import pt.isel.leic.multicloudguardian.domain.user.UsersDomainConfig
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Success
 import pt.isel.leic.multicloudguardian.repository.jdbi.JdbiTransactionManager
 import pt.isel.leic.multicloudguardian.service.storage.StorageService
+import pt.isel.leic.multicloudguardian.service.storage.apis.AmazonApi
+import pt.isel.leic.multicloudguardian.service.storage.apis.AzureApi
+import pt.isel.leic.multicloudguardian.service.storage.apis.BackBlazeApi
+import pt.isel.leic.multicloudguardian.service.storage.apis.GoogleApi
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.StorageFileJclouds
 import pt.isel.leic.multicloudguardian.service.user.UsersService
 import kotlin.test.fail
@@ -43,16 +55,12 @@ open class ServiceTests : ApplicationTests() {
             testClock,
         )
 
-        fun storageService(
-            jcloudsStorage: StorageFileJclouds,
-            providerDomain: ProviderDomainConfig,
-            clock: TestClock,
-        ): StorageService =
+        fun createStorageService(): StorageService =
             StorageService(
                 JdbiTransactionManager(jdbi),
                 jcloudsStorage,
                 providerDomain,
-                clock,
+                testClock,
             )
 
         fun createUserInService(
@@ -85,16 +93,81 @@ open class ServiceTests : ApplicationTests() {
         private val testClock = TestClock()
         private val userServices = createUsersService(testClock)
 
-        private fun createUser(): User {
+        private val providerDomain =
+            ProviderDomainConfig(googleCloudStorageConfig(), amazonS3Config(), azureStorageConfig(), backBlazeStorageConfig())
+
+        private fun googleCloudStorageConfig() =
+            GoogleCloudStorageConfig(
+                bucketName = Environment.getBucketName(),
+                identity = Environment.getGoogleIdentity(),
+                credential = Environment.getGoogleCredentials(),
+                location = Environment.getGoogleLocation(),
+            )
+
+        private fun azureStorageConfig() =
+            AzureStorageConfig(
+                bucketName = Environment.getBucketName(),
+                identity = Environment.getAzureIdentity(),
+                credential = Environment.getAzureCredentials(),
+                location = Environment.getAzureLocation(),
+            )
+
+        private fun backBlazeStorageConfig() =
+            BackBlazeStorageConfig(
+                bucketName = Environment.getBucketName(),
+                identity = Environment.getBackBlazeIdentity(),
+                credential = Environment.getBackBlazeCredentials(),
+                location = Environment.getBackBlazeLocation(),
+            )
+
+        private fun amazonS3Config() =
+            AmazonS3StorageConfig(
+                bucketName = Environment.getBucketName(),
+                identity = Environment.getAmazonIdentity(),
+                credential = Environment.getAmazonCredentials(),
+                location = Environment.getAmazonLocation(),
+            )
+
+        private val azureApi = AzureApi()
+        private val googleApi = GoogleApi()
+        private val amazonApi = AmazonApi()
+        private val backBlazeApi = BackBlazeApi()
+
+        private val jcloudsStorage = StorageFileJclouds(azureApi, googleApi, amazonApi, backBlazeApi)
+
+        lateinit var testUser: User
+        lateinit var testUser2: User
+
+        lateinit var testUserInfo: UserInfo
+        lateinit var testUserInfo2: UserInfo
+
+        @JvmStatic
+        @BeforeAll
+        fun setupDB() {
+            testUser = createUser(PerformanceType.HIGH, LocationType.EUROPE) // User associated Azure Provider
+            testUser2 = createUser(PerformanceType.LOW, LocationType.NORTH_AMERICA) // User associated BackBlaze Provider
+            testUserInfo = UserInfo(testUser.id, testUser.username, testUser.email)
+            testUserInfo2 = UserInfo(testUser2.id, testUser2.username, testUser2.email)
+        }
+
+        private fun createUser(
+            performance: PerformanceType,
+            location: LocationType,
+        ): User {
             val username = newTestUserName()
             val password = newTestPassword()
             val email = newTestEmail(username)
             val salt = newTestSalt()
             val iteration = newTestIteration()
-            val performance = PerformanceType.MEDIUM
-            val location = LocationType.EUROPE
 
             return createUserInService(username, password, email, salt, iteration, performance, location)
+        }
+
+        @JvmStatic
+        @AfterAll
+        fun clearDB() {
+            clearData(jdbi, "dbo.Users", "id", testUser.id.value)
+            clearData(jdbi, "dbo.Users", "id", testUser2.id.value)
         }
     }
 }

@@ -378,7 +378,7 @@ class StorageService(
             PageResult.fromPartialResult(files, totalElements, limit, offset)
         }
 
-    fun getFolder(
+    fun getFolders(
         user: User,
         limit: Int,
         page: Int,
