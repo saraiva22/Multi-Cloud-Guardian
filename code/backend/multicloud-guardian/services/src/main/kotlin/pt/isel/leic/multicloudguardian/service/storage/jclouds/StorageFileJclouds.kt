@@ -153,17 +153,6 @@ class StorageFileJclouds(
         }
     }
 
-    fun listBlobs(
-        context: BlobStoreContext,
-        folderName: String?,
-        path: String,
-    ): List<String> {
-        val blobStore = context.blobStore
-        val folderNameValid = folderName?.let { "$it/" } ?: ""
-        val blobs = blobStore.list(path, ListContainerOptions.Builder.prefix(folderNameValid))
-        return blobs.map { blob -> blob.name }
-    }
-
     fun deleteBlob(
         context: BlobStoreContext,
         bucketName: String,
