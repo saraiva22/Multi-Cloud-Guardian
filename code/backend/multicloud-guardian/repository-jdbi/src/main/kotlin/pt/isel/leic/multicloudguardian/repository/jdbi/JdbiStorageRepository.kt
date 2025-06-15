@@ -74,7 +74,7 @@ class JdbiStorageRepository(
                 OR folder_id = :folderId)
                 """.trimIndent(),
             ).bind("user_id", userId.value)
-            .bind("folderId", folderId)
+            .bind("folderId", folderId?.value)
             .mapTo<String>()
             .list()
 
