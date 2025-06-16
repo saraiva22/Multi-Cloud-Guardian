@@ -13,6 +13,7 @@ import pt.isel.leic.multicloudguardian.service.utils.TestClock
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlin.time.Duration.Companion.minutes
@@ -621,7 +622,7 @@ class StorageServiceTests : ServiceTests() {
 
     @Test
     fun `should create two normal folders and a subfolder, verify count and parent linkage`() {
-        // Arrange
+        // Arrange: initialize storage service and test user
         val clock = testClock
         val storageService = createStorageService(clock)
         val user = testUser
@@ -687,7 +688,7 @@ class StorageServiceTests : ServiceTests() {
 
     @Test
     fun `should create nested folders, insert files with clock updates, verify folder metadata, delete file and cleanup`() {
-        // Arrange
+        // Arrange: initialize storage service and test user
         val clock = testClock
         val storageService = createStorageService(clock)
         val user = testUser
@@ -788,5 +789,459 @@ class StorageServiceTests : ServiceTests() {
         storageService.deleteFolder(user, subFolder2Id)
         storageService.deleteFolder(user, subFolder1Id)
         storageService.deleteFolder(user, rootFolderId)
+    }
+
+    @Test
+    fun `move file between root and folder updates folder metadata correctly`() {
+        // Arrange: initialize storage service and test user
+        val clock = TestClock()
+        val storageService = createStorageService(clock)
+        val user = testUser
+
+        // Act:  Upload file to root
+        val fileContent = fileCreation()
+        val uploadFileResult = storageService.uploadFile(fileContent, fileContent.encryption, user)
+        val fileId =
+            when (uploadFileResult) {
+                is Success -> uploadFileResult.value
+                is Failure -> fail("Unexpected $uploadFileResult")
+            }
+
+        // Act: Create a folder
+        val folderName = "TestFolder"
+        val createFolderResult = storageService.createFolder(folderName, user)
+        val folderId =
+            when (createFolderResult) {
+                is Success -> createFolderResult.value
+                is Failure -> fail("Unexpected $createFolderResult")
+            }
+
+        // Act: Move file from root to folder
+        clock.advance(1.minutes)
+        val moveToFolderResult = storageService.moveFile(user, fileId, folderId)
+
+        // Assert: file moved successfully
+        when (moveToFolderResult) {
+            is Success -> assertTrue(moveToFolderResult.value)
+            is Failure -> fail("Unexpected $moveToFolderResult")
+        }
+
+        // Assert: folder metadata updated
+        val folderAfterMove = storageService.getFolderById(user, folderId)
+
+        // Act:  Check folder metadata after moving file in
+        when (folderAfterMove) {
+            is Success -> {
+                assertEquals(1, folderAfterMove.value.numberFiles)
+                assertTrue(folderAfterMove.value.updatedAt.epochSeconds > folderAfterMove.value.createdAt.epochSeconds)
+            }
+            is Failure -> fail("Unexpected $folderAfterMove")
+        }
+
+        // Act: Move file back to root (folderId = null)
+        clock.advance(1.minutes)
+        val moveToRootResult = storageService.moveFile(user, fileId, null)
+
+        // Assert: file moved back to root successfully
+        when (moveToRootResult) {
+            is Success -> assertTrue(moveToRootResult.value)
+            is Failure -> fail("Unexpected $moveToRootResult")
+        }
+
+        // Act: Check folder metadata after moving file out
+        val folderAfterMoveOut = storageService.getFolderById(user, folderId)
+
+        // Assert: folder metadata updated correctly after moving file out
+        when (folderAfterMoveOut) {
+            is Success -> {
+                assertEquals(0, folderAfterMoveOut.value.numberFiles)
+                assertTrue(folderAfterMoveOut.value.updatedAt.epochSeconds > folderAfterMove.value.updatedAt.epochSeconds)
+            }
+            is Failure -> fail("Unexpected $folderAfterMoveOut")
+        }
+
+        // Cleanup
+        storageService.deleteFile(user, fileId)
+        storageService.deleteFolder(user, folderId)
+    }
+
+    @Test
+    fun `move file to folder updates file folderId and file appears in folder`() {
+        // Arrange: initialize storage service and test user
+        val clock = TestClock()
+        val storageService = createStorageService(clock)
+        val user = testUser
+
+        // Act: Upload file to root
+        val fileContent = fileCreation()
+        val uploadFileResult = storageService.uploadFile(fileContent, fileContent.encryption, user)
+
+        // Assert: file upload should succeed
+        val fileId =
+            when (uploadFileResult) {
+                is Success -> uploadFileResult.value
+                is Failure -> fail("Unexpected $uploadFileResult")
+            }
+
+        // Act: Create a folder
+        val folderName = "TestFolder"
+        val createFolderResult = storageService.createFolder(folderName, user)
+
+        // Assert: folder creation should succeed
+        val folderId =
+            when (createFolderResult) {
+                is Success -> createFolderResult.value
+                is Failure -> fail("Unexpected $createFolderResult")
+            }
+
+        // Act: Move file from root to folder
+        clock.advance(1.minutes)
+        val moveToFolderResult = storageService.moveFile(user, fileId, folderId)
+
+        // Assert: file should be moved successfully
+        when (moveToFolderResult) {
+            is Success -> assertTrue(moveToFolderResult.value)
+            is Failure -> fail("Unexpected $moveToFolderResult")
+        }
+
+        // Act: Check file's folderId is updated
+        val getFile = storageService.getFileById(user, fileId)
+
+        // Assert: file should now belong to the created folder
+        when (getFile) {
+            is Success -> assertEquals(folderId, getFile.value.folderId)
+            is Failure -> fail("Unexpected $getFile")
+        }
+
+        // Act: Check files in the folder
+        val filesInFolder = storageService.getFilesInFolder(user, folderId, DEFAULT_LIMIT, DEFAULT_PAGE, DEFAULT_SORT)
+
+        // Assert: file should appear in the folder's file list
+        when (filesInFolder) {
+            is Success -> assertTrue(filesInFolder.value.content.any { it.fileId == fileId })
+            is Failure -> fail("Unexpected $filesInFolder")
+        }
+
+        // Cleanup
+        storageService.deleteFile(user, fileId)
+        storageService.deleteFolder(user, folderId)
+    }
+
+    @Test
+    fun `swap files between folder and subfolder updates folderId and folder metadata`() {
+        // Arrange: initialize storage service and test user
+        val clock = TestClock()
+        val storageService = createStorageService(clock)
+        val user = testUser
+
+        // Act: Create folder
+        val folderResult = storageService.createFolder("Folder", user)
+
+        // Assert: folder creation should succeed
+        val folderId =
+            when (folderResult) {
+                is Success -> folderResult.value
+                is Failure -> fail("Unexpected $folderResult")
+            }
+
+        // Act: Create subfolder inside the folder
+        val subFolderResult = storageService.createFolderInFolder("SubFolder", user, folderId)
+
+        // Assert: subfolder creation should succeed
+        val subFolderId =
+            when (subFolderResult) {
+                is Success -> subFolderResult.value
+                is Failure -> fail("Unexpected $subFolderResult")
+            }
+
+        // Upload file1 to folder, file2 to subfolder
+        val fileContent1 = fileCreation()
+        val fileContent2 = fileCreation()
+        val file1Result = storageService.uploadFileInFolder(fileContent1, fileContent1.encryption, user, folderId)
+        val file2Result = storageService.uploadFileInFolder(fileContent2, fileContent2.encryption, user, subFolderId)
+        val file1Id =
+            when (file1Result) {
+                is Success -> file1Result.value
+                is Failure -> fail("Unexpected $file1Result")
+            }
+        val file2Id =
+            when (file2Result) {
+                is Success -> file2Result.value
+                is Failure -> fail("Unexpected $file2Result")
+            }
+
+        // Swap: move file1 to subfolder, file2 to folder
+        clock.advance(1.minutes)
+
+        // Act: Move file1 to subfolder, file2 to folder
+        val move1 = storageService.moveFile(user, file1Id, subFolderId)
+        val move2 = storageService.moveFile(user, file2Id, folderId)
+
+        // Assert: both moves should succeed
+        when (move1) {
+            is Success -> assertTrue(move1.value)
+            is Failure -> fail("Unexpected $move1")
+        }
+        when (move2) {
+            is Success -> assertTrue(move2.value)
+            is Failure -> fail("Unexpected $move2")
+        }
+
+        // Act: Check file1 is now in subfolder, file2 in folder
+        val getFile1 = storageService.getFileById(user, file1Id)
+        when (getFile1) {
+            is Success -> assertEquals(subFolderId, getFile1.value.folderId)
+            is Failure -> fail("Unexpected $getFile1")
+        }
+        // Check file2 is now in folder
+        val getFile2 = storageService.getFileById(user, file2Id)
+        when (getFile2) {
+            is Success -> assertEquals(folderId, getFile2.value.folderId)
+            is Failure -> fail("Unexpected $getFile2")
+        }
+
+        // Act: Check files in folder and subfolder
+        val filesInFolder = storageService.getFilesInFolder(user, folderId, DEFAULT_LIMIT, DEFAULT_PAGE, DEFAULT_SORT)
+        val filesInSubFolder = storageService.getFilesInFolder(user, subFolderId, DEFAULT_LIMIT, DEFAULT_PAGE, DEFAULT_SORT)
+
+        // Assert: file1 should be in subfolder, file2 in folder
+        when (filesInFolder) {
+            is Success -> assertTrue(filesInFolder.value.content.any { it.fileId == file2Id })
+            is Failure -> fail("Unexpected $filesInFolder")
+        }
+        when (filesInSubFolder) {
+            is Success -> assertTrue(filesInSubFolder.value.content.any { it.fileId == file1Id })
+            is Failure -> fail("Unexpected $filesInSubFolder")
+        }
+
+        // Act: Check folder metadata after swapping files
+        val folderInfo = storageService.getFolderById(user, folderId)
+        val subFolderInfo = storageService.getFolderById(user, subFolderId)
+
+        // Assert: folder metadata should reflect the correct number of files
+        when (folderInfo) {
+            is Success -> assertEquals(1, folderInfo.value.numberFiles)
+            is Failure -> fail("Unexpected $folderInfo")
+        }
+        when (subFolderInfo) {
+            is Success -> assertEquals(1, subFolderInfo.value.numberFiles)
+            is Failure -> fail("Unexpected $subFolderInfo")
+        }
+
+        // Cleanup
+        storageService.deleteFileInFolder(user, folderId, file2Id)
+        storageService.deleteFileInFolder(user, subFolderId, file1Id)
+        storageService.deleteFolder(user, subFolderId)
+        storageService.deleteFolder(user, folderId)
+    }
+
+    @Test
+    fun `move files from subfolder to root and folder updates all listings and metadata`() {
+        // Arrange: initialize storage service and test user
+        val clock = TestClock()
+        val storageService = createStorageService(clock)
+        val user = testUser
+
+        // Act: Create a parent folder
+        val folderResult = storageService.createFolder("ParentFolder", user)
+
+        // Assert: folder creation should succeed
+        val folderId =
+            when (folderResult) {
+                is Success -> folderResult.value
+                is Failure -> fail("Unexpected $folderResult")
+            }
+
+        // Act: Create a subfolder inside the parent folder
+        val subFolderResult = storageService.createFolderInFolder("SubFolder", user, folderId)
+
+        // Assert: subfolder creation should succeed
+        val subFolderId =
+            when (subFolderResult) {
+                is Success -> subFolderResult.value
+                is Failure -> fail("Unexpected $subFolderResult")
+            }
+
+        // Act: Upload two files to the subfolder
+        val fileContent1 = fileCreation()
+        val fileContent2 = fileCreation()
+        val file1Result = storageService.uploadFileInFolder(fileContent1, fileContent1.encryption, user, subFolderId)
+        val file2Result = storageService.uploadFileInFolder(fileContent2, fileContent2.encryption, user, subFolderId)
+
+        // Assert: both file uploads should succeed
+        val file1Id =
+            when (file1Result) {
+                is Success -> file1Result.value
+                is Failure -> fail("Unexpected $file1Result")
+            }
+        val file2Id =
+            when (file2Result) {
+                is Success -> file2Result.value
+                is Failure -> fail("Unexpected $file2Result")
+            }
+
+        // Act: Check files in the subfolder
+        val filesInSubFolder = storageService.getFilesInFolder(user, subFolderId, DEFAULT_LIMIT, DEFAULT_PAGE, DEFAULT_SORT)
+
+        // Assert: both files are in the subfolder
+        when (filesInSubFolder) {
+            is Success -> {
+                assertEquals(2, filesInSubFolder.value.content.size)
+                assertTrue(filesInSubFolder.value.content.any { it.fileId == file1Id })
+                assertTrue(filesInSubFolder.value.content.any { it.fileId == file2Id })
+            }
+            is Failure -> fail("Unexpected $filesInSubFolder")
+        }
+
+        // Act: get all files and folders for the user
+        val allFiles = storageService.getFiles(user, DEFAULT_LIMIT, DEFAULT_PAGE, DEFAULT_SORT)
+
+        // Assert: getFiles returns both files
+        assertTrue(allFiles.content.any { it.fileId == file1Id })
+        assertTrue(allFiles.content.any { it.fileId == file2Id })
+
+        // Act: get all folders for the user
+        val allFolders = storageService.getFolders(user, DEFAULT_LIMIT, DEFAULT_PAGE, DEFAULT_SORT)
+
+        // Assert: getFolders returns both parent and subfolder
+        assertTrue(allFolders.content.any { it.folderId == folderId })
+        assertTrue(allFolders.content.any { it.folderId == subFolderId })
+
+        // Act: Move files from subfolder to root and parent folder
+        clock.advance(1.minutes)
+        val move1 = storageService.moveFile(user, file1Id, null)
+        val move2 = storageService.moveFile(user, file2Id, folderId)
+
+        // Assert: both moves should succeed
+        when (move1) {
+            is Success -> assertTrue(move1.value)
+            is Failure -> fail("Unexpected $move1")
+        }
+        when (move2) {
+            is Success -> assertTrue(move2.value)
+            is Failure -> fail("Unexpected $move2")
+        }
+
+        // Act: Check file1 is now in root, file2 in parent folder
+        val getFile1 = storageService.getFileById(user, file1Id)
+
+        // Assert: file1 should have no folderId (root)
+        when (getFile1) {
+            is Success -> assertEquals(null, getFile1.value.folderId)
+            is Failure -> fail("Unexpected $getFile1")
+        }
+
+        // Act: Check file2 is now in parent folder
+        val getFile2 = storageService.getFileById(user, file2Id)
+
+        // Assert: file2 should have folderId set to parent folder
+        when (getFile2) {
+            is Success -> assertEquals(folderId, getFile2.value.folderId)
+            is Failure -> fail("Unexpected $getFile2")
+        }
+
+        // Assert: subfolder is now empty
+        val filesInSubFolderAfter = storageService.getFilesInFolder(user, subFolderId, DEFAULT_LIMIT, DEFAULT_PAGE, DEFAULT_SORT)
+        when (filesInSubFolderAfter) {
+            is Success -> assertTrue(filesInSubFolderAfter.value.content.isEmpty())
+            is Failure -> fail("Unexpected $filesInSubFolderAfter")
+        }
+
+        // Assert: parent folder has file2
+        val filesInParentFolder = storageService.getFilesInFolder(user, folderId, DEFAULT_LIMIT, DEFAULT_PAGE, DEFAULT_SORT)
+        when (filesInParentFolder) {
+            is Success -> {
+                assertEquals(1, filesInParentFolder.value.content.size)
+                assertTrue(filesInParentFolder.value.content.any { it.fileId == file2Id })
+            }
+            is Failure -> fail("Unexpected $filesInParentFolder")
+        }
+
+        // Assert: getFiles shows correct folderId for each file
+        val allFilesAfter = storageService.getFiles(user, DEFAULT_LIMIT, DEFAULT_PAGE, DEFAULT_SORT)
+        val file1 = allFilesAfter.content.find { it.fileId == file1Id }
+        val file2 = allFilesAfter.content.find { it.fileId == file2Id }
+        assertNotNull(file1)
+        assertNotNull(file2)
+        assertEquals(null, file1.folderId)
+        assertEquals(folderId, file2.folderId)
+
+        // Assert: folder metadata
+        val parentFolderInfo = storageService.getFolderById(user, folderId)
+        val subFolderInfo = storageService.getFolderById(user, subFolderId)
+        when (parentFolderInfo) {
+            is Success -> assertEquals(1, parentFolderInfo.value.numberFiles)
+            is Failure -> fail("Unexpected $parentFolderInfo")
+        }
+        when (subFolderInfo) {
+            is Success -> assertEquals(0, subFolderInfo.value.numberFiles)
+            is Failure -> fail("Unexpected $subFolderInfo")
+        }
+
+        // Cleanup
+        storageService.deleteFile(user, file1Id)
+        storageService.deleteFileInFolder(user, folderId, file2Id)
+        storageService.deleteFolder(user, subFolderId)
+        storageService.deleteFolder(user, folderId)
+    }
+
+    @Test
+    fun `upload file to root, move to folder, download and verify content`() {
+        // Arrange: initialize storage service and test user
+        val clock = TestClock()
+        val storageService = createStorageService(clock)
+        val user = testUser
+
+        // Upload file to root
+        val fileContent = fileCreation()
+        val uploadFileResult = storageService.uploadFile(fileContent, fileContent.encryption, user)
+        val fileId =
+            when (uploadFileResult) {
+                is Success -> uploadFileResult.value
+                is Failure -> fail("Unexpected $uploadFileResult")
+            }
+
+        // Create a folder
+        val folderResult = storageService.createFolder("TestFolder", user)
+        val folderId =
+            when (folderResult) {
+                is Success -> folderResult.value
+                is Failure -> fail("Unexpected $folderResult")
+            }
+
+        // Move file from root to folder
+        clock.advance(1.minutes)
+        val moveResult = storageService.moveFile(user, fileId, folderId)
+        when (moveResult) {
+            is Success -> assertTrue(moveResult.value)
+            is Failure -> fail("Unexpected $moveResult")
+        }
+
+        // Act:
+        val getFile = storageService.getFileById(user, fileId)
+        when (getFile) {
+            is Success -> {
+                // Assert: file's folderId is updated to the new folder
+                assertEquals(folderId, getFile.value.folderId)
+            }
+            is Failure -> fail("Unexpected $getFile")
+        }
+
+        // Download the file from the folder
+        val downloadResult = storageService.downloadFileInFolder(user, folderId, getFile.value.fileId)
+        when (downloadResult) {
+            is Success -> {
+                // Assert content and metadata
+                assertContentEquals(fileContent.fileContent, downloadResult.value.first.fileContent)
+                assertEquals(fileContent.blobName, downloadResult.value.first.fileName)
+                assertEquals(fileContent.contentType, downloadResult.value.first.mimeType)
+                assertEquals(fileContent.encryption, downloadResult.value.first.encrypted)
+            }
+            is Failure -> fail("Unexpected $downloadResult")
+        }
+
+        // Cleanup
+        storageService.deleteFileInFolder(user, folderId, fileId)
+        storageService.deleteFolder(user, folderId)
     }
 }
