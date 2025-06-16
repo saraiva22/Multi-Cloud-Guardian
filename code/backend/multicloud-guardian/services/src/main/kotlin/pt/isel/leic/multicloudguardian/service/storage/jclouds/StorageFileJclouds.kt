@@ -3,6 +3,7 @@ package pt.isel.leic.multicloudguardian.service.storage.jclouds
 import jakarta.inject.Named
 import org.jclouds.ContextBuilder
 import org.jclouds.blobstore.BlobStoreContext
+import org.jclouds.blobstore.options.CopyOptions
 import org.jclouds.blobstore.options.ListContainerOptions
 import org.jclouds.googlecloud.GoogleCredentialsFromJson
 import org.slf4j.LoggerFactory
@@ -196,6 +197,27 @@ class StorageFileJclouds(
         } catch (e: Exception) {
             logger.error("Error deleting folder $folderPath", e)
             return failure(DeleteBlobError.ErrorDeletingBlob)
+        }
+    }
+
+    fun moveBlob(
+        context: BlobStoreContext,
+        bucketName: String,
+        sourcePath: String, // original path of the blob
+        destinationPath: String, // destination path for the blob
+    ): MoveBlobResult {
+        try {
+            val blobStore = context.blobStore
+
+            //
+            blobStore.copyBlob(bucketName, sourcePath, bucketName, destinationPath, CopyOptions.NONE)
+
+            blobStore.removeBlob(bucketName, sourcePath)
+
+            return success(true)
+        } catch (e: Exception) {
+            logger.error("Error moving blob from  $sourcePath to $destinationPath", e)
+            return failure(MoveBlobError.ErrorMoveBlob)
         }
     }
 

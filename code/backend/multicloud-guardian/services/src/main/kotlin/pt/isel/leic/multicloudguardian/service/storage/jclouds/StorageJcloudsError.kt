@@ -38,3 +38,11 @@ sealed class CreateFolderError {
     data object ErrorCreatingFolder : CreateFolderError()
 }
 typealias CreateFolderResult = Either<CreateFolderError, Boolean>
+
+sealed class MoveBlobError {
+    data object ErrorMoveBlob : MoveBlobError()
+
+    data object BlobNotFound : MoveBlobError()
+}
+
+typealias MoveBlobResult = Either<MoveBlobError, Boolean>

@@ -393,6 +393,53 @@ class JdbiStorageRepository(
         return Id(id)
     }
 
+    override fun updateFilePath(
+        userId: Id,
+        file: File,
+        newPath: String,
+        updateAt: Instant,
+        folderId: Id?,
+    ) {
+        handle
+            .createUpdate(
+                """
+                update dbo.Files
+                set path =:newPath, folder_id = :folderId 
+                where file_id = :fileId and user_id = :userId
+                """.trimIndent(),
+            ).bind("newPath", newPath)
+            .bind("folderId", folderId?.value)
+            .bind("fileId", file.fileId.value)
+            .bind("userId", userId.value)
+            .execute()
+
+        if (folderId != null) {
+            handle
+                .createUpdate(
+                    """
+                    update dbo.Folders
+                    set updated_at = :updatedAt
+                    where folder_id = :folderId
+                    """.trimIndent(),
+                ).bind("updatedAt", updateAt.epochSeconds)
+                .bind("folderId", folderId.value)
+                .execute()
+        }
+        val fileFolderId = file.folderId
+        if (fileFolderId != null) {
+            handle
+                .createUpdate(
+                    """
+                    update dbo.Folders
+                    set updated_at = :updatedAt
+                    where folder_id = :folderId
+                    """.trimIndent(),
+                ).bind("updatedAt", updateAt.epochSeconds)
+                .bind("folderId", fileFolderId.value)
+                .execute()
+        }
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(JdbiStorageRepository::class.java)
 

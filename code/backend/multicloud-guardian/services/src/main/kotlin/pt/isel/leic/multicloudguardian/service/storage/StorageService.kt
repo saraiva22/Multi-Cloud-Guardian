@@ -18,6 +18,7 @@ import pt.isel.leic.multicloudguardian.domain.utils.failure
 import pt.isel.leic.multicloudguardian.domain.utils.success
 import pt.isel.leic.multicloudguardian.repository.TransactionManager
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.CreateBlobStorageContextError
+import pt.isel.leic.multicloudguardian.service.storage.jclouds.MoveBlobError
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.StorageFileJclouds
 
 @Service
@@ -167,6 +168,60 @@ class StorageService(
             }
         }
 
+    fun moveFile(
+        user: User,
+        fileId: Id,
+        folderId: Id?,
+    ): MoveFileResult =
+        transactionManager.run {
+            val usersRepository = it.usersRepository
+            val storageRepository = it.storageRepository
+            val file =
+                storageRepository.getFileById(user.id, fileId) ?: return@run failure(MoveFileError.FileNotFound)
+
+            if (storageRepository.isFileNameInFolder(user.id, folderId, file.fileName)) {
+                return@run failure(MoveFileError.FileNameAlreadyExists)
+            }
+
+            val destinationPath =
+                if (folderId !== null) {
+                    val pathFolder = storageRepository.getFolderById(user.id, folderId) ?: return@run failure(MoveFileError.FolderNotFound)
+                    pathFolder.path + file.fileName
+                } else {
+                    "${user.username.value}/${file.fileName}"
+                }
+
+            val provider = usersRepository.getProvider(user.id)
+            val bucketName = providerDomain.getBucketName(provider)
+
+            when (val contextStorage = createContextStorage(provider, bucketName)) {
+                is Failure ->
+                    when (contextStorage.value) {
+                        CreateContextJCloudError.ErrorCreatingContext -> return@run failure(MoveFileError.ErrorCreatingContext)
+                        CreateContextJCloudError.ErrorCreatingGlobalBucket -> return@run failure(
+                            MoveFileError.ErrorCreatingGlobalBucket,
+                        )
+                        CreateContextJCloudError.InvalidCredential -> return@run failure(MoveFileError.InvalidCredential)
+                    }
+                is Success -> {
+                    val moveFile = jcloudsStorage.moveBlob(contextStorage.value, bucketName, file.path, destinationPath)
+
+                    when (moveFile) {
+                        is Failure ->
+                            when (moveFile.value) {
+                                MoveBlobError.ErrorMoveBlob -> return@run failure(MoveFileError.MoveBlobError)
+                                MoveBlobError.BlobNotFound -> return@run failure(MoveFileError.MoveBlobNotFound)
+                            }
+                        is Success -> {
+                            contextStorage.value.close()
+                            storageRepository.updateFilePath(user.id, file, destinationPath, clock.now(), folderId)
+                            success(true)
+                        }
+                    }
+                }
+            }
+        }
+
     fun downloadFile(
         user: User,
         fileId: Id,
@@ -225,6 +280,7 @@ class StorageService(
                         }
 
                         is Success -> {
+                            contextStorage.value.close()
                             val fileDown =
                                 FileDownload(
                                     downloadFile.value,
@@ -274,6 +330,7 @@ class StorageService(
                         is Failure -> return@run failure(DeleteFileError.ErrorDeletingFile)
 
                         is Success -> {
+                            contextStorage.value.close()
                             fileRepository.deleteFile(user.id, file, if (file.folderId != null) clock.now() else null)
                             success(true)
                         }
@@ -313,6 +370,7 @@ class StorageService(
                         is Failure -> return@run failure(DeleteFolderError.ErrorDeletingFolder)
 
                         is Success -> {
+                            contextStorage.value.close()
                             fileRepository.deleteFolder(user.id, folder)
                             success(true)
                         }
@@ -357,6 +415,7 @@ class StorageService(
                         is Failure -> return@run failure(DeleteFileError.ErrorDeletingFile)
 
                         is Success -> {
+                            contextStorage.value.close()
                             fileRepository.deleteFile(user.id, file, if (file.folderId != null) clock.now() else null)
                             success(true)
                         }
@@ -510,6 +569,7 @@ class StorageService(
                         is Failure -> return@run failure(CreationFolderError.ErrorCreatingFolder)
 
                         is Success -> {
+                            contextStorage.value.close()
                             val newFolderId =
                                 fileRepository.createFolder(user.id, folderName, folderId, path, clock.now())
                             success(newFolderId)

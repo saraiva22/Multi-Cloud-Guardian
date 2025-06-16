@@ -85,6 +85,7 @@ class Problem(
         private val invalidEncryptFile = URI("${FILE_FOLDER}invalid-encrypt-file")
         private val invalidDeleteFile = URI("${FILE_FOLDER}invalid-delete-file")
         private val fileIsEncrypted = URI("${FILE_FOLDER}file-is-encrypted")
+        private val invalidCreateBlob = URI("${FILE_FOLDER}invalid-created-blob")
 
         // Folder
         private val invalidFolderName = URI("${FILE_FOLDER}invalid-folder-name")
@@ -245,11 +246,20 @@ class Problem(
                 instance = instance,
             ).toResponse()
 
+        fun invalidCreateBlob(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = invalidCreateBlob,
+                title = "Invalid blob creation",
+                status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                detail = "Invalid blob creation",
+                instance = instance,
+            ).toResponse()
+
         fun invalidCreationGlobalBucket(instance: URI?): ResponseEntity<*> =
             Problem(
                 type = invalidCreationGlobalBucket,
                 title = "Invalid creation global bucket",
-                status = HttpStatus.BAD_REQUEST.value(),
+                status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 detail = "Invalid creation global bucket",
                 instance = instance,
             ).toResponse()
@@ -285,7 +295,7 @@ class Problem(
             Problem(
                 type = invalidCreateContext,
                 title = "Invalid create context",
-                status = HttpStatus.BAD_REQUEST.value(),
+                status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 detail = "Invalid create context",
                 instance = instance,
             ).toResponse()
@@ -306,7 +316,7 @@ class Problem(
             Problem(
                 type = invalidCredential,
                 title = "Invalid credential",
-                status = HttpStatus.BAD_REQUEST.value(),
+                status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 detail = "Invalid credential",
                 instance = instance,
             ).toResponse()

@@ -26,6 +26,7 @@ import pt.isel.leic.multicloudguardian.http.model.storage.FolderCreateInputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FolderInfoOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FoldersListOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.GenerateTempUrlInputModel
+import pt.isel.leic.multicloudguardian.http.model.storage.MoveFileInputModel
 import pt.isel.leic.multicloudguardian.http.model.utils.IdOutputModel
 import pt.isel.leic.multicloudguardian.service.storage.CreateTempUrlFileError
 import pt.isel.leic.multicloudguardian.service.storage.CreationFolderError
@@ -37,6 +38,7 @@ import pt.isel.leic.multicloudguardian.service.storage.GetFileInFolderError
 import pt.isel.leic.multicloudguardian.service.storage.GetFilesInFolderError
 import pt.isel.leic.multicloudguardian.service.storage.GetFolderByIdError
 import pt.isel.leic.multicloudguardian.service.storage.GetFoldersInFolderError
+import pt.isel.leic.multicloudguardian.service.storage.MoveFileError
 import pt.isel.leic.multicloudguardian.service.storage.StorageService
 import pt.isel.leic.multicloudguardian.service.storage.UploadFileError
 
@@ -168,6 +170,32 @@ class StorageController(
                     CreateTempUrlFileError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
                     CreateTempUrlFileError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
                     CreateTempUrlFileError.InvalidCredential -> Problem.invalidCredential(instance)
+                }
+        }
+    }
+
+    @PostMapping(Uris.Files.MOVE_FILE)
+    fun moveFile(
+        @Validated @PathVariable fileId: Int,
+        @RequestBody input: MoveFileInputModel,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Files.moveFile(fileId)
+        val folderIdOrNull = input.folderId?.let { Id(it) }
+        val res = storageService.moveFile(authenticatedUser.user, Id(fileId), folderIdOrNull)
+        return when (res) {
+            is Success ->
+                ResponseEntity.status(HttpStatus.OK).build<Unit>()
+            is Failure ->
+                when (res.value) {
+                    MoveFileError.FileNotFound -> Problem.fileNotFound(fileId, instance)
+                    MoveFileError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
+                    MoveFileError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
+                    MoveFileError.InvalidCredential -> Problem.invalidCredential(instance)
+                    MoveFileError.FileNameAlreadyExists -> Problem.invalidFileName("Name associated $fileId", instance)
+                    MoveFileError.FolderNotFound -> Problem.folderNotFound(input.folderId ?: 0, instance)
+                    MoveFileError.MoveBlobError -> Problem.invalidCreateBlob(instance)
+                    MoveFileError.MoveBlobNotFound -> Problem.invalidCreateBlob(instance)
                 }
         }
     }

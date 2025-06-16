@@ -114,4 +114,12 @@ interface StorageRepository {
         path: String,
         createdAt: Instant,
     ): Id
+
+    fun updateFilePath(
+        userId: Id,
+        file: File,
+        newPath: String,
+        updateAt: Instant,
+        folderId: Id?,
+    )
 }

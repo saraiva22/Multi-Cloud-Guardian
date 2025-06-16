@@ -44,6 +44,7 @@ object Uris {
         const val CREATE_URL = "$PREFIX/files/{fileId}/temp-url"
         const val DOWNLOAD_FILE = "$PREFIX/files/{fileId}/download"
         const val DELETE = "$PREFIX/files/{fileId}"
+        const val MOVE_FILE = "$PREFIX/files/{fileId}/move"
 
         fun uploadFile(): URI = URI(UPLOAD)
 
@@ -54,6 +55,8 @@ object Uris {
         fun downloadFile(id: Int): URI = UriTemplate(DOWNLOAD_FILE).expand(id)
 
         fun deleteFile(id: Int): URI = UriTemplate(DELETE).expand(id)
+
+        fun moveFile(id: Int): URI = UriTemplate(MOVE_FILE).expand(id)
     }
 
     object Folders {

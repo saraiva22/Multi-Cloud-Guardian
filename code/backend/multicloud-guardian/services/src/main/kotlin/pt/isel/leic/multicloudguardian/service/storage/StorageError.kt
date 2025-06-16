@@ -142,3 +142,23 @@ sealed class GetFoldersInFolderError {
 }
 
 typealias GetFoldersInFolderResult = Either<GetFoldersInFolderError, PageResult<Folder>>
+
+sealed class MoveFileError {
+    data object FileNotFound : MoveFileError()
+
+    data object FolderNotFound : MoveFileError()
+
+    data object FileNameAlreadyExists : MoveFileError()
+
+    data object ErrorCreatingGlobalBucket : MoveFileError()
+
+    data object ErrorCreatingContext : MoveFileError()
+
+    data object InvalidCredential : MoveFileError()
+
+    data object MoveBlobError : MoveFileError()
+
+    data object MoveBlobNotFound : MoveFileError()
+}
+
+typealias MoveFileResult = Either<MoveFileError, Boolean>
