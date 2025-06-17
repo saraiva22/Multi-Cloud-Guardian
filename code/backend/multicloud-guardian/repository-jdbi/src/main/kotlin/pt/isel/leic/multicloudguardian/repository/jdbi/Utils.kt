@@ -20,6 +20,7 @@ import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.IdMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.InstantMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.PasswordValidationInfoMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.TokenValidationInfoMapper
+import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.TypeMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.UserInfoMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.UserMapper
 import pt.isel.leic.multicloudguardian.repository.jdbi.mappers.UserStorageInfoMapper
@@ -35,11 +36,12 @@ fun Jdbi.configureWithAppRequirements(): Jdbi {
     registerColumnMapper(IdMapper())
     registerColumnMapper(EmailMapper::class.java, EmailMapper())
     registerColumnMapper(UsernameMapper::class.java, UsernameMapper())
+    registerColumnMapper(TypeMapper::class.java, TypeMapper())
 
     registerRowMapper(User::class.java, UserMapper())
     registerRowMapper(UserInfo::class.java, UserInfoMapper())
     registerRowMapper(UserStorageInfo::class.java, UserStorageInfoMapper())
-    registerRowMapper(Folder::class.java, FolderMapper())
+    registerRowMapper(Folder::class.java, FolderMapper(UserInfoMapper(), TypeMapper()))
     registerRowMapper(File::class.java, FileMapper())
     registerRowMapper(Credentials::class.java, CredentialsMapper())
 

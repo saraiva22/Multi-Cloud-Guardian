@@ -12,6 +12,7 @@ import pt.isel.leic.multicloudguardian.domain.utils.Id
  * @property size The size of the folder in bytes.
  * @property numberFiles The number of files in the folder.
  * @property path The path of the folder.
+ * @property type The type of the folder, which can be either a regular folder or a shared folder.
  * @property createdAt The [Instant]  when the folder was created.
  * @property updatedAt The [Instant]  of the last folder update.
  * */
@@ -27,6 +28,7 @@ data class Folder(
     val size: Long,
     val numberFiles: Int,
     val path: String,
+    val type: Type,
     val createdAt: Instant,
     val updatedAt: Instant,
 ) {

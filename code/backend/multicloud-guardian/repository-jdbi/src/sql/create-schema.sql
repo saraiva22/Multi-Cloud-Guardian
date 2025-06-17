@@ -40,7 +40,7 @@ create table dbo.Preferences (
 
 create table dbo.Folders(
     folder_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    user_id int REFERENCES dbo.Users(id) on delete cascade on update cascade,
+    user_id int REFERENCES dbo.Users(id) on delete cascade on update cascade, -- Owner of the folder
     parent_folder_id int REFERENCES dbo.Folders(folder_id) on delete cascade,
     folder_name VARCHAR(25) not null,
     size bigint not null,
@@ -48,6 +48,7 @@ create table dbo.Folders(
     created_at bigint not null,
     updated_at bigint not null,
     path VARCHAR(255) not null,
+    type int not null check (type in (0, 1)), -- 0 for private folder, 1 for shared folder
     constraint created_before_updated_at check (created_at <= updated_at),
     constraint created_at_is_valid check (created_at > 0),
     constraint updated_at_is_valid check (updated_at > 0),
@@ -69,7 +70,83 @@ create table dbo.Files(
     constraint created_at_is_valid check (created_at > 0)
 );
 
--- Function to update folder size and number of files when a file is added, updated or deleted 
+create table dbo.Join_Folders(
+    user_id INT REFERENCES dbo.Users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    folder_id INT REFERENCES dbo.Folders(folder_id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, folder_id)
+)
+
+
+create table dbo.Invited_Folders(
+  invite_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  inviter_id INT REFERENCES dbo.Users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  guest_id INT REFERENCES dbo.Users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  folder_id INT REFERENCES dbo.Folders(folder_id) ON DELETE CASCADE,
+  status    int not null check (status in (0, 1, 2)), -- 0 for pending, 1 for accept, 2 for reject
+)
+
+
+
+
+-- Function to join a user to create a shared folder
+create or replace function insert_owner_into_join_folders()
+returns trigger as $$
+begin
+    -- Insert the owner of the folder into the Join_Folders table
+    insert into dbo.Join_Folders (user_id, folder_id)
+    values (NEW.user_id, NEW.folder_id);
+    return NEW;
+end;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger to insert the owner into Join_Folders when a new folder is created
+create trigger trigger_insert_owner_into_join_folders
+after insert on dbo.Folders
+for each row
+execute function insert_owner_into_join_folders();
+
+
+
+
+-- Function to insert a new member into a shared folder
+create or replace function insert_new_member_into_shared_folder()
+returns trigger as $$
+begin
+    -- Insert the new member into the Join_Folders table
+    insert into dbo.Join_Folders (user_id, folder_id)
+    values (NEW.guest_id, NEW.folder_id);
+    return NEW;
+end;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger to insert a new member into a shared folder when an invitation is accepted
+create trigger trigger_insert_new_member_into_shared_folder
+after update on dbo.Invited_Folders
+for each row
+when (OLD.status = 0 and NEW.status = 1) -- When the invitation status changes from pending to accepted
+execute function insert_new_member_into_shared_folder();
+
+
+
+-- Function to delete previous invitation to a shared folder
+create or replace function delete_previous_invite_to_shared_folder()
+returns trigger as $$
+begin
+    -- Delete the previous invitation for the user to the shared folder
+    delete from dbo.Invited_Folders
+    where guest_id = OLD.user_id and folder_id = OLD.folder_id;
+    return OLD;
+end;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger to delete previous invitation to a shared folder when a user is invited
+create trigger trigger_delete_previous_invite_to_shared_folder
+after delete on dbo.Join_Folders
+for each row
+execute function delete_previous_invite_to_shared_folder();
+
+
+-- Function to update folder size and number of files when a file is added, updated or deleted
 
 create or replace function update_folder_stats()
 returns trigger as $$
