@@ -1,6 +1,7 @@
 package pt.isel.leic.multicloudguardian.service
 
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
+import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Success
 import pt.isel.leic.multicloudguardian.service.storage.CreateTempUrlFileError
@@ -1256,5 +1257,41 @@ class StorageServiceTests : ServiceTests() {
         // Cleanup
         storageService.deleteFileInFolder(user, folderId, fileId)
         storageService.deleteFolder(user, folderId)
+    }
+
+    @Test
+    fun `invite user to shared folder, accept invite, and verify membership`() {
+        // Arrange: initialize storage service and users
+        val storageService = createStorageService()
+        val owner = testUser
+        val invitedUser = testUser2
+        val folderType = FolderType.SHARED
+        val folderName = "SharedFolder"
+
+        // Create a shared folder
+        val folderResult = storageService.createFolder(folderName, owner, folderType)
+        val folderId =
+            when (folderResult) {
+                is Success -> folderResult.value
+                is Failure -> fail("Unexpected $folderResult")
+            }
+
+        // Invite the second user to the shared folder
+        val inviteResult = storageService.inviteFolder(folderId, owner, invitedUser.username)
+        val inviteCode =
+            when (inviteResult) {
+                is Success -> inviteResult.value // Assume this returns the invite code or link
+                is Failure -> fail("Unexpected $inviteResult")
+            }
+
+        // Invited user accepts the invite
+        val acceptResult = storageService.validateFolderInvite(invitedUser, folderId, inviteCode, InviteStatus.ACCEPT)
+        when (acceptResult) {
+            is Success -> assertTrue(acceptResult.value.folderName == folderName)
+            is Failure -> fail("Unexpected $acceptResult")
+        }
+
+        // Cleanup
+        storageService.deleteFolder(owner, folderId)
     }
 }

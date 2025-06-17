@@ -185,6 +185,17 @@ class JdbiStorageRepository(
             .mapTo<Folder>()
             .singleOrNull()
 
+    override fun getFolderById(folderId: Id): Folder? =
+        handle
+            .createQuery(
+                """
+                select folder.*, users.username ,users.email 
+                from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.folder_id = :folderId
+                """.trimIndent(),
+            ).bind("folderId", folderId.value)
+            .mapTo<Folder>()
+            .singleOrNull()
+
     override fun getFiles(
         userId: Id,
         limit: Int,
@@ -481,6 +492,43 @@ class JdbiStorageRepository(
         logger.info("Invite created for user {} to folder {}", guestId, folderId)
 
         return Id(inviteId)
+    }
+
+    override fun isInviteCodeValid(
+        userId: Id,
+        folderId: Id,
+        inviteId: Id,
+    ): Boolean =
+        handle
+            .createQuery(
+                """
+                select count(*) from dbo.Invited_Folders 
+                where guest_id = :userId and folder_id = :folderId and invite_id = :inviteId
+                and status = :status
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .bind("folderId", folderId.value)
+            .bind("inviteId", inviteId.value)
+            .bind("status", InviteStatus.PENDING.ordinal)
+            .mapTo<Int>()
+            .single() == 1
+
+    override fun folderInviteUpdated(
+        guestId: Id,
+        inviteId: Id,
+        inviteStatus: InviteStatus,
+    ) {
+        handle
+            .createUpdate(
+                """
+                update dbo.Invited_Folders 
+                set status = :status 
+                where invite_id = :inviteId and guest_id = :guestId
+                """.trimIndent(),
+            ).bind("inviteId", inviteId.value)
+            .bind("guestId", guestId.value)
+            .bind("status", inviteStatus.ordinal)
+            .execute()
     }
 
     companion object {

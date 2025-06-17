@@ -176,3 +176,15 @@ sealed class InviteFolderError {
 }
 
 typealias InviteFolderResult = Either<InviteFolderError, Id>
+
+sealed class ValidateFolderInviteError {
+    data object UserAlreadyInFolder : ValidateFolderInviteError()
+
+    data object InvalidInvite : ValidateFolderInviteError()
+
+    data object FolderIsPrivate : ValidateFolderInviteError()
+
+    data object FolderNotFound : ValidateFolderInviteError()
+}
+
+typealias ValidateFolderInviteResult = Either<ValidateFolderInviteError, Folder>

@@ -26,6 +26,7 @@ import pt.isel.leic.multicloudguardian.http.model.storage.FilesListOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FolderCreateInputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FolderInfoOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FolderInviteInput
+import pt.isel.leic.multicloudguardian.http.model.storage.FolderInviteStatusInputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FoldersListOutputModel
 import pt.isel.leic.multicloudguardian.http.model.utils.IdOutputModel
 import pt.isel.leic.multicloudguardian.service.storage.CreationFolderError
@@ -39,6 +40,7 @@ import pt.isel.leic.multicloudguardian.service.storage.GetFoldersInFolderError
 import pt.isel.leic.multicloudguardian.service.storage.InviteFolderError
 import pt.isel.leic.multicloudguardian.service.storage.StorageService
 import pt.isel.leic.multicloudguardian.service.storage.UploadFileError
+import pt.isel.leic.multicloudguardian.service.storage.ValidateFolderInviteError
 
 @RestController
 class FoldersController(
@@ -411,8 +413,37 @@ class FoldersController(
                     InviteFolderError.FolderIsPrivate -> Problem.folderIsPrivate(folderId, instance)
                     InviteFolderError.FolderNotFound -> Problem.folderNotFound(folderId, instance)
                     InviteFolderError.UserAlreadyInFolder -> Problem.userAlreadyInFolder(input.username, instance)
-                    InviteFolderError.GuestNotFound -> Problem.usernameNotFound(input.username, instance)
+                    InviteFolderError.GuestNotFound -> Problem.userNotFoundByUsername(input.username, instance)
                     InviteFolderError.UserIsNotOwner -> Problem.userIsNotFolderOwner(authenticatedUser.user.username.value, instance)
+                }
+        }
+    }
+
+    @PostMapping(Uris.Folders.VALIDATE_FOLDER_INVITE)
+    fun validateFolderInvite(
+        @PathVariable @Validated folderId: Int,
+        @PathVariable @Validated inviteId: Int,
+        @RequestBody input: FolderInviteStatusInputModel,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Folders.validateFolderInvite(folderId, inviteId)
+        val invite = storageService.validateFolderInvite(authenticatedUser.user, Id(folderId), Id(inviteId), input.inviteStatus)
+        return when (invite) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(FolderInfoOutputModel.fromDomain(invite.value))
+
+            is Failure ->
+                when (invite.value) {
+                    ValidateFolderInviteError.FolderIsPrivate -> Problem.folderIsPrivate(folderId, instance)
+                    ValidateFolderInviteError.InvalidInvite -> Problem.invalidInviteFolder(folderId, instance)
+                    ValidateFolderInviteError.FolderNotFound -> Problem.folderNotFound(folderId, instance)
+                    ValidateFolderInviteError.UserAlreadyInFolder ->
+                        Problem.userAlreadyInFolder(
+                            authenticatedUser.user.username.value,
+                            instance,
+                        )
                 }
         }
     }

@@ -5,6 +5,7 @@ import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
+import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 
 interface StorageRepository {
@@ -57,6 +58,8 @@ interface StorageRepository {
         userId: Id,
         folderId: Id,
     ): Folder?
+
+    fun getFolderById(folderId: Id): Folder?
 
     fun getFiles(
         userId: Id,
@@ -135,4 +138,16 @@ interface StorageRepository {
         guestId: Id,
         folderId: Id,
     ): Id
+
+    fun isInviteCodeValid(
+        userId: Id,
+        folderId: Id,
+        inviteId: Id,
+    ): Boolean
+
+    fun folderInviteUpdated(
+        guestId: Id,
+        inviteId: Id,
+        inviteStatus: InviteStatus,
+    )
 }

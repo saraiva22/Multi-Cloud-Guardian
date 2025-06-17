@@ -1,6 +1,7 @@
 package pt.isel.leic.multicloudguardian.http.model.storage
 
 import pt.isel.leic.multicloudguardian.domain.file.File
+import pt.isel.leic.multicloudguardian.http.model.user.UserInfoOutputModel
 
 data class FileInfoOutputModel(
     val fileId: Int,

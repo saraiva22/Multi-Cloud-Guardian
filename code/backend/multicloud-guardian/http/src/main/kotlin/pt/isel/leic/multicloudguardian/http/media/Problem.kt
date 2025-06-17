@@ -98,6 +98,7 @@ class Problem(
         private val folderIsPrivate = URI("${FILE_FOLDER}folder-is-private")
         private val userAlreadyInFolder = URI("${FILE_FOLDER}user-already-in-folder")
         private val userIsNotFolderOwner = URI("${FILE_FOLDER}user-is-not-folder-owner")
+        private val invalidInviteFolder = URI("${FILE_FOLDER}invalid-invite-folder")
 
         fun internalServerError(instance: URI?): ResponseEntity<*> =
             Problem(
@@ -198,7 +199,7 @@ class Problem(
         ): ResponseEntity<*> =
             Problem(
                 type = usernameAlreadyExists,
-                title = "UserName already exists",
+                title = "Username already exists",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = "Give username ${username.value} already exists",
                 instance = instance,
@@ -210,8 +211,8 @@ class Problem(
         ): ResponseEntity<*> =
             Problem(
                 type = usernameNotFound,
-                title = "UserName not found",
-                status = HttpStatus.BAD_REQUEST.value(),
+                title = "Username not found",
+                status = HttpStatus.NOT_FOUND.value(),
                 detail = "Give username $username not found",
                 instance = instance,
             ).toResponse()
@@ -458,7 +459,7 @@ class Problem(
                 type = folderIsPrivate,
                 title = "Folder is private",
                 status = HttpStatus.BAD_REQUEST.value(),
-                detail = "Folder $id is private and cannot be shared via temporary URL",
+                detail = "Folder $id is private and your request cannot be fulfilled",
                 instance = instance,
             ).toResponse()
 
@@ -483,6 +484,18 @@ class Problem(
                 title = "User is not folder owner",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = "User $username is not the owner of the folder",
+                instance = instance,
+            ).toResponse()
+
+        fun invalidInviteFolder(
+            folderId: Int,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = invalidInviteFolder,
+                title = "Invalid invite folder",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "An error occurred and the invitation to folder $folderId is invalid.",
                 instance = instance,
             ).toResponse()
     }

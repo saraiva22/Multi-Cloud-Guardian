@@ -8,6 +8,7 @@ import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.file.FileDownload
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
+import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderDomainConfig
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.user.User
@@ -59,11 +60,17 @@ class StorageService(
 
             val folder =
                 folderId?.let {
-                    fileRepository.getFolderById(user.id, folderId)
+                    fileRepository.getFolderById(folderId)
                         ?: return@run failure(UploadFileError.ParentFolderNotFound)
                 }
 
-            val provider = usersRepository.getProvider(user.id)
+            if (folder != null && folder.type == FolderType.PRIVATE && folder.user.id != user.id) {
+                return@run failure(UploadFileError.ParentFolderNotFound)
+            }
+
+            val selectUser = folder?.user?.id ?: user.id
+            val provider = usersRepository.getProvider(selectUser)
+
             val bucketName = providerDomain.getBucketName(provider)
             when (val contextStorage = createContextStorage(provider, bucketName)) {
                 is Failure ->
@@ -448,6 +455,30 @@ class StorageService(
             val inviteId = storageRepository.createInviteFolder(user.id, guest.id, folderId)
 
             success(inviteId)
+        }
+
+    fun validateFolderInvite(
+        guest: User,
+        folderId: Id,
+        inviteId: Id,
+        inviteStatus: InviteStatus,
+    ): ValidateFolderInviteResult =
+        transactionManager.run {
+            val storageRepository = it.storageRepository
+
+            val folder = storageRepository.getFolderById(folderId) ?: return@run failure(ValidateFolderInviteError.FolderNotFound)
+
+            if (folder.type == FolderType.PRIVATE) return@run failure(ValidateFolderInviteError.FolderIsPrivate)
+
+            if (storageRepository.isMemberOfFolder(guest.id, folderId)) return@run failure(ValidateFolderInviteError.UserAlreadyInFolder)
+
+            if (!storageRepository.isInviteCodeValid(guest.id, folderId, inviteId)) {
+                return@run failure(ValidateFolderInviteError.InvalidInvite)
+            }
+
+            storageRepository.folderInviteUpdated(guest.id, inviteId, inviteStatus)
+
+            success(folder)
         }
 
     fun getFiles(

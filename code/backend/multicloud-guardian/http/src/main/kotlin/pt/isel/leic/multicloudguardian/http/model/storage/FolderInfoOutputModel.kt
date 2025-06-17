@@ -2,6 +2,7 @@ package pt.isel.leic.multicloudguardian.http.model.storage
 
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
+import pt.isel.leic.multicloudguardian.http.model.user.UserInfoOutputModel
 
 data class FolderInfoOutputModel(
     val folderId: Int,
