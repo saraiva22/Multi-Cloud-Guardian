@@ -41,7 +41,7 @@ fun Jdbi.configureWithAppRequirements(): Jdbi {
     registerRowMapper(User::class.java, UserMapper())
     registerRowMapper(UserInfo::class.java, UserInfoMapper())
     registerRowMapper(UserStorageInfo::class.java, UserStorageInfoMapper())
-    registerRowMapper(Folder::class.java, FolderMapper(UserInfoMapper(), TypeMapper()))
+    registerRowMapper(Folder::class.java, FolderMapper())
     registerRowMapper(File::class.java, FileMapper())
     registerRowMapper(Credentials::class.java, CredentialsMapper())
 

@@ -8,13 +8,13 @@ package pt.isel.leic.multicloudguardian.domain.folder
  * - ACCEPT: The operation has been accepted.
  * - REJECT: The operation has been rejected.
  */
-enum class Status {
+enum class InviteStatus {
     PENDING,
     ACCEPT,
     REJECT,
     ;
 
     companion object {
-        fun fromInt(value: Int): Status = Status.entries[value]
+        fun fromInt(value: Int): InviteStatus = InviteStatus.entries[value]
     }
 }

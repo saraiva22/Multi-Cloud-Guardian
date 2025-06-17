@@ -7,6 +7,7 @@ import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.file.FileDownload
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
+import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderDomainConfig
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.user.User
@@ -517,17 +518,20 @@ class StorageService(
     fun createFolder(
         folderName: String,
         user: User,
-    ): CreationFolderResult = createFolderGeneric(folderName, user)
+        folderType: FolderType,
+    ): CreationFolderResult = createFolderGeneric(folderName, user, folderType)
 
     fun createFolderInFolder(
         folderName: String,
         user: User,
+        folderType: FolderType,
         folderId: Id,
-    ): CreationFolderResult = createFolderGeneric(folderName, user, folderId)
+    ): CreationFolderResult = createFolderGeneric(folderName, user, folderType, folderId)
 
     private fun createFolderGeneric(
         folderName: String,
         user: User,
+        folderType: FolderType,
         folderId: Id? = null,
     ): CreationFolderResult =
         transactionManager.run {
@@ -571,7 +575,7 @@ class StorageService(
                         is Success -> {
                             contextStorage.value.close()
                             val newFolderId =
-                                fileRepository.createFolder(user.id, folderName, folderId, path, clock.now())
+                                fileRepository.createFolder(user.id, folderName, folderId, path, folderType, clock.now())
                             success(newFolderId)
                         }
                     }

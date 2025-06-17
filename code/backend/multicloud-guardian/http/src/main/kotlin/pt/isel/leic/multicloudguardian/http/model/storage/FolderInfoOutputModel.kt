@@ -1,7 +1,7 @@
 package pt.isel.leic.multicloudguardian.http.model.storage
 
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
-import pt.isel.leic.multicloudguardian.domain.folder.Type
+import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 
 data class FolderInfoOutputModel(
     val folderId: Int,
@@ -11,7 +11,7 @@ data class FolderInfoOutputModel(
     val size: Long,
     val numberFile: Int,
     val path: String,
-    val type: Type,
+    val type: FolderType,
     val createdAt: Long,
     val updatedAt: Long,
 ) {

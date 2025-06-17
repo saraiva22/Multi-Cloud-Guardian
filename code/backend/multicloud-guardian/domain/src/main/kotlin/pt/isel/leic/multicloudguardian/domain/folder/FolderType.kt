@@ -5,12 +5,12 @@ package pt.isel.leic.multicloudguardian.domain.folder
  * @property PRIVATE Represents a private folder.
  * @property SHARED Represents a shared folder.
  */
-enum class Type {
+enum class FolderType {
     PRIVATE,
     SHARED,
     ;
 
     companion object {
-        fun fromInt(value: Int): Type = entries[value]
+        fun fromInt(value: Int): FolderType = entries[value]
     }
 }

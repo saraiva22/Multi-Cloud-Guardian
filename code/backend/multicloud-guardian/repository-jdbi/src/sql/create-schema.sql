@@ -47,7 +47,7 @@ create table dbo.Folders(
     number_files int not null,
     created_at bigint not null,
     updated_at bigint not null,
-    path VARCHAR(255) not null,
+    path VARCHAR(1024) not null,
     type int not null check (type in (0, 1)), -- 0 for private folder, 1 for shared folder
     constraint created_before_updated_at check (created_at <= updated_at),
     constraint created_at_is_valid check (created_at > 0),
@@ -74,37 +74,35 @@ create table dbo.Join_Folders(
     user_id INT REFERENCES dbo.Users(id) ON DELETE CASCADE ON UPDATE CASCADE,
     folder_id INT REFERENCES dbo.Folders(folder_id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, folder_id)
-)
-
+);
 
 create table dbo.Invited_Folders(
   invite_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   inviter_id INT REFERENCES dbo.Users(id) ON DELETE CASCADE ON UPDATE CASCADE,
   guest_id INT REFERENCES dbo.Users(id) ON DELETE CASCADE ON UPDATE CASCADE,
   folder_id INT REFERENCES dbo.Folders(folder_id) ON DELETE CASCADE,
-  status    int not null check (status in (0, 1, 2)), -- 0 for pending, 1 for accept, 2 for reject
-)
+  status    int not null check (status in (0, 1, 2)) -- 0 for pending, 1 for accept, 2 for reject
+);
 
 
-
-
--- Function to join a user to create a shared folder
+-- Function to join a user to create a shared folder only if type is shared (type = 1)
 create or replace function insert_owner_into_join_folders()
 returns trigger as $$
 begin
-    -- Insert the owner of the folder into the Join_Folders table
-    insert into dbo.Join_Folders (user_id, folder_id)
-    values (NEW.user_id, NEW.folder_id);
+    -- Only insert if the folder is shared
+    if NEW.type = 1 then
+        insert into dbo.Join_Folders (user_id, folder_id)
+        values (NEW.user_id, NEW.folder_id);
+    end if;
     return NEW;
 end;
 $$ LANGUAGE plpgsql;
 
--- Create trigger to insert the owner into Join_Folders when a new folder is created
+-- Create trigger to insert the owner into Join_Folders when a new shared folder is created
 create trigger trigger_insert_owner_into_join_folders
 after insert on dbo.Folders
 for each row
 execute function insert_owner_into_join_folders();
-
 
 
 

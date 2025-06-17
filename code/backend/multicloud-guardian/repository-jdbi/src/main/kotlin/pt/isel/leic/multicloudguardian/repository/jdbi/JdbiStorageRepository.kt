@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
+import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 import pt.isel.leic.multicloudguardian.repository.StorageRepository
 
@@ -373,6 +374,7 @@ class JdbiStorageRepository(
         folderName: String,
         parentFolderId: Id?,
         path: String,
+        folderType: FolderType,
         createdAt: Instant,
     ): Id {
         val id =
@@ -380,13 +382,14 @@ class JdbiStorageRepository(
                 .createUpdate(
                     """
                     insert into dbo.Folders (user_id, parent_folder_id, folder_name, size, 
-                    number_files, created_at, updated_at, path) values (:user_id, :parent_folder_id, :folder_name, 0, 0, :created_at,:created_at, :path)
+                    number_files, created_at, updated_at, path, type) values (:user_id, :parent_folder_id, :folder_name, 0, 0, :created_at,:created_at, :path, :type)
                     """.trimIndent(),
                 ).bind("user_id", userId.value)
                 .bind("parent_folder_id", parentFolderId?.value)
                 .bind("folder_name", folderName)
                 .bind("created_at", createdAt.epochSeconds)
                 .bind("path", path)
+                .bind("type", folderType.ordinal)
                 .executeAndReturnGeneratedKeys()
                 .mapTo<Int>()
                 .one()

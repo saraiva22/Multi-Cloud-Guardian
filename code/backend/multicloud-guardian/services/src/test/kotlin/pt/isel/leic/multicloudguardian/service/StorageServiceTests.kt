@@ -1,5 +1,6 @@
 package pt.isel.leic.multicloudguardian.service
 
+import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Success
 import pt.isel.leic.multicloudguardian.service.storage.CreateTempUrlFileError
@@ -108,7 +109,8 @@ class StorageServiceTests : ServiceTests() {
         val folderName = "ISEL"
         val user = testUser
         val userInfo = testUserInfo
-        val createFolder = storageService.createFolder(folderName, user)
+        val folderType = FolderType.PRIVATE
+        val createFolder = storageService.createFolder(folderName, user, folderType)
 
         // Assert: folder creation should succeed
         when (createFolder) {
@@ -289,6 +291,7 @@ class StorageServiceTests : ServiceTests() {
         // Arrange: initialize test clock and storage service
         val clock = TestClock()
         val storageService = createStorageService(clock)
+        val folderType = FolderType.PRIVATE
         val parentFolderName = "ParentFolder"
         val subFolder1Name = "SubFolder1"
         val subFolder2Name = "SubFolder2"
@@ -298,7 +301,7 @@ class StorageServiceTests : ServiceTests() {
         val setSort = DEFAULT_SORT
 
         // Act: create a parent folder for the user
-        val createParentFolder = storageService.createFolder(parentFolderName, user)
+        val createParentFolder = storageService.createFolder(parentFolderName, user, folderType)
 
         // Assert: parent folder is created with a valid ID
         when (createParentFolder) {
@@ -344,7 +347,7 @@ class StorageServiceTests : ServiceTests() {
         }
 
         // Act: create two subfolders inside the parent folder
-        val createSubFolder1 = storageService.createFolderInFolder(subFolder1Name, user, parentFolderId)
+        val createSubFolder1 = storageService.createFolderInFolder(subFolder1Name, user, folderType, parentFolderId)
 
         when (createSubFolder1) {
             is Success -> assertTrue(createSubFolder1.value.value > 0)
@@ -352,7 +355,7 @@ class StorageServiceTests : ServiceTests() {
         }
         val subFolder1Id = createSubFolder1.value
 
-        val createSubFolder2 = storageService.createFolderInFolder(subFolder2Name, user, parentFolderId)
+        val createSubFolder2 = storageService.createFolderInFolder(subFolder2Name, user, folderType, parentFolderId)
 
         when (createSubFolder2) {
             is Success -> assertTrue(createSubFolder2.value.value > 0)
@@ -477,9 +480,10 @@ class StorageServiceTests : ServiceTests() {
         val storageService = createStorageService()
         val folderName = "TestFolder"
         val user = testUser
+        val folderType = FolderType.PRIVATE
 
         // Act: create a new folder
-        val createFolderResult = storageService.createFolder(folderName, user)
+        val createFolderResult = storageService.createFolder(folderName, user, folderType)
         val folderId =
             when (createFolderResult) {
                 is Success -> createFolderResult.value
@@ -529,9 +533,10 @@ class StorageServiceTests : ServiceTests() {
         val storageService = createStorageService()
         val folderName = "TestFolderEncrypted"
         val user = testUser
+        val folderType = FolderType.PRIVATE
 
         // Act: create a new folder
-        val createFolderResult = storageService.createFolder(folderName, user)
+        val createFolderResult = storageService.createFolder(folderName, user, folderType)
         val folderId =
             when (createFolderResult) {
                 is Success -> createFolderResult.value
@@ -582,9 +587,10 @@ class StorageServiceTests : ServiceTests() {
         val storageService = createStorageService()
         val folderName = "TestFolderForDelete"
         val user = testUser
+        val folderType = FolderType.PRIVATE
 
         // Act: create a new folder
-        val createFolderResult = storageService.createFolder(folderName, user)
+        val createFolderResult = storageService.createFolder(folderName, user, folderType)
         val folderId =
             when (createFolderResult) {
                 is Success -> createFolderResult.value
@@ -626,13 +632,14 @@ class StorageServiceTests : ServiceTests() {
         val clock = testClock
         val storageService = createStorageService(clock)
         val user = testUser
+        val folderType = FolderType.PRIVATE
 
         // Act: create two normal folders
         val folderName1 = "Folder1"
         val folderName2 = "Folder2"
-        val createFolder1 = storageService.createFolder(folderName1, user)
+        val createFolder1 = storageService.createFolder(folderName1, user, folderType)
         clock.advance(1.minutes)
-        val createFolder2 = storageService.createFolder(folderName2, user)
+        val createFolder2 = storageService.createFolder(folderName2, user, folderType)
         clock.advance(1.minutes)
 
         val folderId1 =
@@ -650,7 +657,7 @@ class StorageServiceTests : ServiceTests() {
         // Act: create a subfolder inside folder1
         val subFolderName = "SubFolder"
         clock.advance(1.minutes)
-        val createSubFolder = storageService.createFolderInFolder(subFolderName, user, folderId1)
+        val createSubFolder = storageService.createFolderInFolder(subFolderName, user, folderType, folderId1)
 
         val subFolderId =
             when (createSubFolder) {
@@ -692,9 +699,10 @@ class StorageServiceTests : ServiceTests() {
         val clock = testClock
         val storageService = createStorageService(clock)
         val user = testUser
+        val folderType = FolderType.PRIVATE
 
         // Act: create root folder
-        val rootFolderResult = storageService.createFolder("RootFolder", user)
+        val rootFolderResult = storageService.createFolder("RootFolder", user, folderType)
         val rootFolderId =
             when (rootFolderResult) {
                 is Success -> rootFolderResult.value
@@ -703,7 +711,7 @@ class StorageServiceTests : ServiceTests() {
 
         // Act: create first subfolder inside root
         clock.advance(1.minutes)
-        val subFolder1Result = storageService.createFolderInFolder("SubFolder1", user, rootFolderId)
+        val subFolder1Result = storageService.createFolderInFolder("SubFolder1", user, folderType, rootFolderId)
         val subFolder1Id =
             when (subFolder1Result) {
                 is Success -> subFolder1Result.value
@@ -712,7 +720,7 @@ class StorageServiceTests : ServiceTests() {
 
         // Act: create second subfolder inside first subfolder
         clock.advance(1.minutes)
-        val subFolder2Result = storageService.createFolderInFolder("SubFolder2", user, subFolder1Id)
+        val subFolder2Result = storageService.createFolderInFolder("SubFolder2", user, folderType, subFolder1Id)
         val subFolder2Id =
             when (subFolder2Result) {
                 is Success -> subFolder2Result.value
@@ -797,6 +805,7 @@ class StorageServiceTests : ServiceTests() {
         val clock = TestClock()
         val storageService = createStorageService(clock)
         val user = testUser
+        val folderType = FolderType.PRIVATE
 
         // Act:  Upload file to root
         val fileContent = fileCreation()
@@ -809,7 +818,7 @@ class StorageServiceTests : ServiceTests() {
 
         // Act: Create a folder
         val folderName = "TestFolder"
-        val createFolderResult = storageService.createFolder(folderName, user)
+        val createFolderResult = storageService.createFolder(folderName, user, folderType)
         val folderId =
             when (createFolderResult) {
                 is Success -> createFolderResult.value
@@ -871,6 +880,7 @@ class StorageServiceTests : ServiceTests() {
         val clock = TestClock()
         val storageService = createStorageService(clock)
         val user = testUser
+        val folderType = FolderType.PRIVATE
 
         // Act: Upload file to root
         val fileContent = fileCreation()
@@ -885,7 +895,7 @@ class StorageServiceTests : ServiceTests() {
 
         // Act: Create a folder
         val folderName = "TestFolder"
-        val createFolderResult = storageService.createFolder(folderName, user)
+        val createFolderResult = storageService.createFolder(folderName, user, folderType)
 
         // Assert: folder creation should succeed
         val folderId =
@@ -933,9 +943,10 @@ class StorageServiceTests : ServiceTests() {
         val clock = TestClock()
         val storageService = createStorageService(clock)
         val user = testUser
+        val folderType = FolderType.PRIVATE
 
         // Act: Create folder
-        val folderResult = storageService.createFolder("Folder", user)
+        val folderResult = storageService.createFolder("Folder", user, folderType)
 
         // Assert: folder creation should succeed
         val folderId =
@@ -945,7 +956,7 @@ class StorageServiceTests : ServiceTests() {
             }
 
         // Act: Create subfolder inside the folder
-        val subFolderResult = storageService.createFolderInFolder("SubFolder", user, folderId)
+        val subFolderResult = storageService.createFolderInFolder("SubFolder", user, folderType, folderId)
 
         // Assert: subfolder creation should succeed
         val subFolderId =
@@ -1041,9 +1052,10 @@ class StorageServiceTests : ServiceTests() {
         val clock = TestClock()
         val storageService = createStorageService(clock)
         val user = testUser
+        val folderType = FolderType.PRIVATE
 
         // Act: Create a parent folder
-        val folderResult = storageService.createFolder("ParentFolder", user)
+        val folderResult = storageService.createFolder("ParentFolder", user, folderType)
 
         // Assert: folder creation should succeed
         val folderId =
@@ -1053,7 +1065,7 @@ class StorageServiceTests : ServiceTests() {
             }
 
         // Act: Create a subfolder inside the parent folder
-        val subFolderResult = storageService.createFolderInFolder("SubFolder", user, folderId)
+        val subFolderResult = storageService.createFolderInFolder("SubFolder", user, folderType, folderId)
 
         // Assert: subfolder creation should succeed
         val subFolderId =
@@ -1191,6 +1203,7 @@ class StorageServiceTests : ServiceTests() {
         val clock = TestClock()
         val storageService = createStorageService(clock)
         val user = testUser
+        val folderType = FolderType.PRIVATE
 
         // Upload file to root
         val fileContent = fileCreation()
@@ -1202,7 +1215,7 @@ class StorageServiceTests : ServiceTests() {
             }
 
         // Create a folder
-        val folderResult = storageService.createFolder("TestFolder", user)
+        val folderResult = storageService.createFolder("TestFolder", user, folderType)
         val folderId =
             when (folderResult) {
                 is Success -> folderResult.value

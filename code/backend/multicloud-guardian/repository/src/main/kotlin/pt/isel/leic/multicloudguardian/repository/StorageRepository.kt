@@ -4,6 +4,7 @@ import kotlinx.datetime.Instant
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
+import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 
 interface StorageRepository {
@@ -112,6 +113,7 @@ interface StorageRepository {
         folderName: String,
         parentFolderId: Id?,
         path: String,
+        folderType: FolderType,
         createdAt: Instant,
     ): Id
 

@@ -8,6 +8,7 @@ import org.postgresql.ds.PGSimpleDataSource
 import pt.isel.leic.multicloudguardian.ApplicationTests.Companion.fileCreation
 import pt.isel.leic.multicloudguardian.Environment
 import pt.isel.leic.multicloudguardian.TestClock
+import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 import kotlin.math.abs
 import kotlin.random.Random
@@ -69,9 +70,10 @@ class JdbiStorageRepositoryTests {
             val parentFolderId: Id? = null
             val path = "/TestFolder"
             val createdAt = Clock.System.now()
+            val folderType = FolderType.PRIVATE
 
             // when: creating the folder
-            val folderId = repo.createFolder(userId, folderName, parentFolderId, path, createdAt)
+            val folderId = repo.createFolder(userId, folderName, parentFolderId, path, folderType, createdAt)
             assertNotNull(folderId)
 
             // then: the folder can be retrieved and all properties match
@@ -97,9 +99,10 @@ class JdbiStorageRepositoryTests {
             val parentFolderId: Id? = null
             val path = "/EmptyFolder"
             val createdAt = Clock.System.now()
+            val folderType = FolderType.PRIVATE
 
             // Create the folder
-            val folderId = repo.createFolder(userId, folderName, parentFolderId, path, createdAt)
+            val folderId = repo.createFolder(userId, folderName, parentFolderId, path, folderType, createdAt)
 
             // When: getting file names in the empty folder
             val fileNames = repo.getFileNamesInFolder(userId, folderId)
@@ -171,7 +174,8 @@ class JdbiStorageRepositoryTests {
             val folderName = "ExistsFolder"
             val path = "/ExistsFolder"
             val createdAt = Clock.System.now()
-            val folderId = repo.createFolder(userId, folderName, null, path, createdAt)
+            val folderType = FolderType.PRIVATE
+            val folderId = repo.createFolder(userId, folderName, null, path, folderType, createdAt)
             assertEquals(true, repo.isFolderNameExists(userId, null, folderName))
             clearData(jdbi, "dbo.Folders", "folder_id", folderId.value)
         }
@@ -258,7 +262,8 @@ class JdbiStorageRepositoryTests {
             val folderName = "DeleteFolder"
             val path = "/DeleteFolder"
             val createdAt = Clock.System.now()
-            val folderId = repo.createFolder(userId, folderName, null, path, createdAt)
+            val folderType = FolderType.PRIVATE
+            val folderId = repo.createFolder(userId, folderName, null, path, folderType, createdAt)
             val fileCreate = fileCreation()
             val filePath = "$path/file.txt"
             val url = "http://example.com/file.txt"
@@ -301,8 +306,9 @@ class JdbiStorageRepositoryTests {
             val repo = JdbiStorageRepository(handle)
             val userId = Id(1)
             val createdAt = Clock.System.now()
+            val folderType = FolderType.PRIVATE
 
-            val folderId = repo.createFolder(userId, "ToDelete", null, "/ToDelete", createdAt)
+            val folderId = repo.createFolder(userId, "ToDelete", null, "/ToDelete", folderType, createdAt)
             val file = fileCreation()
             val fileId = repo.storeFile(file, "/ToDelete/file.txt", "http://f.com", userId, folderId, false, createdAt, null)
 

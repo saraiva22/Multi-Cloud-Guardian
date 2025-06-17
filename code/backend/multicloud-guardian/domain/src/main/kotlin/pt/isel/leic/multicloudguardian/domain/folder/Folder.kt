@@ -28,7 +28,7 @@ data class Folder(
     val size: Long,
     val numberFiles: Int,
     val path: String,
-    val type: Type,
+    val type: FolderType,
     val createdAt: Instant,
     val updatedAt: Instant,
 ) {
