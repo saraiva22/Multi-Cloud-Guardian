@@ -95,6 +95,9 @@ class Problem(
         private val invalidParentFolder = URI("${FILE_FOLDER}invalid-parent-folder")
         private val parentFolderNotFound = URI("${FILE_FOLDER}parent-folder-not-found")
         private val invalidKey = URI("${FILE_FOLDER}invalid-key")
+        private val folderIsPrivate = URI("${FILE_FOLDER}folder-is-private")
+        private val userAlreadyInFolder = URI("${FILE_FOLDER}user-already-in-folder")
+        private val userIsNotFolderOwner = URI("${FILE_FOLDER}user-is-not-folder-owner")
 
         fun internalServerError(instance: URI?): ResponseEntity<*> =
             Problem(
@@ -444,6 +447,42 @@ class Problem(
                 title = "File is encrypted",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = "File $id is encrypted and cannot be shared via temporary URL",
+                instance = instance,
+            ).toResponse()
+
+        fun folderIsPrivate(
+            id: Int,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = folderIsPrivate,
+                title = "Folder is private",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Folder $id is private and cannot be shared via temporary URL",
+                instance = instance,
+            ).toResponse()
+
+        fun userAlreadyInFolder(
+            username: String,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = userAlreadyInFolder,
+                title = "User already in folder",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "User $username is already in the folder",
+                instance = instance,
+            ).toResponse()
+
+        fun userIsNotFolderOwner(
+            username: String,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = userIsNotFolderOwner,
+                title = "User is not folder owner",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "User $username is not the owner of the folder",
                 instance = instance,
             ).toResponse()
     }

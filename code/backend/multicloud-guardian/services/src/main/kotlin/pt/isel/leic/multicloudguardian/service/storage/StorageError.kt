@@ -162,3 +162,17 @@ sealed class MoveFileError {
 }
 
 typealias MoveFileResult = Either<MoveFileError, Boolean>
+
+sealed class InviteFolderError {
+    data object UserAlreadyInFolder : InviteFolderError()
+
+    data object FolderNotFound : InviteFolderError()
+
+    data object FolderIsPrivate : InviteFolderError()
+
+    data object GuestNotFound : InviteFolderError()
+
+    data object UserIsNotOwner : InviteFolderError()
+}
+
+typealias InviteFolderResult = Either<InviteFolderError, Id>

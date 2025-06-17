@@ -124,4 +124,15 @@ interface StorageRepository {
         updateAt: Instant,
         folderId: Id?,
     )
+
+    fun isMemberOfFolder(
+        userId: Id,
+        folderId: Id,
+    ): Boolean
+
+    fun createInviteFolder(
+        inviterId: Id,
+        guestId: Id,
+        folderId: Id,
+    ): Id
 }

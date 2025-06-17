@@ -71,6 +71,11 @@ object Uris {
         const val DOWNLOAD_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}/download"
         const val DELETE_FOLDER = "$PREFIX/folders/{folderId}"
         const val DELETE_FILE_IN_FOLDER = "$PREFIX/folders/{folderId}/files/{fileId}"
+        const val CREATE_INVITE_FOLDER = "$PREFIX/folders/{folderId}/invites"
+        const val VALIDATE_FOLDER_INVITE = "$PREFIX/folders/{folderId}/invites/{inviteId}"
+        const val RECEIVED_FOLDER_INVITES = "$PREFIX/folders/invites/received"
+        const val SENT_FOLDER_INVITES = "$PREFIX/folders/invites/sent"
+        const val LEAVE_SHARED_FOLDER = "$PREFIX/folders/{folderId}/leave"
 
         fun register(): URI = URI(CREATE)
 
@@ -100,5 +105,14 @@ object Uris {
             folderId: Int,
             fileId: Int,
         ): URI = UriTemplate(DELETE_FILE_IN_FOLDER).expand(folderId, fileId)
+
+        fun inviteFolder(folderId: Int): URI = UriTemplate(CREATE_INVITE_FOLDER).expand(folderId)
+
+        fun validateFolderInvite(
+            folderId: Int,
+            inviteId: Int,
+        ): URI = UriTemplate(VALIDATE_FOLDER_INVITE).expand(folderId, inviteId)
+
+        fun leaveFolder(folderId: Int): URI = UriTemplate(LEAVE_SHARED_FOLDER).expand(folderId)
     }
 }

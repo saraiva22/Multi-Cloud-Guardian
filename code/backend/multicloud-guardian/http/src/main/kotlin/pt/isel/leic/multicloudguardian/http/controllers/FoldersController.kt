@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import pt.isel.leic.multicloudguardian.domain.user.AuthenticatedUser
+import pt.isel.leic.multicloudguardian.domain.user.components.Username
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 import pt.isel.leic.multicloudguardian.domain.utils.PageResult
@@ -24,6 +25,7 @@ import pt.isel.leic.multicloudguardian.http.model.storage.FileInfoOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FilesListOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FolderCreateInputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FolderInfoOutputModel
+import pt.isel.leic.multicloudguardian.http.model.storage.FolderInviteInput
 import pt.isel.leic.multicloudguardian.http.model.storage.FoldersListOutputModel
 import pt.isel.leic.multicloudguardian.http.model.utils.IdOutputModel
 import pt.isel.leic.multicloudguardian.service.storage.CreationFolderError
@@ -34,6 +36,7 @@ import pt.isel.leic.multicloudguardian.service.storage.GetFileInFolderError
 import pt.isel.leic.multicloudguardian.service.storage.GetFilesInFolderError
 import pt.isel.leic.multicloudguardian.service.storage.GetFolderByIdError
 import pt.isel.leic.multicloudguardian.service.storage.GetFoldersInFolderError
+import pt.isel.leic.multicloudguardian.service.storage.InviteFolderError
 import pt.isel.leic.multicloudguardian.service.storage.StorageService
 import pt.isel.leic.multicloudguardian.service.storage.UploadFileError
 
@@ -385,6 +388,31 @@ class FoldersController(
                     DeleteFileError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
                     DeleteFileError.ErrorDeletingFile -> Problem.invalidDeleteFile(instance)
                     DeleteFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(folderId, instance)
+                }
+        }
+    }
+
+    @PostMapping(Uris.Folders.CREATE_INVITE_FOLDER)
+    fun inviteFolder(
+        @PathVariable @Validated folderId: Int,
+        @RequestBody input: FolderInviteInput,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Folders.inviteFolder(folderId)
+        val folderShared =
+            storageService.inviteFolder(Id(folderId), authenticatedUser.user, Username(input.username))
+        return when (folderShared) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(IdOutputModel(folderShared.value.value))
+            is Failure ->
+                when (folderShared.value) {
+                    InviteFolderError.FolderIsPrivate -> Problem.folderIsPrivate(folderId, instance)
+                    InviteFolderError.FolderNotFound -> Problem.folderNotFound(folderId, instance)
+                    InviteFolderError.UserAlreadyInFolder -> Problem.userAlreadyInFolder(input.username, instance)
+                    InviteFolderError.GuestNotFound -> Problem.usernameNotFound(input.username, instance)
+                    InviteFolderError.UserIsNotOwner -> Problem.userIsNotFolderOwner(authenticatedUser.user.username.value, instance)
                 }
         }
     }

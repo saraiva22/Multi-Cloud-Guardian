@@ -8,6 +8,7 @@ import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
+import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 import pt.isel.leic.multicloudguardian.repository.StorageRepository
 
@@ -441,6 +442,45 @@ class JdbiStorageRepository(
                 .bind("folderId", fileFolderId.value)
                 .execute()
         }
+    }
+
+    override fun isMemberOfFolder(
+        userId: Id,
+        folderId: Id,
+    ): Boolean =
+        handle
+            .createQuery(
+                """
+                select count(*) from dbo.Join_Folders where user_id = :userId and folder_id = :folderId
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .bind("folderId", folderId.value)
+            .mapTo<Int>()
+            .single() == 1
+
+    override fun createInviteFolder(
+        inviterId: Id,
+        guestId: Id,
+        folderId: Id,
+    ): Id {
+        val inviteId =
+            handle
+                .createUpdate(
+                    """
+                    insert into dbo.Invited_Folders(inviter_id, guest_id, folder_id, status) 
+                    values (:inviterId, :guestId, :folderId, :status)
+                    """.trimIndent(),
+                ).bind("inviterId", inviterId.value)
+                .bind("guestId", guestId.value)
+                .bind("folderId", folderId.value)
+                .bind("status", InviteStatus.PENDING.ordinal)
+                .executeAndReturnGeneratedKeys()
+                .mapTo<Int>()
+                .one()
+
+        logger.info("Invite created for user {} to folder {}", guestId, folderId)
+
+        return Id(inviteId)
     }
 
     companion object {

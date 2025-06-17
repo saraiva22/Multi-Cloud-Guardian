@@ -11,6 +11,7 @@ import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderDomainConfig
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.user.User
+import pt.isel.leic.multicloudguardian.domain.user.components.Username
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 import pt.isel.leic.multicloudguardian.domain.utils.PageResult
@@ -423,6 +424,30 @@ class StorageService(
                     }
                 }
             }
+        }
+
+    fun inviteFolder(
+        folderId: Id,
+        user: User,
+        guestName: Username,
+    ): InviteFolderResult =
+        transactionManager.run {
+            val storageRepository = it.storageRepository
+            val usersRepository = it.usersRepository
+
+            val folder = storageRepository.getFolderById(user.id, folderId) ?: return@run failure(InviteFolderError.FolderNotFound)
+
+            if (folder.type == FolderType.PRIVATE) return@run failure(InviteFolderError.FolderIsPrivate)
+
+            if (folder.user.id != user.id) return@run failure(InviteFolderError.UserIsNotOwner)
+
+            val guest = usersRepository.getUserByUsername(guestName) ?: return@run failure(InviteFolderError.GuestNotFound)
+
+            if (storageRepository.isMemberOfFolder(guest.id, folderId)) return@run failure(InviteFolderError.UserAlreadyInFolder)
+
+            val inviteId = storageRepository.createInviteFolder(user.id, guest.id, folderId)
+
+            success(inviteId)
         }
 
     fun getFiles(
