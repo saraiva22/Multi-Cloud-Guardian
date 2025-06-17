@@ -7,6 +7,7 @@ import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.file.FileDownload
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
+import pt.isel.leic.multicloudguardian.domain.folder.FolderPrivateInvite
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderDomainConfig
@@ -90,14 +91,7 @@ class StorageService(
                     val path = "$basePath${file.blobName}"
 
                     val isUploadFile =
-                        jcloudsStorage.uploadBlob(
-                            path,
-                            fileContentData,
-                            file.contentType,
-                            contextStorage.value,
-                            bucketName,
-                            encryption,
-                        )
+                        jcloudsStorage.uploadBlob(path, fileContentData, file.contentType, contextStorage.value, bucketName, encryption)
 
                     when (isUploadFile) {
                         is Failure -> {
@@ -479,6 +473,34 @@ class StorageService(
             storageRepository.folderInviteUpdated(guest.id, inviteId, inviteStatus)
 
             success(folder)
+        }
+
+    fun getReceivedFolderInvites(
+        user: User,
+        limit: Int,
+        page: Int,
+        sort: String,
+    ): PageResult<FolderPrivateInvite> =
+        transactionManager.run {
+            val storageRep = it.storageRepository
+            val offset = page * limit
+            val invites = storageRep.getReceivedFolderInvites(user.id, limit, offset, sort)
+            val totalElements = storageRep.countReceivedFolderInvites(user.id)
+            PageResult.fromPartialResult(invites, totalElements, limit, offset)
+        }
+
+    fun getSentFolderInvites(
+        user: User,
+        limit: Int,
+        page: Int,
+        sort: String,
+    ): PageResult<FolderPrivateInvite> =
+        transactionManager.run {
+            val storageRep = it.storageRepository
+            val offset = page * limit
+            val invites = storageRep.getSentFolderInvites(user.id, limit, offset, sort)
+            val totalElements = storageRep.countSentFolderInvites(user.id)
+            PageResult.fromPartialResult(invites, totalElements, limit, offset)
         }
 
     fun getFiles(

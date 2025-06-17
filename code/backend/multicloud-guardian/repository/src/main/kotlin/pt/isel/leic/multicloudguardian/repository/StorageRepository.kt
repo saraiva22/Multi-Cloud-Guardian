@@ -4,6 +4,7 @@ import kotlinx.datetime.Instant
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
+import pt.isel.leic.multicloudguardian.domain.folder.FolderPrivateInvite
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
 import pt.isel.leic.multicloudguardian.domain.utils.Id
@@ -150,4 +151,22 @@ interface StorageRepository {
         inviteId: Id,
         inviteStatus: InviteStatus,
     )
+
+    fun getReceivedFolderInvites(
+        userId: Id,
+        limit: Int,
+        offset: Int,
+        sort: String,
+    ): List<FolderPrivateInvite>
+
+    fun getSentFolderInvites(
+        userId: Id,
+        limit: Int,
+        offset: Int,
+        sort: String,
+    ): List<FolderPrivateInvite>
+
+    fun countReceivedFolderInvites(userId: Id): Long
+
+    fun countSentFolderInvites(userId: Id): Long
 }

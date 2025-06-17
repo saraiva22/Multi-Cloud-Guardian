@@ -27,6 +27,8 @@ import pt.isel.leic.multicloudguardian.http.model.storage.FolderCreateInputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FolderInfoOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FolderInviteInput
 import pt.isel.leic.multicloudguardian.http.model.storage.FolderInviteStatusInputModel
+import pt.isel.leic.multicloudguardian.http.model.storage.FolderPrivateInviteListOutputModel
+import pt.isel.leic.multicloudguardian.http.model.storage.FolderPrivateInviteOutputModel
 import pt.isel.leic.multicloudguardian.http.model.storage.FoldersListOutputModel
 import pt.isel.leic.multicloudguardian.http.model.utils.IdOutputModel
 import pt.isel.leic.multicloudguardian.service.storage.CreationFolderError
@@ -446,6 +448,60 @@ class FoldersController(
                         )
                 }
         }
+    }
+
+    @GetMapping(Uris.Folders.RECEIVED_FOLDER_INVITES)
+    fun getReceivedFolderInvites(
+        authenticatedUser: AuthenticatedUser,
+        @RequestParam(required = false) size: Int?,
+        @RequestParam(required = false) page: Int?,
+        @RequestParam(required = false) sort: String?,
+    ): ResponseEntity<*> {
+        val setLimit = size ?: DEFAULT_LIMIT
+        val setPage = page ?: DEFAULT_PAGE
+        val setSort = sort ?: DEFAULT_SORT
+        val res = storageService.getReceivedFolderInvites(authenticatedUser.user, setLimit, setPage, setSort)
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(
+                PageResult(
+                    content = FolderPrivateInviteListOutputModel(res.content.map { FolderPrivateInviteOutputModel.fromDomain(it) }).invites,
+                    pageable = res.pageable,
+                    totalElements = res.totalElements,
+                    totalPages = res.totalPages,
+                    last = res.last,
+                    first = res.first,
+                    size = res.size,
+                    number = res.number,
+                ),
+            )
+    }
+
+    @GetMapping(Uris.Folders.SENT_FOLDER_INVITES)
+    fun getSentFolderInvites(
+        authenticatedUser: AuthenticatedUser,
+        @RequestParam(required = false) size: Int?,
+        @RequestParam(required = false) page: Int?,
+        @RequestParam(required = false) sort: String?,
+    ): ResponseEntity<*> {
+        val setLimit = size ?: DEFAULT_LIMIT
+        val setPage = page ?: DEFAULT_PAGE
+        val setSort = sort ?: DEFAULT_SORT
+        val res = storageService.getSentFolderInvites(authenticatedUser.user, setLimit, setPage, setSort)
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(
+                PageResult(
+                    content = FolderPrivateInviteListOutputModel(res.content.map { FolderPrivateInviteOutputModel.fromDomain(it) }).invites,
+                    pageable = res.pageable,
+                    totalElements = res.totalElements,
+                    totalPages = res.totalPages,
+                    last = res.last,
+                    first = res.first,
+                    size = res.size,
+                    number = res.number,
+                ),
+            )
     }
 
     companion object {

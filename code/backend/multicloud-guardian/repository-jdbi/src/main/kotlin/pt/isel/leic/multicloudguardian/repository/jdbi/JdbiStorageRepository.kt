@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
+import pt.isel.leic.multicloudguardian.domain.folder.FolderPrivateInvite
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
 import pt.isel.leic.multicloudguardian.domain.utils.Id
@@ -530,6 +531,78 @@ class JdbiStorageRepository(
             .bind("status", inviteStatus.ordinal)
             .execute()
     }
+
+    override fun getReceivedFolderInvites(
+        userId: Id,
+        limit: Int,
+        offset: Int,
+        sort: String,
+    ): List<FolderPrivateInvite> {
+        val order = orderBy(sort, "folder_name")
+
+        return handle
+            .createQuery(
+                """
+                select invite.invite_id, invite.folder_id, folder.folder_name, users.id as user_id, users.username, users.email, invite.status
+                from dbo.Invited_Folders invite 
+                inner join dbo.Folders folder on invite.folder_id = folder.folder_id 
+                inner join dbo.Users users on invite.inviter_id = users.id 
+                where invite.guest_id = :userId
+                order by $order
+                LIMIT :limit OFFSET :offset
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .bind("limit", limit)
+            .bind("offset", offset)
+            .mapTo<FolderPrivateInvite>()
+            .toList()
+    }
+
+    override fun getSentFolderInvites(
+        userId: Id,
+        limit: Int,
+        offset: Int,
+        sort: String,
+    ): List<FolderPrivateInvite> {
+        val order = orderBy(sort, "folder_name")
+
+        return handle
+            .createQuery(
+                """
+                select invite.invite_id, invite.folder_id, folder.folder_name, users.id as user_id, users.username, users.email, invite.status
+                from dbo.Invited_Folders invite 
+                inner join dbo.Folders folder on invite.folder_id = folder.folder_id 
+                inner join dbo.Users users on invite.guest_id = users.id 
+                where invite.inviter_id = :userId
+                order by $order
+                LIMIT :limit OFFSET :offset
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .bind("limit", limit)
+            .bind("offset", offset)
+            .mapTo<FolderPrivateInvite>()
+            .toList()
+    }
+
+    override fun countReceivedFolderInvites(userId: Id): Long =
+        handle
+            .createQuery(
+                """
+                select count(*) from dbo.Invited_Folders where guest_id = :userId
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .mapTo<Long>()
+            .one()
+
+    override fun countSentFolderInvites(userId: Id): Long =
+        handle
+            .createQuery(
+                """
+                select count(*) from dbo.Invited_Folders where inviter_id = :userId
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .mapTo<Long>()
+            .one()
 
     companion object {
         private val logger = LoggerFactory.getLogger(JdbiStorageRepository::class.java)
