@@ -50,7 +50,7 @@ class JdbiStorageRepositoryTests {
             assertEquals(fileCreate.size, file.size)
             assertEquals(fileCreate.contentType, file.contentType)
             assertEquals(userId, file.user.id)
-            assertEquals(folderId, file.folderId)
+            assertEquals(folderId, file.folderInfo?.id)
             assertEquals(path, file.path)
             assertEquals(false, file.encryption)
             assertEquals(createdAt.epochSeconds, file.createdAt.epochSeconds)
@@ -81,7 +81,7 @@ class JdbiStorageRepositoryTests {
             assertNotNull(folder)
             assertEquals(folderName, folder.folderName)
             assertEquals(userId, folder.user.id)
-            assertEquals(parentFolderId, folder.parentFolderId)
+            assertEquals(parentFolderId, folder.parentFolderInfo?.id)
             assertEquals(path, folder.path)
             assertEquals(createdAt.epochSeconds, folder.createdAt.epochSeconds)
 

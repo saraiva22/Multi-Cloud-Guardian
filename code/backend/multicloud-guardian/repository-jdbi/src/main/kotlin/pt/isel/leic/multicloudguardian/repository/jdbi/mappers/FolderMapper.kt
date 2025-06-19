@@ -3,6 +3,7 @@ package pt.isel.leic.multicloudguardian.repository.jdbi.mappers
 import org.jdbi.v3.core.mapper.RowMapper
 import org.jdbi.v3.core.statement.StatementContext
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
+import pt.isel.leic.multicloudguardian.domain.folder.FolderInfo
 import pt.isel.leic.multicloudguardian.domain.user.UserInfo
 import pt.isel.leic.multicloudguardian.domain.user.components.Email
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
@@ -15,8 +16,10 @@ class FolderMapper : RowMapper<Folder> {
     override fun map(
         rs: ResultSet,
         ctx: StatementContext,
-    ): Folder =
-        Folder(
+    ): Folder {
+        val parentFolderId = rs.getObject("parent_id") as? Int
+
+        return Folder(
             folderId = Id(rs.getInt("folder_id")),
             user =
                 UserInfo(
@@ -24,7 +27,15 @@ class FolderMapper : RowMapper<Folder> {
                     username = Username(rs.getString("username")),
                     email = Email(rs.getString("email")),
                 ),
-            parentFolderId = rs.getObject("parent_folder_id")?.let { Id(it as Int) },
+            parentFolderInfo =
+                if (parentFolderId == null) {
+                    null
+                } else {
+                    FolderInfo(
+                        id = Id(parentFolderId),
+                        folderName = rs.getString("parent_folder_name"),
+                    )
+                },
             folderName = rs.getString("folder_name"),
             size = rs.getLong("size"),
             numberFiles = rs.getInt("number_files"),
@@ -33,4 +44,5 @@ class FolderMapper : RowMapper<Folder> {
             createdAt = InstantMapper().map(rs, 7, ctx),
             updatedAt = InstantMapper().map(rs, 8, ctx),
         )
+    }
 }

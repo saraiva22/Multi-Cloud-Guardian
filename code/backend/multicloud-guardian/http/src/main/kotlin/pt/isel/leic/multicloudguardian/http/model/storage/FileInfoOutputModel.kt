@@ -6,7 +6,7 @@ import pt.isel.leic.multicloudguardian.http.model.user.UserInfoOutputModel
 data class FileInfoOutputModel(
     val fileId: Int,
     val user: UserInfoOutputModel,
-    val folderId: Int?,
+    val folderInfo: FolderInfoDetailsModel?,
     val name: String,
     val size: Long,
     val contentType: String,
@@ -27,7 +27,13 @@ data class FileInfoOutputModel(
                         username = file.user.username.value,
                         email = file.user.email.value,
                     ),
-                folderId = file.folderId?.value,
+                folderInfo =
+                    file.folderInfo?.let {
+                        FolderInfoDetailsModel(
+                            folderId = it.id.value,
+                            folderName = it.folderName,
+                        )
+                    },
                 name = file.fileName,
                 size = file.size,
                 contentType = file.contentType,

@@ -23,7 +23,7 @@ private const val MIN_FOLDER_NAME_LENGTH = 2
 data class Folder(
     val folderId: Id,
     val user: UserInfo,
-    val parentFolderId: Id?,
+    val parentFolderInfo: FolderInfo?,
     val folderName: String,
     val size: Long,
     val numberFiles: Int,

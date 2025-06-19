@@ -150,7 +150,8 @@ class StorageServiceTests : ServiceTests() {
         when (getFile) {
             is Success -> {
                 assertEquals(uploadFileInFolder.value, getFile.value.fileId)
-                assertEquals(getFolder.value.folderId, getFile.value.folderId)
+                assertEquals(getFolder.value.folderId, getFile.value.folderInfo?.id)
+                assertEquals(getFolder.value.folderName, getFile.value.folderInfo?.folderName)
                 assertEquals(file.size, getFile.value.size)
                 assertEquals(getFolder.value.user, getFile.value.user)
             }
@@ -222,7 +223,7 @@ class StorageServiceTests : ServiceTests() {
                 assertEquals(file.fileName, getFileResult.value.fileName)
                 assertEquals(file.encryption, getFileResult.value.encryption)
                 assertEquals(file.contentType, getFileResult.value.contentType)
-                assertEquals(file.folderId, getFileResult.value.folderId)
+                assertEquals(file.folderInfo, getFileResult.value.folderInfo)
                 assertEquals(fileCreation.blobName, getFileResult.value.fileName)
                 assertEquals(fileCreation.size, getFileResult.value.size)
                 assertEquals(fileCreation.contentType, getFileResult.value.contentType)
@@ -329,15 +330,6 @@ class StorageServiceTests : ServiceTests() {
         val parentFolder = storageService.getFolderById(user, parentFolderId)
         val fileResult = storageService.getFileInFolder(user, parentFolderId, fileId)
 
-        // Assert: uploaded file is present in the parent folder with correct metadata
-        when (fileResult) {
-            is Success -> {
-                assertEquals(parentFolderId, fileResult.value.folderId)
-                assertEquals(file.blobName, fileResult.value.fileName)
-            }
-            is Failure -> fail("Unexpected $fileResult")
-        }
-
         // Assert: parent folder metadata is updated (number of files and updatedAt)
         when (parentFolder) {
             is Success -> {
@@ -345,6 +337,16 @@ class StorageServiceTests : ServiceTests() {
                 assertTrue(parentFolder.value.updatedAt.epochSeconds > parentFolder.value.createdAt.epochSeconds)
             }
             is Failure -> fail("Unexpected $parentFolder")
+        }
+
+        // Assert: uploaded file is present in the parent folder with correct metadata
+        when (fileResult) {
+            is Success -> {
+                assertEquals(parentFolderId, fileResult.value.folderInfo?.id)
+                assertEquals(parentFolder.value.folderName, fileResult.value.folderInfo?.folderName)
+                assertEquals(file.blobName, fileResult.value.fileName)
+            }
+            is Failure -> fail("Unexpected $fileResult")
         }
 
         // Act: create two subfolders inside the parent folder
@@ -676,7 +678,8 @@ class StorageServiceTests : ServiceTests() {
         val subFolder =
             getFolders.content.find { it.folderId == subFolderId }
                 ?: fail("Subfolder not found in folder list")
-        assertEquals(folderId1, subFolder.parentFolderId)
+        assertEquals(folderId1, subFolder.parentFolderInfo?.id)
+        assertEquals(folderName1, subFolder.parentFolderInfo?.folderName)
 
         // Act: retrieve folders with limit and descending creation order
         val newLimit = 2
@@ -920,7 +923,10 @@ class StorageServiceTests : ServiceTests() {
 
         // Assert: file should now belong to the created folder
         when (getFile) {
-            is Success -> assertEquals(folderId, getFile.value.folderId)
+            is Success -> {
+                assertEquals(folderId, getFile.value.folderInfo?.id)
+                assertEquals(folderName, getFile.value.folderInfo?.folderName)
+            }
             is Failure -> fail("Unexpected $getFile")
         }
 
@@ -1002,13 +1008,19 @@ class StorageServiceTests : ServiceTests() {
         // Act: Check file1 is now in subfolder, file2 in folder
         val getFile1 = storageService.getFileById(user, file1Id)
         when (getFile1) {
-            is Success -> assertEquals(subFolderId, getFile1.value.folderId)
+            is Success -> {
+                assertEquals(subFolderId, getFile1.value.folderInfo?.id)
+                assertEquals("SubFolder", getFile1.value.folderInfo?.folderName)
+            }
             is Failure -> fail("Unexpected $getFile1")
         }
         // Check file2 is now in folder
         val getFile2 = storageService.getFileById(user, file2Id)
         when (getFile2) {
-            is Success -> assertEquals(folderId, getFile2.value.folderId)
+            is Success -> {
+                assertEquals(folderId, getFile2.value.folderInfo?.id)
+                assertEquals("Folder", getFile2.value.folderInfo?.folderName)
+            }
             is Failure -> fail("Unexpected $getFile2")
         }
 
@@ -1140,7 +1152,7 @@ class StorageServiceTests : ServiceTests() {
 
         // Assert: file1 should have no folderId (root)
         when (getFile1) {
-            is Success -> assertEquals(null, getFile1.value.folderId)
+            is Success -> assertEquals(null, getFile1.value.folderInfo)
             is Failure -> fail("Unexpected $getFile1")
         }
 
@@ -1149,7 +1161,10 @@ class StorageServiceTests : ServiceTests() {
 
         // Assert: file2 should have folderId set to parent folder
         when (getFile2) {
-            is Success -> assertEquals(folderId, getFile2.value.folderId)
+            is Success -> {
+                assertEquals(folderId, getFile2.value.folderInfo?.id)
+                assertEquals("ParentFolder", getFile2.value.folderInfo?.folderName)
+            }
             is Failure -> fail("Unexpected $getFile2")
         }
 
@@ -1176,8 +1191,9 @@ class StorageServiceTests : ServiceTests() {
         val file2 = allFilesAfter.content.find { it.fileId == file2Id }
         assertNotNull(file1)
         assertNotNull(file2)
-        assertEquals(null, file1.folderId)
-        assertEquals(folderId, file2.folderId)
+        assertEquals(null, file1.folderInfo)
+        assertEquals(folderId, file2.folderInfo?.id)
+        assertEquals("ParentFolder", file2.folderInfo?.folderName)
 
         // Assert: folder metadata
         val parentFolderInfo = storageService.getFolderById(user, folderId)
@@ -1236,7 +1252,8 @@ class StorageServiceTests : ServiceTests() {
         when (getFile) {
             is Success -> {
                 // Assert: file's folderId is updated to the new folder
-                assertEquals(folderId, getFile.value.folderId)
+                assertEquals(folderId, getFile.value.folderInfo?.id)
+                assertEquals("TestFolder", getFile.value.folderInfo?.folderName)
             }
             is Failure -> fail("Unexpected $getFile")
         }

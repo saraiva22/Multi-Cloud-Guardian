@@ -73,7 +73,8 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select file_name from dbo.Files where user_id = :user_id and ((:folderId IS NULL AND folder_id IS NULL) 
+                select file_name from dbo.Files 
+                where user_id = :user_id and ((:folderId IS NULL AND folder_id IS NULL) 
                 OR folder_id = :folderId)
                 """.trimIndent(),
             ).bind("user_id", userId.value)
@@ -107,8 +108,11 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select file.*, users.username ,users.email 
-                from dbo.Files file inner join dbo.Users on file.user_id = id where file.file_id = :fileId and file.user_id = :userId
+                select file.*, users.username, users.email, folder.folder_id as folder_id, folder.folder_name as folder_name
+                from dbo.Files file
+                inner join dbo.Users on file.user_id = users.id
+                left join dbo.Folders folder on file.folder_id = folder.folder_id
+                where file.file_id = :fileId and file.user_id = :userId
                 """.trimIndent(),
             ).bind("userId", userId.value)
             .bind("fileId", fileId.value)
@@ -123,8 +127,11 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select file.*, users.username ,users.email 
-                from dbo.Files file inner join dbo.Users on file.user_id = id where file.file_id = :fileId and file.user_id = :userId
+                select file.*, users.username, users.email, folder.folder_id as folder_id, folder.folder_name as folder_name
+                from dbo.Files file
+                inner join dbo.Users on file.user_id = users.id
+                left join dbo.Folders folder on file.folder_id = folder.folder_id
+                where file.file_id = :fileId and file.user_id = :userId
                 and file.folder_id = :folderId
                 """.trimIndent(),
             ).bind("userId", userId.value)
@@ -141,10 +148,14 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select folder.*, users.username ,users.email 
-                from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.folder_name = :folderName and folder.user_id = :userId
-                and ((:parentFolderId IS NULL AND folder.parent_folder_id IS NULL) 
-                OR folder.parent_folder_id = :parentFolderId)
+                select folder.*, users.username, users.email,
+                       parent.folder_id as parent_id, parent.folder_name as parent_folder_name
+                from dbo.Folders folder
+                inner join dbo.Users on folder.user_id = users.id
+                left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
+                where folder.folder_name = :folderName and folder.user_id = :userId
+                  and ((:parentFolderId IS NULL AND folder.parent_folder_id IS NULL)
+                  OR folder.parent_folder_id = :parentFolderId)
                 """.trimIndent(),
             ).bind("userId", userId.value)
             .bind("parentFolderId", parentFolderId?.value)
@@ -162,8 +173,8 @@ class JdbiStorageRepository(
                 """
                 select count(*) from dbo.Folders 
                 where user_id = :userId
-                  and folder_name = :folderName
-                  and parent_folder_id IS NOT DISTINCT FROM :parentFolderId
+                and folder_name = :folderName
+                and parent_folder_id IS NOT DISTINCT FROM :parentFolderId
                 """.trimIndent(),
             ).bind("userId", userId.value)
             .bind("folderName", folderName)
@@ -178,8 +189,12 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select folder.*, users.username ,users.email 
-                from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.folder_id = :folderId and folder.user_id = :userId
+                select folder.*, users.username, users.email,
+                       parent.folder_id as parent_id, parent.folder_name as parent_folder_name
+                from dbo.Folders folder
+                inner join dbo.Users on folder.user_id = users.id
+                left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
+                where folder.folder_id = :folderId and folder.user_id = :userId
                 """.trimIndent(),
             ).bind("userId", userId.value)
             .bind("folderId", folderId.value)
@@ -190,8 +205,12 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select folder.*, users.username ,users.email 
-                from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.folder_id = :folderId
+                select folder.*, users.username, users.email,
+                       parent.folder_id as parent_id, parent.folder_name as parent_folder_name
+                from dbo.Folders folder
+                inner join dbo.Users on folder.user_id = users.id
+                left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
+                where folder.folder_id = :folderId
                 """.trimIndent(),
             ).bind("folderId", folderId.value)
             .mapTo<Folder>()
@@ -207,8 +226,11 @@ class JdbiStorageRepository(
         return handle
             .createQuery(
                 """
-                select file.*, users.username ,users.email 
-                from dbo.Files file inner join dbo.Users on file.user_id = id where file.user_id = :userId
+                select file.*, users.username, users.email, folder.folder_id as folder_id, folder.folder_name as folder_name
+                from dbo.Files file
+                inner join dbo.Users on file.user_id = users.id
+                left join dbo.Folders folder on file.folder_id = folder.folder_id
+                where file.user_id = :userId
                 order by $order
                 LIMIT :limit OFFSET :offset
                 """.trimIndent(),
@@ -249,8 +271,12 @@ class JdbiStorageRepository(
         return handle
             .createQuery(
                 """
-                select folder.*, users.username ,users.email 
-                from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.user_id = :userId 
+                select folder.*, users.username, users.email,
+                       parent.folder_id as parent_id, parent.folder_name as parent_folder_name
+                from dbo.Folders folder
+                inner join dbo.Users on folder.user_id = users.id
+                left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
+                where folder.user_id = :userId
                 order by $order
                 LIMIT :limit OFFSET :offset
                 """.trimIndent(),
@@ -284,9 +310,12 @@ class JdbiStorageRepository(
             handle
                 .createQuery(
                     """
-                    select folder.*, users.username ,users.email 
-                    from dbo.Folders folder inner join dbo.Users on folder.user_id = id where folder.user_id = :userId 
-                    and folder.parent_folder_id = :folderId
+                    select folder.*, users.username, users.email,
+                           parent.folder_id as parent_id, parent.folder_name as parent_folder_name
+                    from dbo.Folders folder
+                    inner join dbo.Users on folder.user_id = users.id
+                    left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
+                    where folder.user_id = :userId and folder.parent_folder_id = :folderId
                     order by $order
                     LIMIT :limit OFFSET :offset
                     """.trimIndent(),
@@ -312,8 +341,11 @@ class JdbiStorageRepository(
         return handle
             .createQuery(
                 """
-                select files.*, users.username ,users.email  from dbo.Files inner join dbo.folders on files.folder_id = folders.folder_id 
-                inner join dbo.users on folders.user_id = users.id where folders.folder_id = :folderId and users.id = :userId
+                select files.*, users.username, users.email, folders.folder_id as folder_id, folders.folder_name as folder_name
+                from dbo.Files 
+                inner join dbo.folders on files.folder_id = folders.folder_id 
+                inner join dbo.users on folders.user_id = users.id 
+                where folders.folder_id = :folderId and users.id = :userId
                 order by $order
                 LIMIT :limit OFFSET :offset
                 """.trimIndent(),
@@ -353,7 +385,7 @@ class JdbiStorageRepository(
             .bind("userId", userId.value)
             .execute()
 
-        val folderId = file.folderId
+        val folderId = file.folderInfo
         if (updatedAt != null && folderId != null) {
             handle
                 .createUpdate(
@@ -363,7 +395,7 @@ class JdbiStorageRepository(
                     where folder_id = :folder_id
                     """.trimIndent(),
                 ).bind("updated_at", updatedAt.epochSeconds)
-                .bind("folder_id", folderId.value)
+                .bind("folder_id", folderId.id.value)
                 .execute()
         }
     }
@@ -441,7 +473,7 @@ class JdbiStorageRepository(
                 .bind("folderId", folderId.value)
                 .execute()
         }
-        val fileFolderId = file.folderId
+        val fileFolderId = file.folderInfo
         if (fileFolderId != null) {
             handle
                 .createUpdate(
@@ -451,7 +483,7 @@ class JdbiStorageRepository(
                     where folder_id = :folderId
                     """.trimIndent(),
                 ).bind("updatedAt", updateAt.epochSeconds)
-                .bind("folderId", fileFolderId.value)
+                .bind("folderId", fileFolderId.id.value)
                 .execute()
         }
     }

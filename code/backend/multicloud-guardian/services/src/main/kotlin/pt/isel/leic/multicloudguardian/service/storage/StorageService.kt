@@ -254,7 +254,7 @@ class StorageService(
             val file =
                 fileRepository.getFileById(user.id, fileId) ?: return@run failure(DownloadFileError.FileNotFound)
 
-            if (folder != null && folder.folderId != file.folderId) {
+            if (folder != null && folder.folderId != file.folderInfo?.id) {
                 return@run failure(DownloadFileError.FileNotFound)
             }
 
@@ -334,7 +334,7 @@ class StorageService(
 
                         is Success -> {
                             contextStorage.value.close()
-                            fileRepository.deleteFile(user.id, file, if (file.folderId != null) clock.now() else null)
+                            fileRepository.deleteFile(user.id, file, if (file.folderInfo != null) clock.now() else null)
                             success(true)
                         }
                     }
@@ -419,7 +419,7 @@ class StorageService(
 
                         is Success -> {
                             contextStorage.value.close()
-                            fileRepository.deleteFile(user.id, file, if (file.folderId != null) clock.now() else null)
+                            fileRepository.deleteFile(user.id, file, if (file.folderInfo != null) clock.now() else null)
                             success(true)
                         }
                     }
