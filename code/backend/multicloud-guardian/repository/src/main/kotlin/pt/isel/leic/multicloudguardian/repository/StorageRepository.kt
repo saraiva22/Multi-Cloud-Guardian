@@ -146,6 +146,11 @@ interface StorageRepository {
         inviteId: Id,
     ): Boolean
 
+    fun isOwnerOfFolder(
+        userId: Id,
+        folderId: Id,
+    ): Boolean
+
     fun folderInviteUpdated(
         guestId: Id,
         inviteId: Id,
@@ -169,4 +174,9 @@ interface StorageRepository {
     fun countReceivedFolderInvites(userId: Id): Long
 
     fun countSentFolderInvites(userId: Id): Long
+
+    fun leaveFolder(
+        userId: Id,
+        folderId: Id,
+    ): Boolean
 }

@@ -546,6 +546,19 @@ class JdbiStorageRepository(
             .mapTo<Int>()
             .single() == 1
 
+    override fun isOwnerOfFolder(
+        userId: Id,
+        folderId: Id,
+    ): Boolean =
+        handle
+            .createQuery(
+                "select 1 from dbo.Folders where folder_id = :folderId and user_id = :userId",
+            ).bind("folderId", folderId.value)
+            .bind("userId", userId.value)
+            .mapTo<Int>()
+            .findOne()
+            .isPresent
+
     override fun folderInviteUpdated(
         guestId: Id,
         inviteId: Id,
@@ -635,6 +648,27 @@ class JdbiStorageRepository(
             ).bind("userId", userId.value)
             .mapTo<Long>()
             .one()
+
+    override fun leaveFolder(
+        userId: Id,
+        folderId: Id,
+    ): Boolean {
+        val isOwner = isOwnerOfFolder(userId, folderId)
+
+        if (isOwner) {
+            logger.info("User {} is trying to leave folder {} but is the owner", userId, folderId)
+            return true
+        }
+
+        return handle
+            .createUpdate(
+                """
+                delete from dbo.Join_Folders where user_id = :userId and folder_id = :folderId
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .bind("folderId", folderId.value)
+            .execute() > 0
+    }
 
     companion object {
         private val logger = LoggerFactory.getLogger(JdbiStorageRepository::class.java)

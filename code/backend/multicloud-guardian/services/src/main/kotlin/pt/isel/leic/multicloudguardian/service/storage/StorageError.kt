@@ -188,3 +188,15 @@ sealed class ValidateFolderInviteError {
 }
 
 typealias ValidateFolderInviteResult = Either<ValidateFolderInviteError, Folder>
+
+sealed class LeaveFolderError {
+    data object UserNotInFolder : LeaveFolderError()
+
+    data object FolderNotFound : LeaveFolderError()
+
+    data object FolderIsPrivate : LeaveFolderError()
+
+    data object ErrorLeavingFolder : LeaveFolderError()
+}
+
+typealias LeaveFolderResult = Either<LeaveFolderError, Unit>

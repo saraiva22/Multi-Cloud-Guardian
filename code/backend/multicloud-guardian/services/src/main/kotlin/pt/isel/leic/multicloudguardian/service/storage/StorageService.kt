@@ -503,6 +503,34 @@ class StorageService(
             PageResult.fromPartialResult(invites, totalElements, limit, offset)
         }
 
+    fun leaveFolder(
+        user: User,
+        folderId: Id,
+    ): LeaveFolderResult =
+        transactionManager.run {
+            val storageRepository = it.storageRepository
+            val folder = storageRepository.getFolderById(folderId) ?: return@run failure(LeaveFolderError.FolderNotFound)
+
+            if (folder.type == FolderType.PRIVATE) return@run failure(LeaveFolderError.FolderIsPrivate)
+
+            if (!storageRepository.isMemberOfFolder(user.id, folderId)) return@run failure(LeaveFolderError.UserNotInFolder)
+
+            val isOwner = storageRepository.isOwnerOfFolder(user.id, folderId)
+
+            if (isOwner) {
+                val result = deleteFolder(user, folderId)
+                when (result) {
+                    is Failure -> return@run failure(LeaveFolderError.ErrorLeavingFolder)
+                    is Success -> {
+                        return@run success(Unit)
+                    }
+                }
+            } else {
+                if (!storageRepository.leaveFolder(user.id, folderId)) return@run failure(LeaveFolderError.ErrorLeavingFolder)
+                success(Unit)
+            }
+        }
+
     fun getFiles(
         user: User,
         limit: Int,

@@ -99,6 +99,8 @@ class Problem(
         private val userAlreadyInFolder = URI("${FILE_FOLDER}user-already-in-folder")
         private val userIsNotFolderOwner = URI("${FILE_FOLDER}user-is-not-folder-owner")
         private val invalidInviteFolder = URI("${FILE_FOLDER}invalid-invite-folder")
+        private val userNotFoundInFolder = URI("${FILE_FOLDER}user-not-found-in-folder")
+        private val errorLeavingFolder = URI("${FILE_FOLDER}error-leaving-folder")
 
         fun internalServerError(instance: URI?): ResponseEntity<*> =
             Problem(
@@ -472,6 +474,31 @@ class Problem(
                 title = "User already in folder",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = "User $username is already in the folder",
+                instance = instance,
+            ).toResponse()
+
+        fun userNotFoundInFolder(
+            username: String,
+            folderId: Int,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = userNotFoundInFolder,
+                title = "User not found in folder",
+                status = HttpStatus.NOT_FOUND.value(),
+                detail = "User $username not found in the folder with id $folderId",
+                instance = instance,
+            ).toResponse()
+
+        fun errorLeavingFolder(
+            folderId: Int,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = errorLeavingFolder,
+                title = "Error leaving folder",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "An error occurred while trying to leave the folder with id $folderId",
                 instance = instance,
             ).toResponse()
 

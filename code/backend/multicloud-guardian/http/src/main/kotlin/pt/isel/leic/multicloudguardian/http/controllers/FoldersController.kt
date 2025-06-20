@@ -40,6 +40,7 @@ import pt.isel.leic.multicloudguardian.service.storage.GetFilesInFolderError
 import pt.isel.leic.multicloudguardian.service.storage.GetFolderByIdError
 import pt.isel.leic.multicloudguardian.service.storage.GetFoldersInFolderError
 import pt.isel.leic.multicloudguardian.service.storage.InviteFolderError
+import pt.isel.leic.multicloudguardian.service.storage.LeaveFolderError
 import pt.isel.leic.multicloudguardian.service.storage.StorageService
 import pt.isel.leic.multicloudguardian.service.storage.UploadFileError
 import pt.isel.leic.multicloudguardian.service.storage.ValidateFolderInviteError
@@ -362,7 +363,11 @@ class FoldersController(
         val instance = Uris.Folders.deleteFolder(folderId)
         val user = authenticatedUser.user
         return when (val res = storageService.deleteFolder(user, Id(folderId))) {
-            is Success -> ResponseEntity.status(HttpStatus.OK).build<Unit>()
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.OK)
+                    .header("Location", instance.toASCIIString())
+                    .build<Unit>()
             is Failure ->
                 when (res.value) {
                     DeleteFolderError.FolderNotFound -> Problem.folderNotFound(folderId, instance)
@@ -383,7 +388,11 @@ class FoldersController(
         val instance = Uris.Folders.deleteFileInFolder(folderId, fileId)
         val user = authenticatedUser.user
         return when (val res = storageService.deleteFileInFolder(user, Id(folderId), Id(fileId))) {
-            is Success -> ResponseEntity.status(HttpStatus.OK).build<Unit>()
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.OK)
+                    .header("Location", instance.toASCIIString())
+                    .build<Unit>()
             is Failure ->
                 when (res.value) {
                     DeleteFileError.FileNotFound -> Problem.fileNotFound(fileId, instance)
@@ -442,10 +451,7 @@ class FoldersController(
                     ValidateFolderInviteError.InvalidInvite -> Problem.invalidInviteFolder(folderId, instance)
                     ValidateFolderInviteError.FolderNotFound -> Problem.folderNotFound(folderId, instance)
                     ValidateFolderInviteError.UserAlreadyInFolder ->
-                        Problem.userAlreadyInFolder(
-                            authenticatedUser.user.username.value,
-                            instance,
-                        )
+                        Problem.userAlreadyInFolder(authenticatedUser.user.username.value, instance)
                 }
         }
     }
@@ -502,6 +508,33 @@ class FoldersController(
                     number = res.number,
                 ),
             )
+    }
+
+    @PostMapping(Uris.Folders.LEAVE_SHARED_FOLDER)
+    fun leaveFolder(
+        @PathVariable @Validated folderId: Int,
+        authenticatedUser: AuthenticatedUser,
+    ): ResponseEntity<*> {
+        val instance = Uris.Folders.leaveFolder(folderId)
+        return when (val res = storageService.leaveFolder(authenticatedUser.user, Id(folderId))) {
+            is Success ->
+                ResponseEntity
+                    .status(HttpStatus.OK)
+                    .header("Location", instance.toASCIIString())
+                    .build<Unit>()
+            is Failure ->
+                when (res.value) {
+                    LeaveFolderError.FolderNotFound -> Problem.folderNotFound(folderId, instance)
+                    LeaveFolderError.FolderIsPrivate -> Problem.folderIsPrivate(folderId, instance)
+                    LeaveFolderError.UserNotInFolder ->
+                        Problem.userNotFoundInFolder(
+                            authenticatedUser.user.username.value,
+                            folderId,
+                            instance,
+                        )
+                    LeaveFolderError.ErrorLeavingFolder -> Problem.errorLeavingFolder(folderId, instance)
+                }
+        }
     }
 
     companion object {
