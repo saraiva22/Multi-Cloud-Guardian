@@ -50,6 +50,8 @@ sealed class CreateTempUrlFileError {
     data object ErrorCreatingContext : CreateTempUrlFileError()
 
     data object ErrorCreatingGlobalBucket : CreateTempUrlFileError()
+
+    data object FolderIsShared : CreateTempUrlFileError()
 }
 
 typealias CreateTempUrlFileResult = Either<CreateTempUrlFileError, Pair<File, String>>
@@ -83,6 +85,8 @@ sealed class DeleteFileError {
     data object ErrorDeletingFile : DeleteFileError()
 
     data object ParentFolderNotFound : DeleteFileError()
+
+    data object PermissionDenied : DeleteFileError()
 }
 
 typealias DeleteFileResult = Either<DeleteFileError, Boolean>
@@ -97,6 +101,8 @@ sealed class DeleteFolderError {
     data object ErrorCreatingGlobalBucket : DeleteFolderError()
 
     data object ErrorDeletingFolder : DeleteFolderError()
+
+    data object PermissionDenied : DeleteFolderError()
 }
 
 typealias DeleteFolderResult = Either<DeleteFolderError, Boolean>
@@ -113,6 +119,8 @@ sealed class CreationFolderError {
     data object ErrorCreatingFolder : CreationFolderError()
 
     data object ParentFolderNotFound : CreationFolderError()
+
+    data object FolderIsShared : CreationFolderError()
 }
 
 typealias CreationFolderResult = Either<CreationFolderError, Id>
@@ -133,12 +141,16 @@ typealias GetFileInFolderResult = Either<GetFileInFolderError, File>
 
 sealed class GetFilesInFolderError {
     data object FolderNotFound : GetFilesInFolderError()
+
+    data object NotMemberOfFolder : GetFilesInFolderError()
 }
 
 typealias GetFilesInFolderResult = Either<GetFilesInFolderError, PageResult<File>>
 
 sealed class GetFoldersInFolderError {
     data object FolderNotFound : GetFoldersInFolderError()
+
+    data object FolderIsShared : GetFoldersInFolderError()
 }
 
 typealias GetFoldersInFolderResult = Either<GetFoldersInFolderError, PageResult<Folder>>

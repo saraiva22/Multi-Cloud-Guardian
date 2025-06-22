@@ -32,25 +32,19 @@ interface StorageRepository {
         fileName: String,
     ): Boolean
 
-    fun getFileById(
-        userId: Id,
-        fileId: Id,
-    ): File?
+    fun getFileById(fileId: Id): File?
 
     fun getFileInFolder(
-        userId: Id,
         folderId: Id,
         fileId: Id,
     ): File?
 
     fun getFolderByName(
-        userId: Id,
         parentFolderId: Id?,
         folderName: String,
     ): Folder?
 
     fun isFolderNameExists(
-        userId: Id,
         parentFolderId: Id?,
         folderName: String,
     ): Boolean

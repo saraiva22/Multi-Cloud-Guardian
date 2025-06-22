@@ -6,6 +6,7 @@ import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.file.FileDownload
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
+import pt.isel.leic.multicloudguardian.domain.folder.FolderInfo
 import pt.isel.leic.multicloudguardian.domain.folder.FolderPrivateInvite
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
@@ -19,6 +20,7 @@ import pt.isel.leic.multicloudguardian.domain.utils.PageResult
 import pt.isel.leic.multicloudguardian.domain.utils.Success
 import pt.isel.leic.multicloudguardian.domain.utils.failure
 import pt.isel.leic.multicloudguardian.domain.utils.success
+import pt.isel.leic.multicloudguardian.repository.StorageRepository
 import pt.isel.leic.multicloudguardian.repository.TransactionManager
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.CreateBlobStorageContextError
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.MoveBlobError
@@ -52,15 +54,15 @@ class StorageService(
     ): UploadFileResult =
         transactionManager.run {
             val usersRepository = it.usersRepository
-            val fileRepository = it.storageRepository
+            val storageRepository = it.storageRepository
 
-            if (fileRepository.isFileNameInFolder(user.id, folderId, file.blobName)) {
+            if (storageRepository.isFileNameInFolder(user.id, folderId, file.blobName)) {
                 return@run failure(UploadFileError.FileNameAlreadyExists)
             }
 
             val folder =
                 folderId?.let {
-                    fileRepository.getFolderById(folderId)
+                    storageRepository.getFolderById(folderId)
                         ?: return@run failure(UploadFileError.ParentFolderNotFound)
                 }
 
@@ -68,7 +70,7 @@ class StorageService(
                 return@run failure(UploadFileError.ParentFolderNotFound)
             }
 
-            if (folder != null && folder.type == FolderType.SHARED && !fileRepository.isMemberOfFolder(user.id, folderId)) {
+            if (folder != null && folder.type == FolderType.SHARED && !isMemberOfSharedFolder(user, folder, storageRepository)) {
                 return@run failure(UploadFileError.ParentFolderNotFound)
             }
 
@@ -104,7 +106,7 @@ class StorageService(
 
                         is Success -> {
                             val fileId =
-                                fileRepository.storeFile(
+                                storageRepository.storeFile(
                                     file,
                                     path,
                                     path,
@@ -127,9 +129,21 @@ class StorageService(
         fileId: Id,
     ): GetFileResult =
         transactionManager.run {
-            val fileRepository = it.storageRepository
+            val storageRepository = it.storageRepository
             val file =
-                fileRepository.getFileById(user.id, fileId) ?: return@run failure(GetFileByIdError.FileNotFound)
+                storageRepository.getFileById(fileId) ?: return@run failure(GetFileByIdError.FileNotFound)
+
+            val folderInfo = file.folderInfo
+            if (folderInfo != null && folderInfo.folderType == FolderType.PRIVATE && file.user.id != user.id) {
+                return@run failure(GetFileByIdError.FileNotFound)
+            }
+
+            if (folderInfo != null &&
+                folderInfo.folderType == FolderType.SHARED &&
+                !isMemberOfSharedFolderInfo(user, folderInfo, storageRepository)
+            ) {
+                return@run failure(GetFileByIdError.FileNotFound)
+            }
 
             success(file)
         }
@@ -143,7 +157,9 @@ class StorageService(
             val usersRepository = it.usersRepository
             val fileRepository = it.storageRepository
             val file =
-                fileRepository.getFileById(user.id, fileId) ?: return@run failure(CreateTempUrlFileError.FileNotFound)
+                fileRepository.getFileById(fileId) ?: return@run failure(CreateTempUrlFileError.FileNotFound)
+            val folderInfo = file.folderInfo
+            if (folderInfo != null && folderInfo.folderType == FolderType.SHARED) return@run failure(CreateTempUrlFileError.FolderIsShared)
             if (file.encryption) return@run failure(CreateTempUrlFileError.EncryptedFile)
 
             val provider = usersRepository.getProvider(user.id)
@@ -183,7 +199,10 @@ class StorageService(
             val usersRepository = it.usersRepository
             val storageRepository = it.storageRepository
             val file =
-                storageRepository.getFileById(user.id, fileId) ?: return@run failure(MoveFileError.FileNotFound)
+                storageRepository.getFileById(fileId) ?: return@run failure(MoveFileError.FileNotFound)
+
+            val folderInfo = file.folderInfo
+            if (folderInfo != null && folderInfo.folderType == FolderType.SHARED) return@run failure(MoveFileError.FolderIsShared)
 
             if (storageRepository.isFileNameInFolder(user.id, folderId, file.fileName)) {
                 return@run failure(MoveFileError.FileNameAlreadyExists)
@@ -192,7 +211,6 @@ class StorageService(
             val destinationPath =
                 if (folderId !== null) {
                     val pathFolder = storageRepository.getFolderById(folderId) ?: return@run failure(MoveFileError.FolderNotFound)
-                    if (pathFolder.type == FolderType.SHARED) return@run failure(MoveFileError.FolderIsShared)
                     pathFolder.path + file.fileName
                 } else {
                     "${user.username.value}/${file.fileName}"
@@ -247,16 +265,20 @@ class StorageService(
     ): DownloadFileResult =
         transactionManager.run {
             val usersRepository = it.usersRepository
-            val fileRepository = it.storageRepository
+            val storageRepository = it.storageRepository
 
             val folder =
                 folderId?.let {
-                    fileRepository.getFolderById(folderId)
+                    storageRepository.getFolderById(folderId)
                         ?: return@run failure(DownloadFileError.ParentFolderNotFound)
                 }
 
+            if (folder != null && folder.type == FolderType.SHARED && !isMemberOfSharedFolder(user, folder, storageRepository)) {
+                return@run failure(DownloadFileError.ParentFolderNotFound)
+            }
+
             val file =
-                fileRepository.getFileById(user.id, fileId) ?: return@run failure(DownloadFileError.FileNotFound)
+                storageRepository.getFileById(fileId) ?: return@run failure(DownloadFileError.FileNotFound)
 
             if (folder != null && folder.folderId != file.folderInfo?.id) {
                 return@run failure(DownloadFileError.FileNotFound)
@@ -316,7 +338,9 @@ class StorageService(
             val usersRepository = it.usersRepository
             val fileRepository = it.storageRepository
 
-            val file = fileRepository.getFileById(user.id, fileId) ?: return@run failure(DeleteFileError.FileNotFound)
+            val file = fileRepository.getFileById(fileId) ?: return@run failure(DeleteFileError.FileNotFound)
+
+            if (file.user.id != user.id) return@run failure(DeleteFileError.FileNotFound)
 
             val provider = usersRepository.getProvider(user.id)
             val bucketName = providerDomain.getBucketName(provider)
@@ -358,6 +382,14 @@ class StorageService(
                 fileRepository.getFolderById(folderId)
                     ?: return@run failure(DeleteFolderError.FolderNotFound)
 
+            if (folder.type == FolderType.PRIVATE && folder.user.id != user.id) {
+                return@run failure(DeleteFolderError.FolderNotFound)
+            }
+
+            if (folder.type == FolderType.SHARED && folder.user.id != user.id) {
+                return@run failure(DeleteFolderError.PermissionDenied)
+            }
+
             val provider = usersRepository.getProvider(user.id)
             val bucketName = providerDomain.getBucketName(provider)
 
@@ -395,12 +427,21 @@ class StorageService(
             val usersRepository = it.usersRepository
             val fileRepository = it.storageRepository
 
-            fileRepository.getFolderById(folderId)
-                ?: return@run failure(DeleteFileError.ParentFolderNotFound)
+            val folder =
+                fileRepository.getFolderById(folderId)
+                    ?: return@run failure(DeleteFileError.ParentFolderNotFound)
+
+            if (folder.type == FolderType.PRIVATE && folder.user.id != user.id) {
+                return@run failure(DeleteFileError.ParentFolderNotFound)
+            }
 
             val file =
-                fileRepository.getFileInFolder(user.id, folderId, fileId)
+                fileRepository.getFileInFolder(folderId, fileId)
                     ?: return@run failure(DeleteFileError.FileNotFound)
+
+            if (folder.type == FolderType.SHARED && file.user.id != user.id && folder.user.id != user.id) {
+                return@run failure(DeleteFileError.PermissionDenied)
+            }
 
             val provider = usersRepository.getProvider(user.id)
             val bucketName = providerDomain.getBucketName(provider)
@@ -569,9 +610,16 @@ class StorageService(
         folderId: Id,
     ): GetFolderResult =
         transactionManager.run {
+            val storageRep = it.storageRepository
             val folder =
-                it.storageRepository.getFolderById(folderId)
+                storageRep.getFolderById(folderId)
                     ?: return@run failure(GetFolderByIdError.FolderNotFound)
+
+            if (folder.type == FolderType.PRIVATE && folder.user.id != user.id) return@run failure(GetFolderByIdError.FolderNotFound)
+            if (folder.type == FolderType.SHARED && !isMemberOfSharedFolder(user, folder, storageRep)) {
+                return@run failure(GetFolderByIdError.FolderNotFound)
+            }
+
             success(folder)
         }
 
@@ -584,7 +632,8 @@ class StorageService(
     ): GetFoldersInFolderResult =
         transactionManager.run {
             val storageRep = it.storageRepository
-            storageRep.getFolderById(folderId) ?: return@run failure(GetFoldersInFolderError.FolderNotFound)
+            val folder = storageRep.getFolderById(folderId) ?: return@run failure(GetFoldersInFolderError.FolderNotFound)
+            if (folder.type == FolderType.SHARED) return@run failure(GetFoldersInFolderError.FolderIsShared)
             val offset = page * limit
             val result = storageRep.getFoldersInFolder(user.id, folderId, limit, offset, sort)
             val folders = result.first
@@ -600,10 +649,14 @@ class StorageService(
         sort: String,
     ): GetFilesInFolderResult =
         transactionManager.run {
-            val folder =
-                it.storageRepository.getFolderById(folderId) ?: return@run failure(
-                    GetFilesInFolderError.FolderNotFound,
-                )
+            val storageRepository = it.storageRepository
+            val folder = storageRepository.getFolderById(folderId) ?: return@run failure(GetFilesInFolderError.FolderNotFound)
+            if (folder.type == FolderType.PRIVATE && user.id != folder.user.id) return@run failure(GetFilesInFolderError.FolderNotFound)
+
+            if (folder.type == FolderType.SHARED && !isMemberOfSharedFolder(user, folder, storageRepository)) {
+                return@run failure(GetFilesInFolderError.FolderNotFound)
+            }
+
             val offset = page * limit
             val files = it.storageRepository.getFilesInFolder(user.id, folderId, limit, offset, sort)
 
@@ -617,10 +670,13 @@ class StorageService(
     ): GetFileInFolderResult =
         transactionManager.run {
             val storageRepository = it.storageRepository
-            storageRepository.getFolderById(folderId)
-                ?: return@run failure(GetFileInFolderError.FolderNotFound)
+            val folder = storageRepository.getFolderById(folderId) ?: return@run failure(GetFileInFolderError.FolderNotFound)
+            if (folder.type == FolderType.PRIVATE && user.id != folder.user.id) return@run failure(GetFileInFolderError.FolderNotFound)
+            if (folder.type == FolderType.SHARED && !isMemberOfSharedFolder(user, folder, storageRepository)) {
+                return@run failure(GetFileInFolderError.FolderNotFound)
+            }
             val file =
-                storageRepository.getFileInFolder(user.id, folderId, fileId)
+                storageRepository.getFileInFolder(folderId, fileId)
                     ?: return@run failure(GetFileInFolderError.FileNotFound)
             success(file)
         }
@@ -646,15 +702,19 @@ class StorageService(
     ): CreationFolderResult =
         transactionManager.run {
             val usersRepository = it.usersRepository
-            val fileRepository = it.storageRepository
+            val storageRepository = it.storageRepository
+
+            if (folderId != null && folderType == FolderType.SHARED) {
+                return@run failure(CreationFolderError.FolderIsShared)
+            }
 
             val folder =
                 folderId?.let {
-                    fileRepository.getFolderById(folderId)
+                    storageRepository.getFolderById(folderId)
                         ?: return@run failure(CreationFolderError.ParentFolderNotFound)
                 }
 
-            if (fileRepository.isFolderNameExists(user.id, folderId, folderName)) {
+            if (storageRepository.isFolderNameExists(folderId, folderName)) {
                 return@run failure(CreationFolderError.FolderNameAlreadyExists)
             }
 
@@ -685,7 +745,7 @@ class StorageService(
                         is Success -> {
                             contextStorage.value.close()
                             val newFolderId =
-                                fileRepository.createFolder(user.id, folderName, folderId, path, folderType, clock.now())
+                                storageRepository.createFolder(user.id, folderName, folderId, path, folderType, clock.now())
                             success(newFolderId)
                         }
                     }
@@ -728,4 +788,16 @@ class StorageService(
             }
         }
     }
+
+    private fun isMemberOfSharedFolder(
+        user: User,
+        folder: Folder,
+        repository: StorageRepository,
+    ): Boolean = repository.isMemberOfFolder(user.id, folder.folderId)
+
+    private fun isMemberOfSharedFolderInfo(
+        user: User,
+        folderInfo: FolderInfo,
+        repository: StorageRepository,
+    ): Boolean = repository.isMemberOfFolder(user.id, folderInfo.id)
 }

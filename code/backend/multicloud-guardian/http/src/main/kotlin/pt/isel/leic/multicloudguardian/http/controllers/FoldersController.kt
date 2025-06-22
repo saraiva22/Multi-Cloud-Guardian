@@ -75,6 +75,8 @@ class FoldersController(
 
                     CreationFolderError.ParentFolderNotFound ->
                         Problem.parentFolderNotFound(0, instance)
+                    CreationFolderError.FolderIsShared ->
+                        Problem.folderIsShared(0, instance)
                 }
         }
     }
@@ -139,9 +141,10 @@ class FoldersController(
                     CreationFolderError.ErrorCreatingFolder -> Problem.invalidFolderCreation(instance)
                     CreationFolderError.FolderNameAlreadyExists ->
                         Problem.folderNameAlreadyExists(input.folderName, instance)
-
                     CreationFolderError.ParentFolderNotFound ->
                         Problem.parentFolderNotFound(folderId, instance)
+                    CreationFolderError.FolderIsShared ->
+                        Problem.folderIsShared(folderId, instance)
                 }
         }
     }
@@ -198,6 +201,7 @@ class FoldersController(
             is Failure ->
                 when (res.value) {
                     GetFoldersInFolderError.FolderNotFound -> Problem.folderNotFound(folderId, instance)
+                    GetFoldersInFolderError.FolderIsShared -> Problem.folderIsShared(folderId, instance)
                 }
         }
     }
@@ -235,6 +239,7 @@ class FoldersController(
             is Failure ->
                 when (res.value) {
                     GetFilesInFolderError.FolderNotFound -> Problem.folderNotFound(folderId, instance)
+                    GetFilesInFolderError.NotMemberOfFolder -> Problem.notMemberOfFolder(folderId, instance)
                 }
         }
     }
@@ -376,6 +381,8 @@ class FoldersController(
                     DeleteFolderError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
                     DeleteFolderError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
                     DeleteFolderError.ErrorDeletingFolder -> Problem.invalidDeleteFile(instance)
+                    DeleteFolderError.PermissionDenied ->
+                        Problem.userPermissionsDeniedType(authenticatedUser.user.username.value, instance)
                 }
         }
     }
@@ -402,6 +409,8 @@ class FoldersController(
                     DeleteFileError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
                     DeleteFileError.ErrorDeletingFile -> Problem.invalidDeleteFile(instance)
                     DeleteFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(folderId, instance)
+                    DeleteFileError.PermissionDenied ->
+                        Problem.userPermissionsDeniedType(authenticatedUser.user.username.value, instance)
                 }
         }
     }

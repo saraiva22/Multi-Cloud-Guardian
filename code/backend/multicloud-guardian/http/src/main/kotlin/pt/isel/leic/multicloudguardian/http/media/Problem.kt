@@ -38,7 +38,8 @@ class Problem(
         private const val DEFAULT_FOLDER = BASE_URL + "default/"
         private const val USER_FOLDER = BASE_URL + "user/"
         private const val TOKEN_FOLDER = BASE_URL + "token/"
-        private const val FILE_FOLDER = BASE_URL + "file/"
+        private const val FILE = BASE_URL + "file/"
+        private const val FOLDER = BASE_URL + "folder/"
 
         fun response(
             status: Int,
@@ -69,39 +70,41 @@ class Problem(
         val unauthorizedRequest = URI("${TOKEN_FOLDER}unauthorized")
 
         // File
-        private val invalidCreateFile = URI("${FILE_FOLDER}invalid-create-file")
-        private val invalidFileCreation = URI("${FILE_FOLDER}invalid-file-creation")
-        private val invalidCreationGlobalBucket = URI("${FILE_FOLDER}invalid-creation-global-bucket")
-        private val invalidCreationStorage = URI("${FILE_FOLDER}invalid-creation-storage")
-        private val invalidErrorCreatingContext = URI("${FILE_FOLDER}invalid-error-creating-context")
-        private val invalidErrorUploadingBlob = URI("${FILE_FOLDER}invalid-error-uploading-blob")
-        private val invalidCreateContext = URI("${FILE_FOLDER}invalid-create-context")
-        private val invalidFileName = URI("${FILE_FOLDER}invalid-file-name")
-        private val invalidCredential = URI("${FILE_FOLDER}invalid-credential")
-        private val fileNotFound = URI("${FILE_FOLDER}file-not-found")
-        private val metadataNotFound = URI("${FILE_FOLDER}metadata-not-found")
-        private val invalidDownloadFile = URI("${FILE_FOLDER}invalid-download-file")
-        private val invalidDecryptFile = URI("${FILE_FOLDER}invalid-decrypt-file")
-        private val invalidEncryptFile = URI("${FILE_FOLDER}invalid-encrypt-file")
-        private val invalidDeleteFile = URI("${FILE_FOLDER}invalid-delete-file")
-        private val fileIsEncrypted = URI("${FILE_FOLDER}file-is-encrypted")
-        private val invalidCreateBlob = URI("${FILE_FOLDER}invalid-created-blob")
+        private val invalidCreateFile = URI("${FILE}invalid-create-file")
+        private val invalidFileCreation = URI("${FILE}invalid-file-creation")
+        private val invalidCreationGlobalBucket = URI("${FILE}invalid-creation-global-bucket")
+        private val invalidCreationStorage = URI("${FILE}invalid-creation-storage")
+        private val invalidErrorCreatingContext = URI("${FILE}invalid-error-creating-context")
+        private val invalidErrorUploadingBlob = URI("${FILE}invalid-error-uploading-blob")
+        private val invalidCreateContext = URI("${FILE}invalid-create-context")
+        private val invalidFileName = URI("${FILE}invalid-file-name")
+        private val invalidCredential = URI("${FILE}invalid-credential")
+        private val fileNotFound = URI("${FILE}file-not-found")
+        private val metadataNotFound = URI("${FILE}metadata-not-found")
+        private val invalidDownloadFile = URI("${FILE}invalid-download-file")
+        private val invalidDecryptFile = URI("${FILE}invalid-decrypt-file")
+        private val invalidEncryptFile = URI("${FILE}invalid-encrypt-file")
+        private val invalidDeleteFile = URI("${FILE}invalid-delete-file")
+        private val fileIsEncrypted = URI("${FILE}file-is-encrypted")
+        private val invalidCreateBlob = URI("${FILE}invalid-created-blob")
 
         // Folder
-        private val invalidFolderName = URI("${FILE_FOLDER}invalid-folder-name")
-        private val invalidFolderCreation = URI("${FILE_FOLDER}invalid-folder-creation")
-        private val folderNotFound = URI("${FILE_FOLDER}folder-not-found")
-        private val folderNameAlreadyExists = URI("${FILE_FOLDER}folder-name-already-exists")
-        private val invalidParentFolder = URI("${FILE_FOLDER}invalid-parent-folder")
-        private val parentFolderNotFound = URI("${FILE_FOLDER}parent-folder-not-found")
-        private val invalidKey = URI("${FILE_FOLDER}invalid-key")
-        private val folderIsPrivate = URI("${FILE_FOLDER}folder-is-private")
-        private val userAlreadyInFolder = URI("${FILE_FOLDER}user-already-in-folder")
-        private val userIsNotFolderOwner = URI("${FILE_FOLDER}user-is-not-folder-owner")
-        private val invalidInviteFolder = URI("${FILE_FOLDER}invalid-invite-folder")
-        private val userNotFoundInFolder = URI("${FILE_FOLDER}user-not-found-in-folder")
-        private val errorLeavingFolder = URI("${FILE_FOLDER}error-leaving-folder")
-        private val folderIsShared = URI("${FILE_FOLDER}folder-is-shared")
+        private val invalidFolderName = URI("${FOLDER}invalid-folder-name")
+        private val invalidFolderCreation = URI("${FOLDER}invalid-folder-creation")
+        private val folderNotFound = URI("${FOLDER}folder-not-found")
+        private val folderNameAlreadyExists = URI("${FOLDER}folder-name-already-exists")
+        private val invalidParentFolder = URI("${FOLDER}invalid-parent-folder")
+        private val parentFolderNotFound = URI("${FOLDER}parent-folder-not-found")
+        private val invalidKey = URI("${FOLDER}invalid-key")
+        private val folderIsPrivate = URI("${FOLDER}folder-is-private")
+        private val userAlreadyInFolder = URI("${FOLDER}user-already-in-folder")
+        private val userIsNotFolderOwner = URI("${FOLDER}user-is-not-folder-owner")
+        private val invalidInviteFolder = URI("${FOLDER}invalid-invite-folder")
+        private val userNotFoundInFolder = URI("${FOLDER}user-not-found-in-folder")
+        private val errorLeavingFolder = URI("${FOLDER}error-leaving-folder")
+        private val folderIsShared = URI("${FOLDER}folder-is-shared")
+        private val notMemberOfFolder = URI("${FOLDER}not-member-of-folder")
+        private val userPermissionsDeniedType = URI("${FOLDER}user-permissions-denied-type")
 
         fun internalServerError(instance: URI?): ResponseEntity<*> =
             Problem(
@@ -536,6 +539,30 @@ class Problem(
                 title = "Invalid invite folder",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = "An error occurred and the invitation to folder $folderId is invalid.",
+                instance = instance,
+            ).toResponse()
+
+        fun notMemberOfFolder(
+            folderId: Int,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = notMemberOfFolder,
+                title = "Not member of folder",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "You are not a member of the folder with id $folderId",
+                instance = instance,
+            ).toResponse()
+
+        fun userPermissionsDeniedType(
+            username: String,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = userPermissionsDeniedType,
+                title = "User not permissions type",
+                status = HttpStatus.FORBIDDEN.value(),
+                detail = "User $username not permissions type",
                 instance = instance,
             ).toResponse()
     }

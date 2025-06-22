@@ -101,10 +101,7 @@ class JdbiStorageRepository(
             .mapTo<Int>()
             .single() == 1
 
-    override fun getFileById(
-        userId: Id,
-        fileId: Id,
-    ): File? =
+    override fun getFileById(fileId: Id): File? =
         handle
             .createQuery(
                 """
@@ -113,15 +110,13 @@ class JdbiStorageRepository(
                 from dbo.Files file
                 inner join dbo.Users on file.user_id = users.id
                 left join dbo.Folders folder on file.folder_id = folder.folder_id
-                where file.file_id = :fileId and file.user_id = :userId
+                where file.file_id = :fileId 
                 """.trimIndent(),
-            ).bind("userId", userId.value)
-            .bind("fileId", fileId.value)
+            ).bind("fileId", fileId.value)
             .mapTo<File>()
             .singleOrNull()
 
     override fun getFileInFolder(
-        userId: Id,
         folderId: Id,
         fileId: Id,
     ): File? =
@@ -133,17 +128,14 @@ class JdbiStorageRepository(
                 from dbo.Files file
                 inner join dbo.Users on file.user_id = users.id
                 left join dbo.Folders folder on file.folder_id = folder.folder_id
-                where file.file_id = :fileId and file.user_id = :userId
-                and file.folder_id = :folderId
+                where file.file_id = :fileId and file.folder_id = :folderId
                 """.trimIndent(),
-            ).bind("userId", userId.value)
-            .bind("folderId", folderId.value)
+            ).bind("folderId", folderId.value)
             .bind("fileId", fileId.value)
             .mapTo<File>()
             .singleOrNull()
 
     override fun getFolderByName(
-        userId: Id,
         parentFolderId: Id?,
         folderName: String,
     ): Folder? =
@@ -155,18 +147,15 @@ class JdbiStorageRepository(
                 from dbo.Folders folder
                 inner join dbo.Users on folder.user_id = users.id
                 left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
-                where folder.folder_name = :folderName and folder.user_id = :userId
-                  and ((:parentFolderId IS NULL AND folder.parent_folder_id IS NULL)
+                where folder.folder_name = :folderName and ((:parentFolderId IS NULL AND folder.parent_folder_id IS NULL)
                   OR folder.parent_folder_id = :parentFolderId)
                 """.trimIndent(),
-            ).bind("userId", userId.value)
-            .bind("parentFolderId", parentFolderId?.value)
+            ).bind("parentFolderId", parentFolderId?.value)
             .bind("folderName", folderName)
             .mapTo<Folder>()
             .singleOrNull()
 
     override fun isFolderNameExists(
-        userId: Id,
         parentFolderId: Id?,
         folderName: String,
     ): Boolean =
@@ -174,12 +163,10 @@ class JdbiStorageRepository(
             .createQuery(
                 """
                 select count(*) from dbo.Folders 
-                where user_id = :userId
-                and folder_name = :folderName
+                where folder_name = :folderName
                 and parent_folder_id IS NOT DISTINCT FROM :parentFolderId
                 """.trimIndent(),
-            ).bind("userId", userId.value)
-            .bind("folderName", folderName)
+            ).bind("folderName", folderName)
             .bind("parentFolderId", parentFolderId?.value)
             .mapTo<Int>()
             .single() == 1

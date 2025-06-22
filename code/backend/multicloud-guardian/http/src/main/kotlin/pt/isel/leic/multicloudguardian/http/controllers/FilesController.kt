@@ -161,6 +161,7 @@ class FilesController(
                     CreateTempUrlFileError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
                     CreateTempUrlFileError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
                     CreateTempUrlFileError.InvalidCredential -> Problem.invalidCredential(instance)
+                    CreateTempUrlFileError.FolderIsShared -> Problem.folderIsShared(0, instance)
                 }
         }
     }
@@ -246,6 +247,7 @@ class FilesController(
                     DeleteFileError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
                     DeleteFileError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
                     DeleteFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(0, instance)
+                    DeleteFileError.PermissionDenied -> Problem.userPermissionsDeniedType(user.username.value, instance)
                 }
         }
     }
