@@ -108,7 +108,8 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select file.*, users.username, users.email, folder.folder_id as folder_id, folder.folder_name as folder_name
+                select file.*, users.username, users.email, folder.folder_id as folder_id, folder.folder_name as folder_name,
+                folder.type as type
                 from dbo.Files file
                 inner join dbo.Users on file.user_id = users.id
                 left join dbo.Folders folder on file.folder_id = folder.folder_id
@@ -127,7 +128,8 @@ class JdbiStorageRepository(
         handle
             .createQuery(
                 """
-                select file.*, users.username, users.email, folder.folder_id as folder_id, folder.folder_name as folder_name
+                select file.*, users.username, users.email, folder.folder_id as folder_id, folder.folder_name as folder_name, 
+                folder.type as type
                 from dbo.Files file
                 inner join dbo.Users on file.user_id = users.id
                 left join dbo.Folders folder on file.folder_id = folder.folder_id
@@ -149,7 +151,7 @@ class JdbiStorageRepository(
             .createQuery(
                 """
                 select folder.*, users.username, users.email,
-                       parent.folder_id as parent_id, parent.folder_name as parent_folder_name
+                       parent.folder_id as parent_id, parent.folder_name as parent_folder_name, parent.type as parent_folder_type
                 from dbo.Folders folder
                 inner join dbo.Users on folder.user_id = users.id
                 left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
@@ -182,31 +184,12 @@ class JdbiStorageRepository(
             .mapTo<Int>()
             .single() == 1
 
-    override fun getFolderById(
-        userId: Id,
-        folderId: Id,
-    ): Folder? =
-        handle
-            .createQuery(
-                """
-                select folder.*, users.username, users.email,
-                       parent.folder_id as parent_id, parent.folder_name as parent_folder_name
-                from dbo.Folders folder
-                inner join dbo.Users on folder.user_id = users.id
-                left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
-                where folder.folder_id = :folderId and folder.user_id = :userId
-                """.trimIndent(),
-            ).bind("userId", userId.value)
-            .bind("folderId", folderId.value)
-            .mapTo<Folder>()
-            .singleOrNull()
-
     override fun getFolderById(folderId: Id): Folder? =
         handle
             .createQuery(
                 """
                 select folder.*, users.username, users.email,
-                       parent.folder_id as parent_id, parent.folder_name as parent_folder_name
+                       parent.folder_id as parent_id, parent.folder_name as parent_folder_name, parent.type as parent_folder_type
                 from dbo.Folders folder
                 inner join dbo.Users on folder.user_id = users.id
                 left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
@@ -226,7 +209,8 @@ class JdbiStorageRepository(
         return handle
             .createQuery(
                 """
-                select file.*, users.username, users.email, folder.folder_id as folder_id, folder.folder_name as folder_name
+                select file.*, users.username, users.email, folder.folder_id as folder_id, folder.folder_name as folder_name,
+                folder.type as type
                 from dbo.Files file
                 inner join dbo.Users on file.user_id = users.id
                 left join dbo.Folders folder on file.folder_id = folder.folder_id
@@ -251,40 +235,72 @@ class JdbiStorageRepository(
             .mapTo<Long>()
             .one()
 
-    override fun countFolder(userId: Id): Long =
-        handle
-            .createQuery(
-                """
-                select count(*) from dbo.Folders where user_id = :userId
-                """.trimIndent(),
-            ).bind("userId", userId.value)
-            .mapTo<Long>()
-            .one()
+    override fun countFolder(
+        userId: Id,
+        search: String?,
+    ): Long {
+        val baseQuery =
+            """
+            select count(*) from (
+                select folder_id as fold_id from dbo.Folders where user_id = :userId
+                ${if (search != null) "and folder_name like :search" else ""}
+                union
+                select f.folder_id fold_id from dbo.Join_Folders jf
+                inner join dbo.Folders f on jf.folder_id = f.folder_id
+                where jf.user_id = :userId
+                ${if (search != null) "and f.folder_name like :search" else ""}
+            ) as all_folders
+            """.trimIndent()
+
+        val query =
+            handle
+                .createQuery(baseQuery)
+                .bind("userId", userId.value)
+
+        if (search != null) {
+            query.bind("search", "%$search%")
+        }
+
+        return query.mapTo<Long>().one()
+    }
 
     override fun getFolders(
         userId: Id,
         limit: Int,
         offset: Int,
         sort: String,
+        search: String?,
     ): List<Folder> {
         val order = orderBy(sort, "folder_name")
-        return handle
-            .createQuery(
-                """
-                select folder.*, users.username, users.email,
-                       parent.folder_id as parent_id, parent.folder_name as parent_folder_name
-                from dbo.Folders folder
-                inner join dbo.Users on folder.user_id = users.id
-                left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
-                where folder.user_id = :userId
-                order by $order
-                LIMIT :limit OFFSET :offset
-                """.trimIndent(),
-            ).bind("userId", userId.value)
-            .bind("limit", limit)
-            .bind("offset", offset)
-            .mapTo<Folder>()
-            .toList()
+        val baseQuery =
+            """
+            select folder.*, users.username, users.email,
+                   parent.folder_id as parent_id, parent.folder_name as parent_folder_name, parent.type as parent_folder_type
+            from dbo.Folders folder
+            inner join dbo.Users on folder.user_id = users.id
+            left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
+            where folder.folder_id in (
+                select folder_id from dbo.Folders where user_id = :userId
+                union
+                select folder_id from dbo.Join_Folders where user_id = :userId
+            )
+            ${if (search != null) "and folder.folder_name like :search" else ""}
+            order by $order
+            LIMIT :limit OFFSET :offset
+            """.trimIndent()
+
+        val query =
+            handle
+                .createQuery(baseQuery)
+                .bind("userId", userId.value)
+                .bind("limit", limit)
+                .bind("offset", offset)
+
+        if (search != null) {
+            query.bind("search", "%$search%")
+        }
+
+        return query.mapTo<Folder>().toList()
     }
 
     override fun getFoldersInFolder(
@@ -311,7 +327,8 @@ class JdbiStorageRepository(
                 .createQuery(
                     """
                     select folder.*, users.username, users.email,
-                           parent.folder_id as parent_id, parent.folder_name as parent_folder_name
+                           parent.folder_id as parent_id, parent.folder_name as parent_folder_name,
+                           parent.type as parent_folder_type
                     from dbo.Folders folder
                     inner join dbo.Users on folder.user_id = users.id
                     left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
@@ -341,7 +358,8 @@ class JdbiStorageRepository(
         return handle
             .createQuery(
                 """
-                select files.*, users.username, users.email, folders.folder_id as folder_id, folders.folder_name as folder_name
+                select files.*, users.username, users.email, folders.folder_id as folder_id, folders.folder_name as folder_name,
+                folders.type as type
                 from dbo.Files 
                 inner join dbo.folders on files.folder_id = folders.folder_id 
                 inner join dbo.users on folders.user_id = users.id 

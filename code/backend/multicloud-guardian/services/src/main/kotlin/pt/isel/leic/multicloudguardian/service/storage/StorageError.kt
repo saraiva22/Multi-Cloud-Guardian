@@ -159,6 +159,8 @@ sealed class MoveFileError {
     data object MoveBlobError : MoveFileError()
 
     data object MoveBlobNotFound : MoveFileError()
+
+    data object FolderIsShared : MoveFileError()
 }
 
 typealias MoveFileResult = Either<MoveFileError, Boolean>

@@ -4,6 +4,7 @@ import org.jdbi.v3.core.mapper.RowMapper
 import org.jdbi.v3.core.statement.StatementContext
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.folder.FolderInfo
+import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.user.UserInfo
 import pt.isel.leic.multicloudguardian.domain.user.components.Email
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
@@ -33,6 +34,7 @@ class FileMapper : RowMapper<File> {
                     FolderInfo(
                         id = Id(rs.getInt("folder_id")),
                         folderName = rs.getString("folder_name"),
+                        folderType = FolderType.entries[rs.getInt("type")],
                     )
                 },
             fileName = rs.getString("file_name"),

@@ -55,11 +55,6 @@ interface StorageRepository {
         folderName: String,
     ): Boolean
 
-    fun getFolderById(
-        userId: Id,
-        folderId: Id,
-    ): Folder?
-
     fun getFolderById(folderId: Id): Folder?
 
     fun getFiles(
@@ -71,13 +66,17 @@ interface StorageRepository {
 
     fun countFiles(userId: Id): Long
 
-    fun countFolder(userId: Id): Long
+    fun countFolder(
+        userId: Id,
+        search: String? = null,
+    ): Long
 
     fun getFolders(
         userId: Id,
         limit: Int,
         offset: Int,
         sort: String,
+        search: String? = null,
     ): List<Folder>
 
     fun getFoldersInFolder(

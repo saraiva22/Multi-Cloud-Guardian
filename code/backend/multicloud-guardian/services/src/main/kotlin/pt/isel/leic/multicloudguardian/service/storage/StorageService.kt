@@ -1,7 +1,6 @@
 package pt.isel.leic.multicloudguardian.service.storage
 
 import kotlinx.datetime.Clock
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
@@ -66,6 +65,10 @@ class StorageService(
                 }
 
             if (folder != null && folder.type == FolderType.PRIVATE && folder.user.id != user.id) {
+                return@run failure(UploadFileError.ParentFolderNotFound)
+            }
+
+            if (folder != null && folder.type == FolderType.SHARED && !fileRepository.isMemberOfFolder(user.id, folderId)) {
                 return@run failure(UploadFileError.ParentFolderNotFound)
             }
 
@@ -188,7 +191,8 @@ class StorageService(
 
             val destinationPath =
                 if (folderId !== null) {
-                    val pathFolder = storageRepository.getFolderById(user.id, folderId) ?: return@run failure(MoveFileError.FolderNotFound)
+                    val pathFolder = storageRepository.getFolderById(folderId) ?: return@run failure(MoveFileError.FolderNotFound)
+                    if (pathFolder.type == FolderType.SHARED) return@run failure(MoveFileError.FolderIsShared)
                     pathFolder.path + file.fileName
                 } else {
                     "${user.username.value}/${file.fileName}"
@@ -247,7 +251,7 @@ class StorageService(
 
             val folder =
                 folderId?.let {
-                    fileRepository.getFolderById(user.id, folderId)
+                    fileRepository.getFolderById(folderId)
                         ?: return@run failure(DownloadFileError.ParentFolderNotFound)
                 }
 
@@ -351,7 +355,7 @@ class StorageService(
             val fileRepository = it.storageRepository
 
             val folder =
-                fileRepository.getFolderById(user.id, folderId)
+                fileRepository.getFolderById(folderId)
                     ?: return@run failure(DeleteFolderError.FolderNotFound)
 
             val provider = usersRepository.getProvider(user.id)
@@ -391,9 +395,8 @@ class StorageService(
             val usersRepository = it.usersRepository
             val fileRepository = it.storageRepository
 
-            val folder =
-                fileRepository.getFolderById(user.id, folderId)
-                    ?: return@run failure(DeleteFileError.ParentFolderNotFound)
+            fileRepository.getFolderById(folderId)
+                ?: return@run failure(DeleteFileError.ParentFolderNotFound)
 
             val file =
                 fileRepository.getFileInFolder(user.id, folderId, fileId)
@@ -436,7 +439,7 @@ class StorageService(
             val storageRepository = it.storageRepository
             val usersRepository = it.usersRepository
 
-            val folder = storageRepository.getFolderById(user.id, folderId) ?: return@run failure(InviteFolderError.FolderNotFound)
+            val folder = storageRepository.getFolderById(folderId) ?: return@run failure(InviteFolderError.FolderNotFound)
 
             if (folder.type == FolderType.PRIVATE) return@run failure(InviteFolderError.FolderIsPrivate)
 
@@ -550,12 +553,13 @@ class StorageService(
         limit: Int,
         page: Int,
         sort: String,
+        search: String? = null,
     ): PageResult<Folder> =
         transactionManager.run {
             val storageRep = it.storageRepository
-            val totalElements = storageRep.countFolder(user.id)
+            val totalElements = storageRep.countFolder(user.id, search)
             val offset = page * limit
-            val folders = storageRep.getFolders(user.id, limit, offset, sort)
+            val folders = storageRep.getFolders(user.id, limit, offset, sort, search)
 
             PageResult.fromPartialResult(folders, totalElements, limit, offset)
         }
@@ -566,7 +570,7 @@ class StorageService(
     ): GetFolderResult =
         transactionManager.run {
             val folder =
-                it.storageRepository.getFolderById(user.id, folderId)
+                it.storageRepository.getFolderById(folderId)
                     ?: return@run failure(GetFolderByIdError.FolderNotFound)
             success(folder)
         }
@@ -580,7 +584,7 @@ class StorageService(
     ): GetFoldersInFolderResult =
         transactionManager.run {
             val storageRep = it.storageRepository
-            storageRep.getFolderById(user.id, folderId) ?: return@run failure(GetFoldersInFolderError.FolderNotFound)
+            storageRep.getFolderById(folderId) ?: return@run failure(GetFoldersInFolderError.FolderNotFound)
             val offset = page * limit
             val result = storageRep.getFoldersInFolder(user.id, folderId, limit, offset, sort)
             val folders = result.first
@@ -597,7 +601,7 @@ class StorageService(
     ): GetFilesInFolderResult =
         transactionManager.run {
             val folder =
-                it.storageRepository.getFolderById(user.id, folderId) ?: return@run failure(
+                it.storageRepository.getFolderById(folderId) ?: return@run failure(
                     GetFilesInFolderError.FolderNotFound,
                 )
             val offset = page * limit
@@ -613,7 +617,7 @@ class StorageService(
     ): GetFileInFolderResult =
         transactionManager.run {
             val storageRepository = it.storageRepository
-            storageRepository.getFolderById(user.id, folderId)
+            storageRepository.getFolderById(folderId)
                 ?: return@run failure(GetFileInFolderError.FolderNotFound)
             val file =
                 storageRepository.getFileInFolder(user.id, folderId, fileId)
@@ -646,7 +650,7 @@ class StorageService(
 
             val folder =
                 folderId?.let {
-                    fileRepository.getFolderById(user.id, folderId)
+                    fileRepository.getFolderById(folderId)
                         ?: return@run failure(CreationFolderError.ParentFolderNotFound)
                 }
 
@@ -723,9 +727,5 @@ class StorageService(
                 }
             }
         }
-    }
-
-    companion object {
-        private val logger = LoggerFactory.getLogger(StorageService::class.java)
     }
 }

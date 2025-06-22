@@ -187,6 +187,7 @@ class FilesController(
                     MoveFileError.FolderNotFound -> Problem.folderNotFound(input.folderId ?: 0, instance)
                     MoveFileError.MoveBlobError -> Problem.invalidCreateBlob(instance)
                     MoveFileError.MoveBlobNotFound -> Problem.invalidCreateBlob(instance)
+                    MoveFileError.FolderIsShared -> Problem.folderIsShared(input.folderId ?: 0, instance)
                 }
         }
     }

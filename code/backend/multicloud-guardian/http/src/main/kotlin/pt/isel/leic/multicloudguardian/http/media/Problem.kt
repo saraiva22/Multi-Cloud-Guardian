@@ -101,6 +101,7 @@ class Problem(
         private val invalidInviteFolder = URI("${FILE_FOLDER}invalid-invite-folder")
         private val userNotFoundInFolder = URI("${FILE_FOLDER}user-not-found-in-folder")
         private val errorLeavingFolder = URI("${FILE_FOLDER}error-leaving-folder")
+        private val folderIsShared = URI("${FILE_FOLDER}folder-is-shared")
 
         fun internalServerError(instance: URI?): ResponseEntity<*> =
             Problem(
@@ -462,6 +463,18 @@ class Problem(
                 title = "Folder is private",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = "Folder $id is private and your request cannot be fulfilled",
+                instance = instance,
+            ).toResponse()
+
+        fun folderIsShared(
+            id: Int,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = folderIsShared,
+                title = "Folder is shared",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Folder $id is shared and your request cannot be fulfilled",
                 instance = instance,
             ).toResponse()
 
