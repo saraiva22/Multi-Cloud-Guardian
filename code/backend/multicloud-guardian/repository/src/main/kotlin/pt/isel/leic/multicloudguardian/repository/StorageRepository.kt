@@ -56,12 +56,19 @@ interface StorageRepository {
         limit: Int,
         offset: Int,
         sort: String,
+        shared: Boolean = false,
+        search: String? = null,
     ): List<File>
 
-    fun countFiles(userId: Id): Long
+    fun countFiles(
+        userId: Id,
+        shared: Boolean = false,
+        search: String? = null,
+    ): Long
 
     fun countFolder(
         userId: Id,
+        shared: Boolean = false,
         search: String? = null,
     ): Long
 
@@ -70,6 +77,7 @@ interface StorageRepository {
         limit: Int,
         offset: Int,
         sort: String,
+        shared: Boolean = false,
         search: String? = null,
     ): List<Folder>
 

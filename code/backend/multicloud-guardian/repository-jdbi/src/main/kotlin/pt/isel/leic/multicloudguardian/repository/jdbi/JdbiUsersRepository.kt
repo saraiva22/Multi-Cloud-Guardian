@@ -5,8 +5,8 @@ import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.kotlin.mapTo
 import org.slf4j.LoggerFactory
 import pt.isel.leic.multicloudguardian.domain.credentials.Credentials
+import pt.isel.leic.multicloudguardian.domain.preferences.CostType
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
-import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.token.Token
 import pt.isel.leic.multicloudguardian.domain.token.TokenValidationInfo
@@ -74,7 +74,7 @@ class JdbiUsersRepository(
         handle
             .createQuery(
                 """
-                select users.id, username, email, location, performance
+                select users.id, username, email, location, cost
                 from dbo.Users as users
                 inner join dbo.Preferences as pref
                 on users.id = pref.user_id
@@ -98,7 +98,7 @@ class JdbiUsersRepository(
         handle
             .createQuery(
                 """
-                 select users.id, username, email, location, performance
+                 select users.id, username, email, location, cost
                 from dbo.Users as users
                 inner join dbo.Preferences as pref
                 on users.id = pref.user_id
@@ -171,17 +171,17 @@ class JdbiUsersRepository(
 
     override fun storagePreferences(
         userId: Id,
-        performanceType: PerformanceType,
+        costType: CostType,
         locationType: LocationType,
         providerType: ProviderType,
     ) {
         handle
             .createUpdate(
                 """
-                insert into dbo.Preferences (user_id,performance,location,storage_provider) values (:user_id, :performance, :location, :storage_provider)
+                insert into dbo.Preferences (user_id,cost,location,storage_provider) values (:user_id, :cost, :location, :storage_provider)
                 """.trimIndent(),
             ).bind("user_id", userId.value)
-            .bind("performance", performanceType.ordinal)
+            .bind("cost", costType.ordinal)
             .bind("location", locationType.ordinal)
             .bind("storage_provider", providerType.ordinal)
             .execute()
@@ -211,7 +211,7 @@ class JdbiUsersRepository(
         handle
             .createQuery(
                 """
-                select users.id, username, email, location, performance
+                select users.id, username, email, location, cost
                 from dbo.Users as users
                 inner join dbo.Preferences as pref
                 on users.id = pref.user_id

@@ -1367,12 +1367,12 @@ class StorageServiceTests : ServiceTests() {
             }
 
         // Assert: Invited user can see both private and shared folders
-        val folders = storageService.getFolders(invitedUser, 10, 0, "created_asc")
+        val folders = storageService.getFolders(invitedUser, 10, 0, "created_asc", true)
         assertTrue(folders.content.any { it.folderName == sharedFolderName })
         assertTrue(folders.content.any { it.folderName == invitedPrivateFolderName })
 
         // Act: Invited user searches for folders with "Priva" keyword
-        val searchFolders = storageService.getFolders(invitedUser, 10, 0, "created_asc", "Priva")
+        val searchFolders = storageService.getFolders(invitedUser, 10, 0, "created_asc", true, "Priva")
 
         // Assert: Should only find the invited private folder
         assertEquals(1, searchFolders.totalElements)
@@ -1424,5 +1424,139 @@ class StorageServiceTests : ServiceTests() {
         storageService.deleteFileInFolder(invitedUser, sharedFolderId, sharedFileId)
         storageService.deleteFolder(owner, sharedFolderId)
         storageService.deleteFolder(invitedUser, invitedPrivateFolderId)
+    }
+
+    @Test
+    fun `shared folder workflow with multiple users, permissions, search, and cleanup`() {
+        // Arrange: initialize storage service and users
+        val storageService = createStorageService()
+        val user1 = testUser
+        val user2 = testUser2
+        val user3 = testUser3
+
+        // User1 creates a private folder and uploads a file
+        val privateFolderName = "privateFolder"
+        val privateFileName = "PrivateFile"
+        val privateFolderId =
+            when (val res = storageService.createFolder(privateFolderName, user1, FolderType.PRIVATE)) {
+                is Success -> res.value
+                is Failure -> fail("Unexpected $res")
+            }
+        val privateFileContent = fileCreation().copy(blobName = privateFileName)
+        val privateFileId =
+            when (val res = storageService.uploadFileInFolder(privateFileContent, privateFileContent.encryption, user1, privateFolderId)) {
+                is Success -> res.value
+                is Failure -> fail("Unexpected $res")
+            }
+
+        // User1 creates a shared folder and invites user2 and user3
+        val sharedFolderName = "folderShared"
+        val sharedFolderId =
+            when (val res = storageService.createFolder(sharedFolderName, user1, FolderType.SHARED)) {
+                is Success -> res.value
+                is Failure -> fail("Unexpected $res")
+            }
+        val inviteCode2 =
+            when (val res = storageService.inviteFolder(sharedFolderId, user1, user2.username)) {
+                is Success -> res.value
+                is Failure -> fail("Unexpected $res")
+            }
+        val inviteCode3 =
+            when (val res = storageService.inviteFolder(sharedFolderId, user1, user3.username)) {
+                is Success -> res.value
+                is Failure -> fail("Unexpected $res")
+            }
+
+        // User2 and User3 accept the invite
+        when (val res = storageService.validateFolderInvite(user2, sharedFolderId, inviteCode2, InviteStatus.ACCEPT)) {
+            is Success -> assertEquals(sharedFolderName, res.value.folderName)
+            is Failure -> fail("Unexpected $res")
+        }
+        when (val res = storageService.validateFolderInvite(user3, sharedFolderId, inviteCode3, InviteStatus.ACCEPT)) {
+            is Success -> assertEquals(sharedFolderName, res.value.folderName)
+            is Failure -> fail("Unexpected $res")
+        }
+
+        // User2 uploads a file to the shared folder
+        val fileTestName = "FileTest"
+        val fileTestContent = fileCreation().copy(blobName = fileTestName)
+        val fileTestId =
+            when (val res = storageService.uploadFileInFolder(fileTestContent, fileTestContent.encryption, user2, sharedFolderId)) {
+                is Success -> res.value
+                is Failure -> fail("Unexpected $res")
+            }
+
+        // User1 and User3 try to view the file uploaded by User2
+        val fileByUser1 = storageService.getFileInFolder(user1, sharedFolderId, fileTestId)
+        when (fileByUser1) {
+            is Success -> assertEquals(fileTestName, fileByUser1.value.fileName)
+            is Failure -> fail("User1 should see the file")
+        }
+        val fileByUser3 = storageService.getFileInFolder(user3, sharedFolderId, fileTestId)
+        when (fileByUser3) {
+            is Success -> assertEquals(fileTestName, fileByUser3.value.fileName)
+            is Failure -> fail("User3 should see the file")
+        }
+
+        // User1 searches for files with "Fil" and should see both PrivateFile and FileTest
+        val searchFiles = storageService.getFiles(user1, 10, 0, "created_asc", true, "Fil")
+        assertTrue(searchFiles.content.any { it.fileName == privateFileName })
+        assertTrue(searchFiles.content.any { it.fileName == fileTestName })
+
+        // User3 tries to delete User2's file in the shared folder and should not succeed
+        val deleteByUser3 = storageService.deleteFileInFolder(user3, sharedFolderId, fileTestId)
+        when (deleteByUser3) {
+            is Success -> fail("User3 should not be able to delete User2's file")
+            is Failure -> assertTrue(true)
+        }
+
+        // User1 uploads a file to the shared folder and deletes User2's file
+        val user1SharedFileName = "User1SharedFile"
+        val user1SharedFileContent = fileCreation().copy(blobName = user1SharedFileName)
+        val user1SharedFileId =
+            when (
+                val res =
+                    storageService.uploadFileInFolder(
+                        user1SharedFileContent,
+                        user1SharedFileContent.encryption,
+                        user1,
+                        sharedFolderId,
+                    )
+            ) {
+                is Success -> res.value
+                is Failure -> fail("Unexpected $res")
+            }
+        val deleteByUser1 = storageService.deleteFileInFolder(user1, sharedFolderId, fileTestId)
+        when (deleteByUser1) {
+            is Success -> assertTrue(deleteByUser1.value)
+            is Failure -> fail("User1 should be able to delete User2's file")
+        }
+
+        // User3 leaves the shared folder and tries to view User1's file in the shared folder
+        val leaveResult = storageService.leaveFolder(user3, sharedFolderId)
+        assertTrue(leaveResult is Success)
+        val fileAfterLeave = storageService.getFileInFolder(user3, sharedFolderId, user1SharedFileId)
+        when (fileAfterLeave) {
+            is Success -> fail("User3 should not see the file after leaving the folder")
+            is Failure -> assertTrue(true)
+        }
+
+        // User3 tries to view User1's private file and private folder
+        val privateFileByUser3 = storageService.getFileInFolder(user3, privateFolderId, privateFileId)
+        when (privateFileByUser3) {
+            is Success -> fail("User3 should not see User1's private file")
+            is Failure -> assertTrue(true)
+        }
+        val privateFolderByUser3 = storageService.getFolderById(user3, privateFolderId)
+        when (privateFolderByUser3) {
+            is Success -> fail("User3 should not see User1's private folder")
+            is Failure -> assertTrue(true)
+        }
+
+        // Cleanup: delete all created files and folders
+        storageService.deleteFileInFolder(user1, sharedFolderId, user1SharedFileId)
+        storageService.deleteFolder(user1, sharedFolderId)
+        storageService.deleteFileInFolder(user1, privateFolderId, privateFileId)
+        storageService.deleteFolder(user1, privateFolderId)
     }
 }

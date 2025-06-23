@@ -580,12 +580,14 @@ class StorageService(
         limit: Int,
         page: Int,
         sort: String,
+        shared: Boolean = false,
+        search: String? = null,
     ): PageResult<File> =
         transactionManager.run {
             val storageRep = it.storageRepository
             val offset = page * limit
-            val files = storageRep.getFiles(user.id, limit, offset, sort)
-            val totalElements = storageRep.countFiles(user.id)
+            val files = storageRep.getFiles(user.id, limit, offset, sort, shared, search)
+            val totalElements = storageRep.countFiles(user.id, shared, search)
             PageResult.fromPartialResult(files, totalElements, limit, offset)
         }
 
@@ -594,13 +596,14 @@ class StorageService(
         limit: Int,
         page: Int,
         sort: String,
+        shared: Boolean = false,
         search: String? = null,
     ): PageResult<Folder> =
         transactionManager.run {
             val storageRep = it.storageRepository
-            val totalElements = storageRep.countFolder(user.id, search)
+            val totalElements = storageRep.countFolder(user.id, shared, search)
             val offset = page * limit
-            val folders = storageRep.getFolders(user.id, limit, offset, sort, search)
+            val folders = storageRep.getFolders(user.id, limit, offset, sort, shared, search)
 
             PageResult.fromPartialResult(folders, totalElements, limit, offset)
         }

@@ -3,8 +3,8 @@ package pt.isel.leic.multicloudguardian.service.user
 import kotlinx.datetime.Clock
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import pt.isel.leic.multicloudguardian.domain.preferences.CostType
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
-import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.preferences.PreferencesDomain
 import pt.isel.leic.multicloudguardian.domain.token.Token
 import pt.isel.leic.multicloudguardian.domain.user.User
@@ -32,7 +32,7 @@ class UsersService(
         password: String,
         salt: String,
         iterations: Int,
-        performanceType: PerformanceType,
+        costType: CostType,
         locationType: LocationType,
     ): UserCreationResult {
         if (!usersDomain.isSafePassword(Password(password))) {
@@ -41,7 +41,7 @@ class UsersService(
 
         val passwordValidationInfo = usersDomain.createPasswordValidationInformation(password)
 
-        val provider = preferencesDomain.associationProvider(performanceType, locationType)
+        val provider = preferencesDomain.associationProvider(costType, locationType)
 
         return transactionManager.run {
             val usersRepository = it.usersRepository
@@ -59,7 +59,7 @@ class UsersService(
                         iterations,
                         passwordValidationInfo,
                     )
-                usersRepository.storagePreferences(id, performanceType, locationType, provider)
+                usersRepository.storagePreferences(id, costType, locationType, provider)
                 success(id)
             }
         }

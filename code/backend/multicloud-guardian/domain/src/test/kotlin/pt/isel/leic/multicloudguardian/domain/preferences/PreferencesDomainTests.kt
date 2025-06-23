@@ -8,7 +8,7 @@ class PreferencesDomainTests {
     @Test
     fun `Verification of the association of the provider based on preferences - Performance LOW`() {
         // give: Set up the performance and location preferences
-        val performance = PerformanceType.LOW
+        val performance = CostType.LOW
         val location = LocationType.EUROPE
 
         // and:
@@ -26,7 +26,7 @@ class PreferencesDomainTests {
     @Test
     fun `Verification of the association of the provider based on preferences - Performance Medium`() {
         // give: Set up the performance and location preferences
-        val performance = PerformanceType.MEDIUM
+        val performance = CostType.MEDIUM
         val location = LocationType.EUROPE
 
         // when: Associate the provider based on preferences
@@ -40,7 +40,7 @@ class PreferencesDomainTests {
     @Test
     fun `Verification of the association of the provider based on preferences - Performance High and Location North-America and Europe `() {
         // give: Set up the performance and location preferences
-        val performance = PerformanceType.HIGH
+        val performance = CostType.HIGH
         val location = LocationType.NORTH_AMERICA
 
         val location1 = LocationType.EUROPE
@@ -58,7 +58,7 @@ class PreferencesDomainTests {
     @Test
     fun `Verification of the association of the provider based on preferences - Performance High and Location South-America and Others `() {
         // give: Set up the performance and location preferences
-        val performance = PerformanceType.HIGH
+        val performance = CostType.HIGH
         val location = LocationType.SOUTH_AMERICA
 
         val location1 = LocationType.OTHERS

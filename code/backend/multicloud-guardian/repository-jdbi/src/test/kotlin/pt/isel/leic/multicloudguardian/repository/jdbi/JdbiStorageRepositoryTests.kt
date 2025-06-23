@@ -4,17 +4,27 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.Jdbi
+import org.junit.jupiter.api.Assertions
 import org.postgresql.ds.PGSimpleDataSource
 import pt.isel.leic.multicloudguardian.ApplicationTests.Companion.fileCreation
+import pt.isel.leic.multicloudguardian.ApplicationTests.Companion.newTestEmail
+import pt.isel.leic.multicloudguardian.ApplicationTests.Companion.newTestIteration
+import pt.isel.leic.multicloudguardian.ApplicationTests.Companion.newTestSalt
 import pt.isel.leic.multicloudguardian.Environment
 import pt.isel.leic.multicloudguardian.TestClock
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
+import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
+import pt.isel.leic.multicloudguardian.domain.user.PasswordValidationInfo
+import pt.isel.leic.multicloudguardian.domain.user.User
+import pt.isel.leic.multicloudguardian.domain.user.components.Email
+import pt.isel.leic.multicloudguardian.domain.user.components.Username
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 import kotlin.math.abs
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class JdbiStorageRepositoryTests {
     @Test
@@ -319,6 +329,53 @@ class JdbiStorageRepositoryTests {
 
             assertEquals(null, fileAfter)
             assertEquals(null, folderAfter)
+        }
+    }
+
+    @Test
+    fun `should add user to Join_Folders after accepting invite`() {
+        runWithHandle { handle ->
+            val repo = JdbiStorageRepository(handle)
+            val ownerId = Id(1)
+            val folderType = FolderType.SHARED
+            val createdAt = Clock.System.now()
+
+            // given: a UserRepository
+            val repoUser = JdbiUsersRepository(handle)
+
+            // when: storing a user
+            val username = Username(newTestUserName())
+            val email = Email(newTestEmail(username.value))
+            val salt = newTestSalt()
+            val iteration = newTestIteration()
+            val passwordValidationInfo = PasswordValidationInfo(newTokenValidationData())
+            repoUser.storeUser(username, email, salt, iteration, passwordValidationInfo)
+
+            // and: retrieving a user
+            val user: User? = repoUser.getUserByUsername(username)
+
+            // then:
+            assertNotNull(user)
+            Assertions.assertEquals(username, user.username)
+            Assertions.assertEquals(passwordValidationInfo, user.passwordValidation)
+            assertTrue(user.id.value >= 0)
+            // Owner creates a folder
+            val folderId = repo.createFolder(ownerId, "SharedFolder", null, "/SharedFolder", folderType, createdAt)
+
+            // Owner invites guest to the folder
+            val inviteId = repo.createInviteFolder(ownerId, user.id, folderId)
+
+            // Guest accepts the invite
+            repo.folderInviteUpdated(user.id, inviteId, InviteStatus.ACCEPT)
+
+            // Check that guest is now in Join_Folders for this folder
+            val isMember = repo.isMemberOfFolder(user.id, folderId)
+            assertEquals(true, isMember)
+
+            // Cleanup
+            clearData(jdbi, "dbo.Join_Folders", "folder_id", folderId.value)
+            clearData(jdbi, "dbo.Folders", "folder_id", folderId.value)
+            clearData(jdbi, "dbo.Users", "id", user.id.value)
         }
     }
 

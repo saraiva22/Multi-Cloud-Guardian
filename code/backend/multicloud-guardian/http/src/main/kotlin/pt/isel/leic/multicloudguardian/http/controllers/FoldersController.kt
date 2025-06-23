@@ -87,12 +87,13 @@ class FoldersController(
         @RequestParam(required = false) search: String?,
         @RequestParam(required = false) size: Int?,
         @RequestParam(required = false) page: Int?,
+        @RequestParam(required = false) shared: Boolean = false,
         @RequestParam(required = false) sort: String?,
     ): ResponseEntity<*> {
         val setLimit = size ?: DEFAULT_LIMIT
         val setPage = page ?: DEFAULT_PAGE
         val setSort = sort ?: DEFAULT_SORT
-        val res = storageService.getFolders(authenticatedUser.user, setLimit, setPage, setSort, search)
+        val res = storageService.getFolders(authenticatedUser.user, setLimit, setPage, setSort, shared, search)
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(

@@ -2,8 +2,8 @@ package pt.isel.leic.multicloudguardian.repository
 
 import kotlinx.datetime.Instant
 import pt.isel.leic.multicloudguardian.domain.credentials.Credentials
+import pt.isel.leic.multicloudguardian.domain.preferences.CostType
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
-import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.token.Token
 import pt.isel.leic.multicloudguardian.domain.token.TokenValidationInfo
@@ -30,7 +30,7 @@ interface UsersRepository {
 
     fun storagePreferences(
         userId: Id,
-        performanceType: PerformanceType,
+        costType: CostType,
         locationType: LocationType,
         providerType: ProviderType,
     )

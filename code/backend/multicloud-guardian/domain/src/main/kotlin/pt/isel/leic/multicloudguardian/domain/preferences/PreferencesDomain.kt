@@ -6,12 +6,12 @@ import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 @Component
 class PreferencesDomain {
     fun associationProvider(
-        performance: PerformanceType,
+        cost: CostType,
         location: LocationType,
     ): ProviderType =
-        when (performance) {
-            PerformanceType.LOW -> ProviderType.BACK_BLAZE
-            PerformanceType.MEDIUM -> ProviderType.GOOGLE
+        when (cost) {
+            CostType.LOW -> ProviderType.BACK_BLAZE
+            CostType.MEDIUM -> ProviderType.GOOGLE
             else ->
                 when (location) {
                     LocationType.NORTH_AMERICA -> ProviderType.AZURE

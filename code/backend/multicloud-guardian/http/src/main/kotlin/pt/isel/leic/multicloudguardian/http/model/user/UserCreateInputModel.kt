@@ -3,8 +3,8 @@ package pt.isel.leic.multicloudguardian.http.model.user
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import pt.isel.leic.multicloudguardian.domain.preferences.CostType
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
-import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.user.components.Password
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
 
@@ -30,6 +30,6 @@ data class UserCreateInputModel(
     val salt: String,
     @field:NotNull(message = "Iterations must not be null")
     val iterations: Int,
-    val performanceType: PerformanceType,
+    val costType: CostType,
     val locationType: LocationType,
 )

@@ -328,7 +328,7 @@ In the backend infrastructure, data validation is enforced at two distinct layer
     val salt: String,
     @field:NotNull(message = "Iterations must not be null")
     val iterations: Int,
-    val performanceType: PerformanceType,
+    val costType: PerformanceType,
     val locationType: LocationType,
   )
 

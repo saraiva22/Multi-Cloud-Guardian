@@ -11,8 +11,8 @@ import pt.isel.leic.multicloudguardian.ApplicationTests.Companion.newTestIterati
 import pt.isel.leic.multicloudguardian.ApplicationTests.Companion.newTestSalt
 import pt.isel.leic.multicloudguardian.Environment
 import pt.isel.leic.multicloudguardian.TestClock
+import pt.isel.leic.multicloudguardian.domain.preferences.CostType
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
-import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.token.Token
 import pt.isel.leic.multicloudguardian.domain.token.TokenValidationInfo
@@ -79,7 +79,7 @@ class JdbiUserRepositoryTests {
             val salt = newTestSalt()
             val iteration = newTestIteration()
             val passwordValidationInfo = PasswordValidationInfo(newTokenValidationData())
-            val performanceType = PerformanceType.HIGH
+            val costType = CostType.HIGH
             val locationType = LocationType.EUROPE
             val providerType = ProviderType.AZURE
 
@@ -90,7 +90,7 @@ class JdbiUserRepositoryTests {
 
             repo.storagePreferences(
                 user.id,
-                performanceType,
+                costType,
                 locationType,
                 providerType,
             )

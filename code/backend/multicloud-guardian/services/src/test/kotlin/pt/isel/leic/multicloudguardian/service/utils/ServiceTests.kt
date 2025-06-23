@@ -6,8 +6,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import pt.isel.leic.multicloudguardian.Environment
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
+import pt.isel.leic.multicloudguardian.domain.preferences.CostType
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
-import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.preferences.PreferencesDomain
 import pt.isel.leic.multicloudguardian.domain.provider.AmazonS3StorageConfig
 import pt.isel.leic.multicloudguardian.domain.provider.AzureStorageConfig
@@ -67,7 +67,7 @@ open class ServiceTests : ApplicationTests() {
             email: String,
             salt: String,
             iteration: Int,
-            performance: PerformanceType,
+            performance: CostType,
             location: LocationType,
         ): User {
             val createUserResult = userServices.createUser(userName, email, password, salt, iteration, performance, location)
@@ -198,9 +198,11 @@ open class ServiceTests : ApplicationTests() {
 
         lateinit var testUser: User
         lateinit var testUser2: User
+        lateinit var testUser3: User
 
         lateinit var testUserInfo: UserInfo
         lateinit var testUserInfo2: UserInfo
+        lateinit var testUserInfo3: UserInfo
 
         const val DEFAULT_LIMIT = 10
         const val DEFAULT_PAGE = 0
@@ -217,14 +219,16 @@ open class ServiceTests : ApplicationTests() {
         @JvmStatic
         @BeforeAll
         fun setupDB() {
-            testUser = createUser(PerformanceType.HIGH, LocationType.EUROPE) // User associated Azure Provider
-            testUser2 = createUser(PerformanceType.LOW, LocationType.NORTH_AMERICA) // User associated BackBlaze Provider
+            testUser = createUser(CostType.HIGH, LocationType.EUROPE) // User associated Azure Provider
+            testUser2 = createUser(CostType.LOW, LocationType.NORTH_AMERICA) // User associated BackBlaze Provider
+            testUser3 = createUser(CostType.HIGH, LocationType.EUROPE) // User associated Azure Provider
             testUserInfo = UserInfo(testUser.id, testUser.username, testUser.email)
             testUserInfo2 = UserInfo(testUser2.id, testUser2.username, testUser2.email)
+            testUserInfo3 = UserInfo(testUser3.id, testUser3.username, testUser3.email)
         }
 
         private fun createUser(
-            performance: PerformanceType,
+            performance: CostType,
             location: LocationType,
         ): User {
             val username = newTestUserName()
@@ -241,6 +245,7 @@ open class ServiceTests : ApplicationTests() {
         fun clearDB() {
             clearData(jdbi, "dbo.Users", "id", testUser.id.value)
             clearData(jdbi, "dbo.Users", "id", testUser2.id.value)
+            clearData(jdbi, "dbo.Users", "id", testUser3.id.value)
         }
     }
 }

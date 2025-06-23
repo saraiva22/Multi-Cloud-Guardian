@@ -6,12 +6,12 @@ import pt.isel.leic.multicloudguardian.domain.utils.Id
  * @property preferencesId The unique identifier for the preferences.
  * @property userId The unique identifier for the user.
  * @property location The location preference of the user.
- * @property performance The performance preference of the user.
+ * @property cost The performance preference of the user.
  */
 
 data class Preferences(
     val preferencesId: Id,
     val userId: Id,
     val location: LocationType,
-    val performance: PerformanceType,
+    val cost: CostType,
 )

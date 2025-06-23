@@ -33,7 +33,7 @@ create table dbo.Preferences (
     preferences_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT REFERENCES dbo.Users(id) ON DELETE CASCADE ON UPDATE CASCADE,
     location int NOT NULL check (location in (0,1,2,3)),
-    performance int NOT NULL check(performance in (0,1,2)),
+    cost int NOT NULL check(cost in (0,1,2)),
     storage_provider int not null check(storage_provider in (0,1,2,3))
 );
 

@@ -1,7 +1,7 @@
 package pt.isel.leic.multicloudguardian.service
 
+import pt.isel.leic.multicloudguardian.domain.preferences.CostType
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
-import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.utils.Either
 import pt.isel.leic.multicloudguardian.service.user.UserCreationError
 import pt.isel.leic.multicloudguardian.service.utils.ServiceTests
@@ -31,7 +31,7 @@ class UserServiceTests : ServiceTests() {
         val email = newTestEmail(username)
         val salt = newTestSalt()
         val iteration = newTestIteration()
-        val performance = PerformanceType.MEDIUM
+        val performance = CostType.MEDIUM
         val location = LocationType.EUROPE
 
         val createUserResult = userService.createUser(username, email, password, salt, iteration, performance, location)
@@ -83,7 +83,7 @@ class UserServiceTests : ServiceTests() {
         val email = newTestEmail(username)
         val salt = newTestSalt()
         val iteration = newTestIteration()
-        val performance = PerformanceType.MEDIUM
+        val performance = CostType.MEDIUM
         val location = LocationType.EUROPE
 
         // then: the creation fails
@@ -109,7 +109,7 @@ class UserServiceTests : ServiceTests() {
         val email = newTestEmail(username)
         val salt = newTestSalt()
         val iteration = newTestIteration()
-        val performance = PerformanceType.MEDIUM
+        val performance = CostType.MEDIUM
         val location = LocationType.EUROPE
 
         val createUserResult =
@@ -155,7 +155,7 @@ class UserServiceTests : ServiceTests() {
         val email = newTestEmail(username)
         val salt = newTestSalt()
         val iteration = newTestIteration()
-        val performance = PerformanceType.MEDIUM
+        val performance = CostType.MEDIUM
         val location = LocationType.EUROPE
 
         val createUserResult = userService.createUser(username, email, password, salt, iteration, performance, location)
@@ -204,7 +204,7 @@ class UserServiceTests : ServiceTests() {
         val email = newTestEmail(username)
         val salt = newTestSalt()
         val iteration = newTestIteration()
-        val performance = PerformanceType.MEDIUM
+        val performance = CostType.MEDIUM
         val location = LocationType.EUROPE
         val createUserResult = createUserInService(username, password, email, salt, iteration, performance, location)
 
@@ -244,7 +244,7 @@ class UserServiceTests : ServiceTests() {
         val email = newTestEmail(username)
         val salt = newTestSalt()
         val iteration = newTestIteration()
-        val performance = PerformanceType.MEDIUM
+        val performance = CostType.MEDIUM
         val location = LocationType.EUROPE
         val createUserResult = userService.createUser(username, email, password, salt, iteration, performance, location)
 
@@ -316,7 +316,7 @@ class UserServiceTests : ServiceTests() {
         val email = newTestEmail(username)
         val salt = newTestSalt()
         val iteration = newTestIteration()
-        val performance = PerformanceType.MEDIUM
+        val performance = CostType.MEDIUM
         val location = LocationType.EUROPE
         val createUserResult = userService.createUser(username, email, password, salt, iteration, performance, location)
 
@@ -388,7 +388,7 @@ class UserServiceTests : ServiceTests() {
         val email = newTestEmail(username)
         val salt = newTestSalt()
         val iteration = newTestIteration()
-        val performance = PerformanceType.MEDIUM
+        val performance = CostType.MEDIUM
         val location = LocationType.EUROPE
         val createUserResult = userService.createUser(username, email, password, salt, iteration, performance, location)
 

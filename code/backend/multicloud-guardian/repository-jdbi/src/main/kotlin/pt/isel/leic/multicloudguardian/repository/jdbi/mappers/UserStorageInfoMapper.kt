@@ -2,8 +2,8 @@ package pt.isel.leic.multicloudguardian.repository.jdbi.mappers
 
 import org.jdbi.v3.core.mapper.RowMapper
 import org.jdbi.v3.core.statement.StatementContext
+import pt.isel.leic.multicloudguardian.domain.preferences.CostType
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
-import pt.isel.leic.multicloudguardian.domain.preferences.PerformanceType
 import pt.isel.leic.multicloudguardian.domain.user.UserStorageInfo
 import pt.isel.leic.multicloudguardian.domain.user.components.Email
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
@@ -22,6 +22,6 @@ class UserStorageInfoMapper : RowMapper<UserStorageInfo> {
             username = Username(rs.getString("username")),
             email = Email(rs.getString("email")),
             locationType = LocationType.entries[rs.getInt("location")],
-            performanceType = PerformanceType.entries[rs.getInt("performance")],
+            costType = CostType.entries[rs.getInt("performance")],
         )
 }

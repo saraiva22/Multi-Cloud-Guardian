@@ -48,7 +48,7 @@ class UsersController(
                 input.password,
                 input.salt,
                 input.iterations,
-                input.performanceType,
+                input.costType,
                 input.locationType,
             )
         return when (user) {
@@ -185,7 +185,7 @@ class UsersController(
                             user.value.username.value,
                             user.value.email.value,
                             user.value.locationType,
-                            user.value.performanceType,
+                            user.value.costType,
                         ),
                     )
 
@@ -210,7 +210,7 @@ class UsersController(
                             user.value.username.value,
                             user.value.email.value,
                             user.value.locationType,
-                            user.value.performanceType,
+                            user.value.costType,
                         ),
                     )
 

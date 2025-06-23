@@ -94,14 +94,16 @@ class FilesController(
     @GetMapping(Uris.Files.GET_FILES)
     fun getFiles(
         authenticatedUser: AuthenticatedUser,
+        @RequestParam(required = false) search: String?,
         @RequestParam(required = false) size: Int?,
         @RequestParam(required = false) page: Int?,
+        @RequestParam(required = false) shared: Boolean = false,
         @RequestParam(required = false) sort: String?,
     ): ResponseEntity<*> {
         val setLimit = size ?: DEFAULT_LIMIT
         val setPage = page ?: DEFAULT_PAGE
         val setSort = sort ?: DEFAULT_SORT
-        val res = storageService.getFiles(authenticatedUser.user, setLimit, setPage, setSort)
+        val res = storageService.getFiles(authenticatedUser.user, setLimit, setPage, setSort, shared, search)
 
         return ResponseEntity.status(HttpStatus.OK).body(
             PageResult(

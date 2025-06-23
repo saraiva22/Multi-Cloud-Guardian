@@ -203,13 +203,12 @@ class StorageFileJclouds(
     fun moveBlob(
         context: BlobStoreContext,
         bucketName: String,
-        sourcePath: String, // original path of the blob
-        destinationPath: String, // destination path for the blob
+        sourcePath: String,
+        destinationPath: String,
     ): MoveBlobResult {
         try {
             val blobStore = context.blobStore
 
-            //
             blobStore.copyBlob(bucketName, sourcePath, bucketName, destinationPath, CopyOptions.NONE)
 
             blobStore.removeBlob(bucketName, sourcePath)
