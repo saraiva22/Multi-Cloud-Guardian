@@ -88,13 +88,13 @@ class JdbiStorageRepositoryTests {
             assertNotNull(folderId)
 
             // then: the folder can be retrieved and all properties match
-            val folder = repo.getFolderById(folderId)
+            val folder = repo.getFolderById(folderId, false)
             assertNotNull(folder)
-            assertEquals(folderName, folder.folderName)
-            assertEquals(userId, folder.user.id)
-            assertEquals(parentFolderId, folder.parentFolderInfo?.id)
-            assertEquals(path, folder.path)
-            assertEquals(createdAt.epochSeconds, folder.createdAt.epochSeconds)
+            assertEquals(folderName, folder.first.folderName)
+            assertEquals(userId, folder.first.user.id)
+            assertEquals(parentFolderId, folder.first.parentFolderInfo?.id)
+            assertEquals(path, folder.first.path)
+            assertEquals(createdAt.epochSeconds, folder.first.createdAt.epochSeconds)
 
             // Cleanup
             clearData(jdbi, "dbo.Folders", "folder_id", folderId.value)
@@ -197,7 +197,7 @@ class JdbiStorageRepositoryTests {
         runWithHandle { handle ->
             val repo = JdbiStorageRepository(handle)
             val userId = Id(1)
-            val folder = repo.getFolderById(Id(99999))
+            val folder = repo.getFolderById(Id(99999), false)
             assertEquals(null, folder)
         }
     }
@@ -280,13 +280,13 @@ class JdbiStorageRepositoryTests {
             val url = "http://example.com/file.txt"
             val fileId = repo.storeFile(fileCreate, filePath, url, userId, folderId, fileCreate.blobName, false, createdAt, null)
             val file = repo.getFileById(fileId)
-            val folder = repo.getFolderById(folderId)
+            val folder = repo.getFolderById(folderId, false)
             assertNotNull(file)
             assertNotNull(folder)
             repo.deleteFile(userId, file, null)
-            repo.deleteFolder(userId, folder)
+            repo.deleteFolder(userId, folder.first)
             assertEquals(null, repo.getFileById(fileId))
-            assertEquals(null, repo.getFolderById(folderId))
+            assertEquals(null, repo.getFolderById(folderId, false))
         }
     }
 
@@ -333,11 +333,11 @@ class JdbiStorageRepositoryTests {
                     createdAt,
                     null,
                 )
-            val getFolderId = repo.getFolderById(folderId)
+            val getFolderId = repo.getFolderById(folderId, false)
             assertNotNull(getFolderId)
-            repo.deleteFolder(userId, getFolderId)
+            repo.deleteFolder(userId, getFolderId.first)
             val fileAfter = repo.getFileById(fileId)
-            val folderAfter = repo.getFolderById(folderId)
+            val folderAfter = repo.getFolderById(folderId, false)
 
             assertEquals(null, fileAfter)
             assertEquals(null, folderAfter)

@@ -87,8 +87,8 @@ class FoldersController(
         @RequestParam(required = false) search: String?,
         @RequestParam(required = false) size: Int?,
         @RequestParam(required = false) page: Int?,
-        @RequestParam(required = false) shared: Boolean = false,
         @RequestParam(required = false) sort: String?,
+        @RequestParam(required = false) shared: Boolean = false,
     ): ResponseEntity<*> {
         val setLimit = size ?: DEFAULT_LIMIT
         val setPage = page ?: DEFAULT_PAGE
@@ -153,15 +153,16 @@ class FoldersController(
     @GetMapping(Uris.Folders.GET_FOLDER_BY_ID)
     fun getFolder(
         @PathVariable @Validated folderId: Int,
+        @RequestParam(required = false) members: Boolean = false,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Folders.folderById(folderId)
-        val res = storageService.getFolderById(authenticatedUser.user, Id(folderId))
+        val res = storageService.getFolderById(authenticatedUser.user, Id(folderId), members)
         return when (res) {
             is Success ->
                 ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(FolderInfoOutputModel.fromDomain(res.value))
+                    .body(FolderInfoOutputModel.fromDomain(res.value.first, res.value.second))
 
             is Failure ->
                 when (res.value) {

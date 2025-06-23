@@ -7,6 +7,7 @@ import pt.isel.leic.multicloudguardian.domain.folder.Folder
 import pt.isel.leic.multicloudguardian.domain.folder.FolderPrivateInvite
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
+import pt.isel.leic.multicloudguardian.domain.user.UserInfo
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 
 interface StorageRepository {
@@ -56,7 +57,12 @@ interface StorageRepository {
         folderName: String,
     ): Boolean
 
-    fun getFolderById(folderId: Id): Folder?
+    fun membersInFolder(folderId: Id): List<UserInfo>
+
+    fun getFolderById(
+        folderId: Id,
+        members: Boolean,
+    ): Pair<Folder, List<UserInfo>>?
 
     fun getFiles(
         userId: Id,

@@ -10,6 +10,7 @@ import pt.isel.leic.multicloudguardian.domain.folder.Folder
 import pt.isel.leic.multicloudguardian.domain.folder.FolderPrivateInvite
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
+import pt.isel.leic.multicloudguardian.domain.user.UserInfo
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 import pt.isel.leic.multicloudguardian.repository.StorageRepository
 
@@ -192,20 +193,44 @@ class JdbiStorageRepository(
             .mapTo<Int>()
             .single() == 1
 
-    override fun getFolderById(folderId: Id): Folder? =
+    override fun membersInFolder(folderId: Id): List<UserInfo> =
         handle
             .createQuery(
                 """
-                select folder.*, users.username, users.email,
-                       parent.folder_id as parent_id, parent.folder_name as parent_folder_name, parent.type as parent_folder_type
-                from dbo.Folders folder
-                inner join dbo.Users on folder.user_id = users.id
-                left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
-                where folder.folder_id = :folderId
+                select users.id, users.username, users.email
+                from dbo.Join_Folders jf
+                inner join dbo.Users users on jf.user_id = users.id
+                where jf.folder_id = :folderId
                 """.trimIndent(),
             ).bind("folderId", folderId.value)
-            .mapTo<Folder>()
-            .singleOrNull()
+            .mapTo<UserInfo>()
+            .toList()
+
+    override fun getFolderById(
+        folderId: Id,
+        members: Boolean,
+    ): Pair<Folder, List<UserInfo>>? {
+        val baseQuery =
+            """
+            select folder.*, users.username, users.email,
+                   parent.folder_id as parent_id, parent.folder_name as parent_folder_name, parent.type as parent_folder_type
+            from dbo.Folders folder
+            inner join dbo.Users on folder.user_id = users.id
+            left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
+            where folder.folder_id = :folderId
+            """.trimIndent()
+
+        val query =
+            handle
+                .createQuery(baseQuery)
+                .bind("folderId", folderId.value)
+
+        val folder = query.mapTo<Folder>().singleOrNull() ?: return null
+
+        val membersList = if (members) membersInFolder(folderId) else emptyList()
+
+        return Pair(folder, membersList)
+    }
 
     override fun getFiles(
         userId: Id,

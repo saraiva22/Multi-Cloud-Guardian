@@ -4,6 +4,7 @@ import org.jclouds.blobstore.BlobStoreContext
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileDownload
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
+import pt.isel.leic.multicloudguardian.domain.user.UserInfo
 import pt.isel.leic.multicloudguardian.domain.utils.Either
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 import pt.isel.leic.multicloudguardian.domain.utils.PageResult
@@ -131,7 +132,7 @@ sealed class GetFolderByIdError {
     data object FolderNotFound : GetFolderByIdError()
 }
 
-typealias GetFolderResult = Either<GetFolderByIdError, Folder>
+typealias GetFolderResult = Either<GetFolderByIdError, Pair<Folder, List<UserInfo>>>
 
 sealed class GetFileInFolderError {
     data object FolderNotFound : GetFileInFolderError()
