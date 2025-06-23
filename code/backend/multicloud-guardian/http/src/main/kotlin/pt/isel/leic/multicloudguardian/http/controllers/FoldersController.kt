@@ -319,6 +319,9 @@ class FoldersController(
                         Problem.invalidCredential(instance)
 
                     UploadFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(folderId, instance)
+
+                    UploadFileError.EncryptionNotSupportedInSharedFolder ->
+                        Problem.encryptionNotSupportedInSharedFolder(folderId, instance)
                 }
         }
     }

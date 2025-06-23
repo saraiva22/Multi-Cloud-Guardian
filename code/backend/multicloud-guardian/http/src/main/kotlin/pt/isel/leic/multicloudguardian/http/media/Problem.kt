@@ -105,6 +105,7 @@ class Problem(
         private val folderIsShared = URI("${FOLDER}folder-is-shared")
         private val notMemberOfFolder = URI("${FOLDER}not-member-of-folder")
         private val userPermissionsDeniedType = URI("${FOLDER}user-permissions-denied-type")
+        private val encryptionNotSupportedInSharedFolder = URI("${FOLDER}encryption-not-supported-in-shared-folder")
 
         fun internalServerError(instance: URI?): ResponseEntity<*> =
             Problem(
@@ -563,6 +564,18 @@ class Problem(
                 title = "User not permissions type",
                 status = HttpStatus.FORBIDDEN.value(),
                 detail = "User $username not permissions type",
+                instance = instance,
+            ).toResponse()
+
+        fun encryptionNotSupportedInSharedFolder(
+            folderId: Int,
+            instance: URI,
+        ): ResponseEntity<*> =
+            Problem(
+                type = encryptionNotSupportedInSharedFolder,
+                title = "Encryption not supported in shared folder",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "Encryption is not supported in shared folders. Folder with id $folderId is shared.",
                 instance = instance,
             ).toResponse()
     }

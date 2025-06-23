@@ -48,6 +48,7 @@ class JdbiStorageRepositoryTests {
                     url = url,
                     userId = userId,
                     folderId = folderId,
+                    fileFakeName = fileCreate.blobName,
                     encryption = false,
                     createdAt = createdAt,
                     updatedAt = null,
@@ -133,7 +134,7 @@ class JdbiStorageRepositoryTests {
             val path = "/exists.txt"
             val url = "http://example.com/exists.txt"
             val createdAt = Clock.System.now()
-            val fileId = repo.storeFile(fileCreate, path, url, userId, folderId, false, createdAt, null)
+            val fileId = repo.storeFile(fileCreate, path, url, userId, folderId, fileCreate.blobName, false, createdAt, null)
             assertEquals(true, repo.isFileNameInFolder(userId, folderId, fileCreate.blobName))
             clearData(jdbi, "dbo.Files", "file_id", fileId.value)
         }
@@ -159,7 +160,7 @@ class JdbiStorageRepositoryTests {
             val path = "/wrongfolder.txt"
             val url = "http://example.com/wrongfolder.txt"
             val createdAt = Clock.System.now()
-            val fileId = repo.storeFile(fileCreate, path, url, userId, folderId, false, createdAt, null)
+            val fileId = repo.storeFile(fileCreate, path, url, userId, folderId, fileCreate.blobName, false, createdAt, null)
             val file = repo.getFileInFolder(Id(99999), fileId)
             assertEquals(null, file)
             clearData(jdbi, "dbo.Files", "file_id", fileId.value)
@@ -277,7 +278,7 @@ class JdbiStorageRepositoryTests {
             val fileCreate = fileCreation()
             val filePath = "$path/file.txt"
             val url = "http://example.com/file.txt"
-            val fileId = repo.storeFile(fileCreate, filePath, url, userId, folderId, false, createdAt, null)
+            val fileId = repo.storeFile(fileCreate, filePath, url, userId, folderId, fileCreate.blobName, false, createdAt, null)
             val file = repo.getFileById(fileId)
             val folder = repo.getFolderById(folderId)
             assertNotNull(file)
@@ -299,8 +300,8 @@ class JdbiStorageRepositoryTests {
             val fileA = fileCreation()
             val fileB = fileCreation()
 
-            val idA = repo.storeFile(fileA, "/A.txt", "http://a.com", userId, null, false, createdAt, null)
-            val idB = repo.storeFile(fileB, "/B.txt", "http://b.com", userId, null, false, createdAt, null)
+            val idA = repo.storeFile(fileA, "/A.txt", "http://a.com", userId, null, fileA.blobName, false, createdAt, null)
+            val idB = repo.storeFile(fileB, "/B.txt", "http://b.com", userId, null, fileB.blobName, false, createdAt, null)
 
             val files = repo.getFiles(userId, 10, 0, "")
             assertEquals(listOf(fileA.blobName, fileB.blobName), files.map { it.fileName })
@@ -320,7 +321,18 @@ class JdbiStorageRepositoryTests {
 
             val folderId = repo.createFolder(userId, "ToDelete", null, "/ToDelete", folderType, createdAt)
             val file = fileCreation()
-            val fileId = repo.storeFile(file, "/ToDelete/file.txt", "http://f.com", userId, folderId, false, createdAt, null)
+            val fileId =
+                repo.storeFile(
+                    file,
+                    "/ToDelete/file.txt",
+                    "http://f.com",
+                    userId,
+                    folderId,
+                    file.blobName,
+                    false,
+                    createdAt,
+                    null,
+                )
             val getFolderId = repo.getFolderById(folderId)
             assertNotNull(getFolderId)
             repo.deleteFolder(userId, getFolderId)

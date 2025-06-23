@@ -87,6 +87,9 @@ class FilesController(
                         Problem.invalidCredential(instance)
 
                     UploadFileError.ParentFolderNotFound -> Problem.parentFolderNotFound(0, instance)
+
+                    UploadFileError.EncryptionNotSupportedInSharedFolder ->
+                        Problem.encryptionNotSupportedInSharedFolder(0, instance)
                 }
         }
     }

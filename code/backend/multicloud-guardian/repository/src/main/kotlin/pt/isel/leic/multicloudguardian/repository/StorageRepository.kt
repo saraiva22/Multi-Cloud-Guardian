@@ -16,6 +16,7 @@ interface StorageRepository {
         url: String,
         userId: Id,
         folderId: Id?,
+        fileFakeName: String,
         encryption: Boolean,
         createdAt: Instant,
         updatedAt: Instant?,
@@ -25,6 +26,12 @@ interface StorageRepository {
         userId: Id,
         folderId: Id?,
     ): List<String>
+
+    fun isFileFakeNameInFolder(
+        userId: Id,
+        fileFakeName: String,
+        folderId: Id?,
+    ): Boolean
 
     fun isFileNameInFolder(
         userId: Id,

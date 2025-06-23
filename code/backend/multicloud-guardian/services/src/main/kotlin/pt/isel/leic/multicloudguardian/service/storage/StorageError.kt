@@ -30,6 +30,8 @@ sealed class UploadFileError {
     data object InvalidCredential : UploadFileError()
 
     data object ParentFolderNotFound : UploadFileError()
+
+    data object EncryptionNotSupportedInSharedFolder : UploadFileError()
 }
 
 typealias UploadFileResult = Either<UploadFileError, Id>

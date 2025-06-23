@@ -22,6 +22,7 @@ class JdbiStorageRepository(
         url: String,
         userId: Id,
         folderId: Id?,
+        fileFakeName: String,
         encryption: Boolean,
         createdAt: Instant,
         updatedAt: Instant?,
@@ -30,12 +31,13 @@ class JdbiStorageRepository(
             handle
                 .createUpdate(
                     """
-                    insert into dbo.Files (user_id, folder_id, file_name,path, size, content_type, created_at, encryption_key, encryption) 
-                    values (:user_id,:folderId, :name,  :path, :size, :content_type, :created_at, :encryption_key, :encryption)
+                    insert into dbo.Files (user_id, folder_id, file_name,file_fake_name, path, size, content_type, created_at, encryption_key, encryption) 
+                    values (:user_id,:folderId, :name, :fake_name, :path, :size, :content_type, :created_at, :encryption_key, :encryption)
                     """.trimIndent(),
                 ).bind("user_id", userId.value)
                 .bind("folderId", folderId?.value)
                 .bind("name", file.blobName)
+                .bind("fake_name", fileFakeName)
                 .bind("path", path)
                 .bind("size", file.size)
                 .bind("content_type", file.contentType)
@@ -81,6 +83,25 @@ class JdbiStorageRepository(
             .bind("folderId", folderId?.value)
             .mapTo<String>()
             .list()
+
+    override fun isFileFakeNameInFolder(
+        userId: Id,
+        fileFakeName: String,
+        folderId: Id?,
+    ): Boolean =
+        handle
+            .createQuery(
+                """
+                select count(*) from dbo.Files 
+                where user_id = :userId 
+                  and file_fake_name = :fileFakeName 
+                  and folder_id IS NOT DISTINCT FROM :folderId
+                """.trimIndent(),
+            ).bind("userId", userId.value)
+            .bind("fileFakeName", fileFakeName)
+            .bind("folderId", folderId?.value)
+            .mapTo<Int>()
+            .single() == 1
 
     override fun isFileNameInFolder(
         userId: Id,

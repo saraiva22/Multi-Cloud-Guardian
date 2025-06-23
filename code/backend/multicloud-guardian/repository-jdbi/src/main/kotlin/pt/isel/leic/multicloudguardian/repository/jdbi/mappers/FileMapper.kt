@@ -38,6 +38,7 @@ class FileMapper : RowMapper<File> {
                     )
                 },
             fileName = rs.getString("file_name"),
+            fileFakeName = rs.getString("file_fake_name"),
             path = rs.getString("path"),
             size = rs.getLong("size"),
             contentType = rs.getString("content_type"),
