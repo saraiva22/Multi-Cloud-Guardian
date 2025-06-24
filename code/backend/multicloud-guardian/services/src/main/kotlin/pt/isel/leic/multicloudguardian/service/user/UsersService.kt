@@ -1,8 +1,8 @@
 package pt.isel.leic.multicloudguardian.service.user
 
+import jakarta.inject.Named
 import kotlinx.datetime.Clock
 import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Service
 import pt.isel.leic.multicloudguardian.domain.preferences.CostType
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
 import pt.isel.leic.multicloudguardian.domain.preferences.PreferencesDomain
@@ -18,12 +18,14 @@ import pt.isel.leic.multicloudguardian.domain.utils.PageResult
 import pt.isel.leic.multicloudguardian.domain.utils.failure
 import pt.isel.leic.multicloudguardian.domain.utils.success
 import pt.isel.leic.multicloudguardian.repository.TransactionManager
+import pt.isel.leic.multicloudguardian.service.sse.SSEService
 
-@Service
+@Named
 class UsersService(
     private val transactionManager: TransactionManager,
     private val usersDomain: UsersDomain,
     private val preferencesDomain: PreferencesDomain,
+    private val sseService: SSEService,
     private val clock: Clock,
 ) {
     fun createUser(
@@ -167,11 +169,15 @@ class UsersService(
             PageResult.fromPartialResult(users, totalElements, limit, offset)
         }
 
-    fun revokeToken(token: String): TokenRevocationResult {
+    fun revokeToken(
+        userId: Id,
+        token: String,
+    ): TokenRevocationResult {
         val tokenValidationInfo = usersDomain.createTokenValidationInformation(token)
         return transactionManager.run {
             val res = it.usersRepository.removeTokenByValidationInfo(tokenValidationInfo)
             if (res == 0) failure(TokenRevocationError.TokenDoesNotExist)
+            sseService.disconnectListener(userId.value, token)
             logger.info("Token Revoked")
             success(true)
         }

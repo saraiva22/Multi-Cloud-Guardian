@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import pt.isel.leic.multicloudguardian.domain.user.AuthenticatedUser
 import pt.isel.leic.multicloudguardian.domain.user.components.Email
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
@@ -28,13 +29,17 @@ import pt.isel.leic.multicloudguardian.http.model.user.UserStorageDetailsOutputM
 import pt.isel.leic.multicloudguardian.http.model.user.UserStorageInfoOutputModel
 import pt.isel.leic.multicloudguardian.http.model.user.UserTokenCreateOutputModel
 import pt.isel.leic.multicloudguardian.http.model.utils.IdOutputModel
+import pt.isel.leic.multicloudguardian.http.util.SseEmitterBasedEventEmitter
+import pt.isel.leic.multicloudguardian.service.sse.SSEService
 import pt.isel.leic.multicloudguardian.service.user.TokenCreationError
 import pt.isel.leic.multicloudguardian.service.user.UserCreationError
 import pt.isel.leic.multicloudguardian.service.user.UsersService
+import java.util.concurrent.TimeUnit
 
 @RestController
 class UsersController(
     private val userService: UsersService,
+    private val sseService: SSEService,
 ) {
     @PostMapping(Uris.Users.CREATE)
     fun createUser(
@@ -152,7 +157,7 @@ class UsersController(
     @PostMapping(Uris.Users.LOGOUT)
     fun logout(authenticatedUser: AuthenticatedUser): ResponseEntity<*> {
         val instance = Uris.Users.logout()
-        return when (userService.revokeToken(authenticatedUser.token)) {
+        return when (userService.revokeToken(authenticatedUser.user.id, authenticatedUser.token)) {
             is Success ->
                 ResponseEntity
                     .status(HttpStatus.OK)
@@ -253,6 +258,17 @@ class UsersController(
     @GetMapping(Uris.Users.HOME)
     fun getUserHome(authenticatedUser: AuthenticatedUser): UserHomeOutputModel =
         UserHomeOutputModel(authenticatedUser.user.id.value, authenticatedUser.user.username.value)
+
+    @GetMapping(Uris.Users.NOTIFICATIONS)
+    fun getNotifications(authenticatedUser: AuthenticatedUser): SseEmitter {
+        val sseEmitter = SseEmitter(TimeUnit.HOURS.toMillis(1))
+        sseService.addEventEmitter(
+            authenticatedUser.user.id.value,
+            authenticatedUser.token,
+            SseEmitterBasedEventEmitter(sseEmitter),
+        )
+        return sseEmitter
+    }
 
     companion object {
         private const val DEFAULT_LIMIT = 10

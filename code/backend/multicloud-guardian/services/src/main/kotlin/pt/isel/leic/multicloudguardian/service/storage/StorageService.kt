@@ -1,7 +1,7 @@
 package pt.isel.leic.multicloudguardian.service.storage
 
+import jakarta.inject.Named
 import kotlinx.datetime.Clock
-import org.springframework.stereotype.Service
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.file.FileDownload
@@ -23,16 +23,18 @@ import pt.isel.leic.multicloudguardian.domain.utils.failure
 import pt.isel.leic.multicloudguardian.domain.utils.success
 import pt.isel.leic.multicloudguardian.repository.StorageRepository
 import pt.isel.leic.multicloudguardian.repository.TransactionManager
+import pt.isel.leic.multicloudguardian.service.sse.SSEService
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.CreateBlobStorageContextError
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.MoveBlobError
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.StorageFileJclouds
 import java.util.UUID.randomUUID
 
-@Service
+@Named
 class StorageService(
     private val transactionManager: TransactionManager,
     private val jcloudsStorage: StorageFileJclouds,
     private val providerDomain: ProviderDomainConfig,
+    private val sseService: SSEService,
     private val clock: Clock,
 ) {
     fun uploadFile(
@@ -126,6 +128,7 @@ class StorageService(
                         }
 
                         is Success -> {
+                            val now = clock.now()
                             val fileId =
                                 storageRepository.storeFile(
                                     file,
@@ -135,9 +138,24 @@ class StorageService(
                                     folderId,
                                     fileFakeName,
                                     encryption,
-                                    clock.now(),
-                                    updatedAt = if (folderId != null) clock.now() else null,
+                                    now,
+                                    updatedAt = if (folderId != null) now else null,
                                 )
+                            if (folder?.first?.type == FolderType.SHARED) {
+                                val userInfo = UserInfo(user.id, user.username, user.email)
+                                sseService.sendFile(
+                                    fileId.value,
+                                    userInfo,
+                                    folder.first.parentFolderInfo,
+                                    file.blobName,
+                                    path,
+                                    file.size,
+                                    file.contentType,
+                                    now.toString(),
+                                    file.encryption,
+                                    folder.second,
+                                )
+                            }
                             contextStorage.value.close()
                             success(fileId)
                         }
@@ -535,7 +553,18 @@ class StorageService(
 
             if (storageRepository.isMemberOfFolder(guest.id, folderId)) return@run failure(InviteFolderError.UserAlreadyInFolder)
 
+            val inviterInfo = UserInfo(user.id, user.username, user.email)
+
             val inviteId = storageRepository.createInviteFolder(user.id, guest.id, folderId)
+
+            sseService.sendInvite(
+                inviteId.value,
+                InviteStatus.PENDING,
+                inviterInfo,
+                guest.id.value,
+                folderId.value,
+                folder.first.folderName,
+            )
 
             success(inviteId)
         }

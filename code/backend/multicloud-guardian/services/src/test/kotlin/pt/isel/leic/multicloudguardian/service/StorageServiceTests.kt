@@ -209,9 +209,11 @@ class StorageServiceTests : ServiceTests() {
     fun `get file and getFiles`() {
         // Arrange: initialize the storage service
         val storageService = createStorageService()
+        val clock = TestClock()
 
         // Act: create and upload a single file
         val fileCreation = fileCreation()
+        clock.advance(1.minutes)
         val file = createFile(testUser, fileCreation)
 
         val getFileResult = storageService.getFileById(testUser, file.fileId)
@@ -234,7 +236,9 @@ class StorageServiceTests : ServiceTests() {
         }
 
         // Act: create and upload two more files
+
         val fileContent1 = fileCreation()
+        clock.advance(1.minutes)
         val fileContent2 = fileCreation()
         val file1 = createFile(testUser, fileContent1)
         val file2 = createFile(testUser, fileContent2)

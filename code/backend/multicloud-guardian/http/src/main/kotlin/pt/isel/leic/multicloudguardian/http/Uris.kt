@@ -19,6 +19,7 @@ object Uris {
         const val STORAGE_DETAILS = "$PREFIX/users/storage"
         const val SEARCH_USERS = "$PREFIX/users"
         const val HOME = "$PREFIX/me"
+        const val NOTIFICATIONS = "$PREFIX/users/notifications"
 
         fun byId(id: Int): URI = UriTemplate(GET_BY_ID).expand(id)
 

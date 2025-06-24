@@ -304,7 +304,7 @@ class JdbiStorageRepositoryTests {
             val idB = repo.storeFile(fileB, "/B.txt", "http://b.com", userId, null, fileB.blobName, false, createdAt, null)
 
             val files = repo.getFiles(userId, 10, 0, "")
-            assertEquals(listOf(fileA.blobName, fileB.blobName), files.map { it.fileName })
+            assertEquals(listOf(fileB.blobName, fileA.blobName), files.map { it.fileName })
 
             clearData(jdbi, "dbo.Files", "file_id", idA.value)
             clearData(jdbi, "dbo.Files", "file_id", idB.value)
