@@ -4,6 +4,7 @@ import kotlinx.datetime.Instant
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
+import pt.isel.leic.multicloudguardian.domain.folder.FolderMembers
 import pt.isel.leic.multicloudguardian.domain.folder.FolderPrivateInvite
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
@@ -53,6 +54,7 @@ interface StorageRepository {
     ): Folder?
 
     fun isFolderNameExists(
+        userId: Id,
         parentFolderId: Id?,
         folderName: String,
     ): Boolean
@@ -62,7 +64,7 @@ interface StorageRepository {
     fun getFolderById(
         folderId: Id,
         members: Boolean,
-    ): Pair<Folder, List<UserInfo>>?
+    ): FolderMembers?
 
     fun getFiles(
         userId: Id,

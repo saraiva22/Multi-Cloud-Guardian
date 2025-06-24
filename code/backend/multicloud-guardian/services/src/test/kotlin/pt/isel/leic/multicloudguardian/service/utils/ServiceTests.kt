@@ -23,6 +23,7 @@ import pt.isel.leic.multicloudguardian.domain.user.UsersDomainConfig
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Success
 import pt.isel.leic.multicloudguardian.repository.jdbi.JdbiTransactionManager
+import pt.isel.leic.multicloudguardian.service.sse.SSEService
 import pt.isel.leic.multicloudguardian.service.storage.StorageService
 import pt.isel.leic.multicloudguardian.service.storage.apis.AmazonApi
 import pt.isel.leic.multicloudguardian.service.storage.apis.AzureApi
@@ -41,6 +42,7 @@ import kotlin.time.Duration.Companion.minutes
 open class ServiceTests : ApplicationTests() {
     companion object {
         fun createUsersService(
+            sseService: SSEService,
             testClock: TestClock,
             tokenTtl: Duration = 30.days,
             tokenRollingTtl: Duration = 30.minutes,
@@ -58,6 +60,7 @@ open class ServiceTests : ApplicationTests() {
                 ),
             ),
             PreferencesDomain(),
+            sseService,
             testClock,
         )
 
@@ -152,7 +155,9 @@ open class ServiceTests : ApplicationTests() {
 
         fun getBucketName(providerType: ProviderType) = providerDomain.getBucketName(providerType)
 
-        private val userServices = createUsersService(testClock)
+        private val sseService = SSEService()
+
+        private val userServices = createUsersService(sseService, testClock)
 
         private val providerDomain =
             ProviderDomainConfig(googleCloudStorageConfig(), amazonS3Config(), azureStorageConfig(), backBlazeStorageConfig())
@@ -213,6 +218,7 @@ open class ServiceTests : ApplicationTests() {
                 JdbiTransactionManager(jdbi),
                 jcloudsStorage,
                 providerDomain,
+                sseService,
                 clock,
             )
 

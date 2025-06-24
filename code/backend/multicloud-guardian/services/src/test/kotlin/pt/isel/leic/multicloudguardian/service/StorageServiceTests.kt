@@ -10,6 +10,7 @@ import pt.isel.leic.multicloudguardian.service.storage.GetFileByIdError
 import pt.isel.leic.multicloudguardian.service.storage.GetFileInFolderError
 import pt.isel.leic.multicloudguardian.service.storage.GetFolderByIdError
 import pt.isel.leic.multicloudguardian.service.storage.GetFoldersInFolderError
+import pt.isel.leic.multicloudguardian.service.storage.InviteStatusResult
 import pt.isel.leic.multicloudguardian.service.storage.UploadFileError
 import pt.isel.leic.multicloudguardian.service.utils.ServiceTests
 import pt.isel.leic.multicloudguardian.service.utils.TestClock
@@ -126,9 +127,9 @@ class StorageServiceTests : ServiceTests() {
         // Assert: folder retrieval should return correct details
         when (getFolder) {
             is Success -> {
-                assertEquals(folderName, getFolder.value.first.folderName)
-                assertEquals(userInfo, getFolder.value.first.user)
-                assertEquals(createFolder.value, getFolder.value.first.folderId)
+                assertEquals(folderName, getFolder.value.folder.folderName)
+                assertEquals(userInfo, getFolder.value.folder.user)
+                assertEquals(createFolder.value, getFolder.value.folder.folderId)
             }
             is Failure -> fail("Unexpected $getFolder")
         }
@@ -145,22 +146,22 @@ class StorageServiceTests : ServiceTests() {
         }
 
         // Act: retrieve the uploaded file from the folder
-        val getFile = storageService.getFileInFolder(user, getFolder.value.first.folderId, uploadFileInFolder.value)
+        val getFile = storageService.getFileInFolder(user, getFolder.value.folder.folderId, uploadFileInFolder.value)
 
         // Assert: file retrieval from folder should return correct details
         when (getFile) {
             is Success -> {
                 assertEquals(uploadFileInFolder.value, getFile.value.fileId)
-                assertEquals(getFolder.value.first.folderId, getFile.value.folderInfo?.id)
-                assertEquals(getFolder.value.first.folderName, getFile.value.folderInfo?.folderName)
+                assertEquals(getFolder.value.folder.folderId, getFile.value.folderInfo?.id)
+                assertEquals(getFolder.value.folder.folderName, getFile.value.folderInfo?.folderName)
                 assertEquals(file.size, getFile.value.size)
-                assertEquals(getFolder.value.first.user, getFile.value.user)
+                assertEquals(getFolder.value.folder.user, getFile.value.user)
             }
             is Failure -> fail("Unexpected $getFile")
         }
 
         // Act: delete the file from the folder
-        val deleteFile = storageService.deleteFileInFolder(user, getFolder.value.first.folderId, getFile.value.fileId)
+        val deleteFile = storageService.deleteFileInFolder(user, getFolder.value.folder.folderId, getFile.value.fileId)
 
         // Assert: file deletion from folder should succeed
         when (deleteFile) {
@@ -169,7 +170,7 @@ class StorageServiceTests : ServiceTests() {
         }
 
         // Act: try to retrieve the deleted file from the folder
-        val getDeletedFileResult = storageService.getFileInFolder(testUser, getFolder.value.first.folderId, uploadFileInFolder.value)
+        val getDeletedFileResult = storageService.getFileInFolder(testUser, getFolder.value.folder.folderId, uploadFileInFolder.value)
 
         // Assert: retrieval should fail with FileNotFound error
         when (getDeletedFileResult) {
@@ -182,12 +183,12 @@ class StorageServiceTests : ServiceTests() {
 
         // Assert: folder size should be zero
         when (getFileAgain) {
-            is Success -> assertEquals(0, getFileAgain.value.first.size)
+            is Success -> assertEquals(0, getFileAgain.value.folder.size)
             is Failure -> fail("Unexpected $getFileAgain")
         }
 
         // Act: delete the folder
-        val deleteFolder = storageService.deleteFolder(user, getFolder.value.first.folderId)
+        val deleteFolder = storageService.deleteFolder(user, getFolder.value.folder.folderId)
 
         // Assert: folder deletion should succeed
         when (deleteFolder) {
@@ -196,7 +197,7 @@ class StorageServiceTests : ServiceTests() {
         }
 
         // Act: try to retrieve a file from the deleted folder
-        val getDeletedFolderResult = storageService.getFileInFolder(testUser, getFolder.value.first.folderId, uploadFileInFolder.value)
+        val getDeletedFolderResult = storageService.getFileInFolder(testUser, getFolder.value.folder.folderId, uploadFileInFolder.value)
 
         // Assert: retrieval should fail with FolderNotFound error
         when (getDeletedFolderResult) {
@@ -338,8 +339,8 @@ class StorageServiceTests : ServiceTests() {
         // Assert: parent folder metadata is updated (number of files and updatedAt)
         when (parentFolder) {
             is Success -> {
-                assertEquals(1, parentFolder.value.first.numberFiles)
-                assertTrue(parentFolder.value.first.updatedAt.epochSeconds > parentFolder.value.first.createdAt.epochSeconds)
+                assertEquals(1, parentFolder.value.folder.numberFiles)
+                assertTrue(parentFolder.value.folder.updatedAt.epochSeconds > parentFolder.value.folder.createdAt.epochSeconds)
             }
             is Failure -> fail("Unexpected $parentFolder")
         }
@@ -348,7 +349,7 @@ class StorageServiceTests : ServiceTests() {
         when (fileResult) {
             is Success -> {
                 assertEquals(parentFolderId, fileResult.value.folderInfo?.id)
-                assertEquals(parentFolder.value.first.folderName, fileResult.value.folderInfo?.folderName)
+                assertEquals(parentFolder.value.folder.folderName, fileResult.value.folderInfo?.folderName)
                 assertEquals(file.blobName, fileResult.value.fileName)
             }
             is Failure -> fail("Unexpected $fileResult")
@@ -782,8 +783,8 @@ class StorageServiceTests : ServiceTests() {
         val subFolder2Info = storageService.getFolderById(user, subFolder2Id)
         when (subFolder2Info) {
             is Success -> {
-                assertEquals(3, subFolder2Info.value.first.numberFiles)
-                assertTrue(subFolder2Info.value.first.updatedAt.epochSeconds > subFolder2Info.value.first.createdAt.epochSeconds)
+                assertEquals(3, subFolder2Info.value.folder.numberFiles)
+                assertTrue(subFolder2Info.value.folder.updatedAt.epochSeconds > subFolder2Info.value.folder.createdAt.epochSeconds)
             }
             is Failure -> fail("Unexpected $subFolder2Info")
         }
@@ -794,8 +795,10 @@ class StorageServiceTests : ServiceTests() {
         val subFolder2InfoAfterDelete = storageService.getFolderById(user, subFolder2Id)
         when (subFolder2InfoAfterDelete) {
             is Success -> {
-                assertEquals(2, subFolder2InfoAfterDelete.value.first.numberFiles)
-                assertTrue(subFolder2InfoAfterDelete.value.first.updatedAt.epochSeconds > subFolder2Info.value.first.updatedAt.epochSeconds)
+                assertEquals(2, subFolder2InfoAfterDelete.value.folder.numberFiles)
+                assertTrue(
+                    subFolder2InfoAfterDelete.value.folder.updatedAt.epochSeconds > subFolder2Info.value.folder.updatedAt.epochSeconds,
+                )
             }
             is Failure -> fail("Unexpected $subFolder2InfoAfterDelete")
         }
@@ -850,8 +853,8 @@ class StorageServiceTests : ServiceTests() {
         // Act:  Check folder metadata after moving file in
         when (folderAfterMove) {
             is Success -> {
-                assertEquals(1, folderAfterMove.value.first.numberFiles)
-                assertTrue(folderAfterMove.value.first.updatedAt.epochSeconds > folderAfterMove.value.first.createdAt.epochSeconds)
+                assertEquals(1, folderAfterMove.value.folder.numberFiles)
+                assertTrue(folderAfterMove.value.folder.updatedAt.epochSeconds > folderAfterMove.value.folder.createdAt.epochSeconds)
             }
             is Failure -> fail("Unexpected $folderAfterMove")
         }
@@ -872,8 +875,8 @@ class StorageServiceTests : ServiceTests() {
         // Assert: folder metadata updated correctly after moving file out
         when (folderAfterMoveOut) {
             is Success -> {
-                assertEquals(0, folderAfterMoveOut.value.first.numberFiles)
-                assertTrue(folderAfterMoveOut.value.first.updatedAt.epochSeconds > folderAfterMove.value.first.updatedAt.epochSeconds)
+                assertEquals(0, folderAfterMoveOut.value.folder.numberFiles)
+                assertTrue(folderAfterMoveOut.value.folder.updatedAt.epochSeconds > folderAfterMove.value.folder.updatedAt.epochSeconds)
             }
             is Failure -> fail("Unexpected $folderAfterMoveOut")
         }
@@ -1049,11 +1052,11 @@ class StorageServiceTests : ServiceTests() {
 
         // Assert: folder metadata should reflect the correct number of files
         when (folderInfo) {
-            is Success -> assertEquals(1, folderInfo.value.first.numberFiles)
+            is Success -> assertEquals(1, folderInfo.value.folder.numberFiles)
             is Failure -> fail("Unexpected $folderInfo")
         }
         when (subFolderInfo) {
-            is Success -> assertEquals(1, subFolderInfo.value.first.numberFiles)
+            is Success -> assertEquals(1, subFolderInfo.value.folder.numberFiles)
             is Failure -> fail("Unexpected $subFolderInfo")
         }
 
@@ -1204,11 +1207,11 @@ class StorageServiceTests : ServiceTests() {
         val parentFolderInfo = storageService.getFolderById(user, folderId)
         val subFolderInfo = storageService.getFolderById(user, subFolderId)
         when (parentFolderInfo) {
-            is Success -> assertEquals(1, parentFolderInfo.value.first.numberFiles)
+            is Success -> assertEquals(1, parentFolderInfo.value.folder.numberFiles)
             is Failure -> fail("Unexpected $parentFolderInfo")
         }
         when (subFolderInfo) {
-            is Success -> assertEquals(0, subFolderInfo.value.first.numberFiles)
+            is Success -> assertEquals(0, subFolderInfo.value.folder.numberFiles)
             is Failure -> fail("Unexpected $subFolderInfo")
         }
 
@@ -1309,7 +1312,17 @@ class StorageServiceTests : ServiceTests() {
         // Invited user accepts the invite
         val acceptResult = storageService.validateFolderInvite(invitedUser, folderId, inviteCode, InviteStatus.ACCEPT)
         when (acceptResult) {
-            is Success -> assertTrue(acceptResult.value.folderName == folderName)
+            is Success ->
+                when (val result = acceptResult.value) {
+                    is InviteStatusResult.InviteAccepted -> {
+                        val folder = result.folderMembers.folder
+                        assertEquals(folderName, folder.folderName)
+                        assertEquals(folderId, folder.folderId)
+                        assertEquals(folderType, folder.type)
+                    }
+                    is InviteStatusResult.InviteRejected -> fail("Expected InviteAccepted but got ${acceptResult.value}")
+                }
+
             is Failure -> fail("Unexpected $acceptResult")
         }
 
@@ -1358,9 +1371,20 @@ class StorageServiceTests : ServiceTests() {
             }
 
         // Assert: Invited user accepts the invite
-        when (val res = storageService.validateFolderInvite(invitedUser, sharedFolderId, inviteCode, InviteStatus.ACCEPT)) {
-            is Success -> assertTrue(res.value.folderName == sharedFolderName)
-            is Failure -> fail("Unexpected $res")
+        val acceptResult = storageService.validateFolderInvite(invitedUser, sharedFolderId, inviteCode, InviteStatus.ACCEPT)
+        when (acceptResult) {
+            is Success ->
+                when (val result = acceptResult.value) {
+                    is InviteStatusResult.InviteAccepted -> {
+                        val folder = result.folderMembers.folder
+                        assertEquals(sharedFolderName, folder.folderName)
+                        assertEquals(sharedFolderId, folder.folderId)
+                        assertEquals(sharedFolderType, folder.type)
+                    }
+                    is InviteStatusResult.InviteRejected -> fail("Expected InviteAccepted but got ${acceptResult.value}")
+                }
+
+            is Failure -> fail("Unexpected $acceptResult")
         }
 
         // Act: Invited user checks folders
@@ -1474,11 +1498,19 @@ class StorageServiceTests : ServiceTests() {
 
         // User2 and User3 accept the invite
         when (val res = storageService.validateFolderInvite(user2, sharedFolderId, inviteCode2, InviteStatus.ACCEPT)) {
-            is Success -> assertEquals(sharedFolderName, res.value.folderName)
+            is Success ->
+                when (val result = res.value) {
+                    is InviteStatusResult.InviteAccepted -> assertEquals(sharedFolderName, result.folderMembers.folder.folderName)
+                    is InviteStatusResult.InviteRejected -> fail("Expected InviteAccepted but got ${res.value}")
+                }
             is Failure -> fail("Unexpected $res")
         }
         when (val res = storageService.validateFolderInvite(user3, sharedFolderId, inviteCode3, InviteStatus.ACCEPT)) {
-            is Success -> assertEquals(sharedFolderName, res.value.folderName)
+            is Success ->
+                when (val result = res.value) {
+                    is InviteStatusResult.InviteAccepted -> assertEquals(sharedFolderName, result.folderMembers.folder.folderName)
+                    is InviteStatusResult.InviteRejected -> fail("Expected InviteAccepted but got ${res.value}")
+                }
             is Failure -> fail("Unexpected $res")
         }
 

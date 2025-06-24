@@ -4,7 +4,7 @@ import org.jclouds.blobstore.BlobStoreContext
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileDownload
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
-import pt.isel.leic.multicloudguardian.domain.user.UserInfo
+import pt.isel.leic.multicloudguardian.domain.folder.FolderMembers
 import pt.isel.leic.multicloudguardian.domain.utils.Either
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 import pt.isel.leic.multicloudguardian.domain.utils.PageResult
@@ -132,7 +132,7 @@ sealed class GetFolderByIdError {
     data object FolderNotFound : GetFolderByIdError()
 }
 
-typealias GetFolderResult = Either<GetFolderByIdError, Pair<Folder, List<UserInfo>>>
+typealias GetFolderResult = Either<GetFolderByIdError, FolderMembers>
 
 sealed class GetFileInFolderError {
     data object FolderNotFound : GetFileInFolderError()
@@ -204,7 +204,14 @@ sealed class ValidateFolderInviteError {
     data object FolderNotFound : ValidateFolderInviteError()
 }
 
-typealias ValidateFolderInviteResult = Either<ValidateFolderInviteError, Folder>
+sealed class InviteStatusResult {
+    data class InviteAccepted(
+        val folderMembers: FolderMembers,
+    ) : InviteStatusResult()
+
+    object InviteRejected : InviteStatusResult()
+}
+typealias ValidateFolderInviteResult = Either<ValidateFolderInviteError, InviteStatusResult>
 
 sealed class LeaveFolderError {
     data object UserNotInFolder : LeaveFolderError()

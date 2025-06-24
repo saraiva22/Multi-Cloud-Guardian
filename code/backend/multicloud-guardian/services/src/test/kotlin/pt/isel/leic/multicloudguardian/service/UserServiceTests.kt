@@ -3,6 +3,9 @@ package pt.isel.leic.multicloudguardian.service
 import pt.isel.leic.multicloudguardian.domain.preferences.CostType
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
 import pt.isel.leic.multicloudguardian.domain.utils.Either
+import pt.isel.leic.multicloudguardian.domain.utils.Failure
+import pt.isel.leic.multicloudguardian.domain.utils.Success
+import pt.isel.leic.multicloudguardian.service.sse.SSEService
 import pt.isel.leic.multicloudguardian.service.user.UserCreationError
 import pt.isel.leic.multicloudguardian.service.utils.ServiceTests
 import pt.isel.leic.multicloudguardian.service.utils.TestClock
@@ -22,7 +25,8 @@ class UserServiceTests : ServiceTests() {
     fun `can create user, token, and retrieve by token`() {
         // given: a user service
         val testClock = TestClock()
-        val userService = createUsersService(testClock)
+        val sseService = SSEService()
+        val userService = createUsersService(sseService, testClock)
         val userAgent = "Mobile"
 
         // when: creating a user
@@ -38,8 +42,8 @@ class UserServiceTests : ServiceTests() {
 
         // then: the creation is successful
         when (createUserResult) {
-            is Either.Left -> fail("Unexpected $createUserResult")
-            is Either.Right -> assertTrue(createUserResult.value.value > 0)
+            is Success -> assertTrue(createUserResult.value.value > 0)
+            is Failure -> fail("Unexpected $createUserResult")
         }
 
         // when: creating a token
@@ -48,8 +52,8 @@ class UserServiceTests : ServiceTests() {
         // then: the creation is successful
         val token =
             when (createTokenResult) {
-                is Either.Left -> fail(createTokenResult.toString())
-                is Either.Right -> createTokenResult.value.tokenValue
+                is Success -> createTokenResult.value.tokenValue
+                is Failure -> fail(createTokenResult.toString())
             }
 
         // and: the token bytes have the expected length
@@ -74,7 +78,8 @@ class UserServiceTests : ServiceTests() {
     fun `create user with invalid password`() {
         // given: a user service
         val testClock = TestClock()
-        val userService = createUsersService(testClock)
+        val sseService = SSEService()
+        val userService = createUsersService(sseService, testClock)
         val userAgent = "Mobile"
 
         // when: creating a user with an invalid password
@@ -91,8 +96,8 @@ class UserServiceTests : ServiceTests() {
             userService.createUser(username, email, passwordValidationInfo, salt, iteration, performance, location)
 
         when (createUserResult) {
-            is Either.Left -> assertTrue(createUserResult.value is UserCreationError.InsecurePassword)
-            is Either.Right -> fail("Expected failure but got success: $createUserResult")
+            is Success -> fail("Expected failure but got success: $createUserResult")
+            is Failure -> assertTrue(createUserResult.value is UserCreationError.InsecurePassword)
         }
     }
 
@@ -100,7 +105,8 @@ class UserServiceTests : ServiceTests() {
     fun `create user token`() {
         // given: a user service
         val testClock = TestClock()
-        val userService = createUsersService(testClock)
+        val sseService = SSEService()
+        val userService = createUsersService(sseService, testClock)
         val userAgent = "Mobile"
 
         // when: creating a user
@@ -122,8 +128,8 @@ class UserServiceTests : ServiceTests() {
         // then: the creation is successful
         val token =
             when (createTokenResult) {
-                is Either.Left -> fail(createTokenResult.toString())
-                is Either.Right -> createTokenResult.value.tokenValue
+                is Success -> createTokenResult.value.tokenValue
+                is Failure -> fail(createTokenResult.toString())
             }
 
         // when: retrieving the user by token
@@ -146,7 +152,8 @@ class UserServiceTests : ServiceTests() {
         val testClock = TestClock()
         val tokenTtl = 90.minutes
         val tokenRollingTtl = 30.minutes
-        val userService = createUsersService(testClock, tokenTtl, tokenRollingTtl)
+        val sseService = SSEService()
+        val userService = createUsersService(sseService, testClock, tokenTtl, tokenRollingTtl)
         val userAgent = "Mobile"
 
         // when: creating a user
@@ -162,8 +169,8 @@ class UserServiceTests : ServiceTests() {
 
         // then: the creation is successful
         when (createUserResult) {
-            is Either.Left -> fail("Unexpected $createUserResult")
-            is Either.Right -> assertTrue(createUserResult.value.value > 0)
+            is Success -> assertTrue(createUserResult.value.value > 0)
+            is Failure -> fail("Unexpected $createUserResult")
         }
 
         // when: creating a token
@@ -172,8 +179,8 @@ class UserServiceTests : ServiceTests() {
         // then: the creation is successful
         val token =
             when (createTokenResult) {
-                is Either.Left -> fail(createTokenResult.toString())
-                is Either.Right -> createTokenResult.value.tokenValue
+                is Success -> createTokenResult.value.tokenValue
+                is Failure -> fail(createTokenResult.toString())
             }
 
         // when: retrieving the user after (rolling TTL - 1s) intervals
@@ -195,7 +202,8 @@ class UserServiceTests : ServiceTests() {
     fun `revoke user token`() {
         // given: a user service
         val tests = TestClock()
-        val userService = createUsersService(tests)
+        val sseService = SSEService()
+        val userService = createUsersService(sseService, tests)
         val userAgent = "Mobile"
 
         // then: creating a user
@@ -219,7 +227,7 @@ class UserServiceTests : ServiceTests() {
             }
 
         // when: revoking the token
-        userService.revokeToken(token)
+        userService.revokeToken(createUserResult.id, token)
 
         // then: the token is no longer valid
         val user = userService.getUserByToken(token)
@@ -235,7 +243,8 @@ class UserServiceTests : ServiceTests() {
         // given: a user service
         val testClock = TestClock()
         val maxTokensPerUser = 5
-        val userService = createUsersService(testClock, maxTokensPerUser = maxTokensPerUser)
+        val sseService = SSEService()
+        val userService = createUsersService(sseService, testClock, maxTokensPerUser = maxTokensPerUser)
         val userAgent = "Mobile"
 
         // when: creating a user
@@ -250,8 +259,8 @@ class UserServiceTests : ServiceTests() {
 
         // then: the creation is successful
         when (createUserResult) {
-            is Either.Left -> fail("Unexpected $createUserResult")
-            is Either.Right -> assertTrue(createUserResult.value.value > 0)
+            is Success -> assertTrue(createUserResult.value.value > 0)
+            is Failure -> fail("Unexpected $createUserResult")
         }
 
         // when: creating MAX tokens
@@ -264,8 +273,8 @@ class UserServiceTests : ServiceTests() {
                     // then: the creation is successful
                     val token =
                         when (createTokenResult) {
-                            is Either.Left -> fail(createTokenResult.toString())
-                            is Either.Right -> createTokenResult.value
+                            is Success -> createTokenResult.value
+                            is Failure -> fail(createTokenResult.toString())
                         }
                     token
                 }.toTypedArray()
@@ -282,8 +291,8 @@ class UserServiceTests : ServiceTests() {
         testClock.advance(1.seconds)
         val newToken =
             when (createTokenResult) {
-                is Either.Left -> fail(createTokenResult.toString())
-                is Either.Right -> createTokenResult.value
+                is Success -> createTokenResult.value
+                is Failure -> fail(createTokenResult.toString())
             }
 
         // then: newToken is valid
@@ -307,7 +316,8 @@ class UserServiceTests : ServiceTests() {
         // given: a user service
         val testClock = TestClock()
         val maxTokensPerUser = 5
-        val userService = createUsersService(testClock, maxTokensPerUser = maxTokensPerUser)
+        val sseService = SSEService()
+        val userService = createUsersService(sseService, testClock, maxTokensPerUser = maxTokensPerUser)
         val userAgent = "Mobile"
 
         // when: creating a user
@@ -322,8 +332,8 @@ class UserServiceTests : ServiceTests() {
 
         // then: the creation is successful
         when (createUserResult) {
-            is Either.Left -> fail("Unexpected $createUserResult")
-            is Either.Right -> assertTrue(createUserResult.value.value > 0)
+            is Success -> assertTrue(createUserResult.value.value > 0)
+            is Failure -> fail("Unexpected $createUserResult")
         }
 
         // when: creating MAX tokens
@@ -336,8 +346,8 @@ class UserServiceTests : ServiceTests() {
                     // then: the creation is successful
                     val token =
                         when (createTokenResult) {
-                            is Either.Left -> fail(createTokenResult.toString())
-                            is Either.Right -> createTokenResult.value
+                            is Success -> createTokenResult.value
+                            is Failure -> fail(createTokenResult.toString())
                         }
                     token
                 }.toTypedArray()
@@ -354,8 +364,8 @@ class UserServiceTests : ServiceTests() {
         testClock.advance(1.minutes)
         val newToken =
             when (createTokenResult) {
-                is Either.Left -> fail(createTokenResult.toString())
-                is Either.Right -> createTokenResult.value
+                is Success -> createTokenResult.value
+                is Failure -> fail(createTokenResult.toString())
             }
 
         // then: newToken is valid
@@ -379,7 +389,8 @@ class UserServiceTests : ServiceTests() {
         // given: a user service
         val testClock = TestClock()
         val maxTokensPerUser = 5
-        val userService = createUsersService(testClock, maxTokensPerUser = maxTokensPerUser)
+        val sseService = SSEService()
+        val userService = createUsersService(sseService, testClock, maxTokensPerUser = maxTokensPerUser)
         val userAgent = "Mobile"
 
         // when: creating a user
@@ -394,8 +405,8 @@ class UserServiceTests : ServiceTests() {
 
         // then: the creation is successful
         when (createUserResult) {
-            is Either.Left -> fail("Unexpected $createUserResult")
-            is Either.Right -> assertTrue(createUserResult.value.value > 0)
+            is Success -> assertTrue(createUserResult.value.value > 0)
+            is Failure -> fail("Unexpected $createUserResult")
         }
 
         // when: creating a token
@@ -404,8 +415,8 @@ class UserServiceTests : ServiceTests() {
         // then: token creation is successful
         val token =
             when (tokenCreationResult) {
-                is Either.Left -> fail("Token creation should be successful: '${tokenCreationResult.value}'")
-                is Either.Right -> tokenCreationResult.value
+                is Success -> tokenCreationResult.value
+                is Failure -> fail("Token creation should be successful: '${tokenCreationResult.value}'")
             }
 
         // when: using the token
@@ -415,7 +426,7 @@ class UserServiceTests : ServiceTests() {
         assertNotNull(maybeUser)
 
         // when: revoking and using the token
-        userService.revokeToken(token.tokenValue)
+        userService.revokeToken(maybeUser.id, token.tokenValue)
 
         maybeUser = userService.getUserByToken(token.tokenValue)
 

@@ -40,6 +40,7 @@ import pt.isel.leic.multicloudguardian.service.storage.GetFilesInFolderError
 import pt.isel.leic.multicloudguardian.service.storage.GetFolderByIdError
 import pt.isel.leic.multicloudguardian.service.storage.GetFoldersInFolderError
 import pt.isel.leic.multicloudguardian.service.storage.InviteFolderError
+import pt.isel.leic.multicloudguardian.service.storage.InviteStatusResult
 import pt.isel.leic.multicloudguardian.service.storage.LeaveFolderError
 import pt.isel.leic.multicloudguardian.service.storage.StorageService
 import pt.isel.leic.multicloudguardian.service.storage.UploadFileError
@@ -162,7 +163,7 @@ class FoldersController(
             is Success ->
                 ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(FolderInfoOutputModel.fromDomain(res.value.first, res.value.second))
+                    .body(FolderInfoOutputModel.fromDomain(res.value.folder, res.value.members))
 
             is Failure ->
                 when (res.value) {
@@ -453,15 +454,26 @@ class FoldersController(
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Folders.validateFolderInvite(folderId, inviteId)
-        val invite = storageService.validateFolderInvite(authenticatedUser.user, Id(folderId), Id(inviteId), input.inviteStatus)
-        return when (invite) {
+        val res = storageService.validateFolderInvite(authenticatedUser.user, Id(folderId), Id(inviteId), input.inviteStatus)
+        return when (res) {
             is Success ->
-                ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(FolderInfoOutputModel.fromDomain(invite.value))
+                when (val resultSuc = res.value) {
+                    is InviteStatusResult.InviteAccepted -> {
+                        val folderMembers = resultSuc.folderMembers
+                        return ResponseEntity
+                            .status(HttpStatus.OK)
+                            .body(FolderInfoOutputModel.fromDomain(folderMembers.folder, folderMembers.members))
+                    }
+
+                    is InviteStatusResult.InviteRejected ->
+                        ResponseEntity
+                            .status(HttpStatus.OK)
+                            .header("Location", instance.toASCIIString())
+                            .build<Unit>()
+                }
 
             is Failure ->
-                when (invite.value) {
+                when (res.value) {
                     ValidateFolderInviteError.FolderIsPrivate -> Problem.folderIsPrivate(folderId, instance)
                     ValidateFolderInviteError.InvalidInvite -> Problem.invalidInviteFolder(folderId, instance)
                     ValidateFolderInviteError.FolderNotFound -> Problem.folderNotFound(folderId, instance)

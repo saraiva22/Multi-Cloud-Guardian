@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.folder.Folder
+import pt.isel.leic.multicloudguardian.domain.folder.FolderMembers
 import pt.isel.leic.multicloudguardian.domain.folder.FolderPrivateInvite
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
@@ -170,7 +171,7 @@ class JdbiStorageRepository(
                 inner join dbo.Users on folder.user_id = users.id
                 left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
                 where folder.folder_name = :folderName and ((:parentFolderId IS NULL AND folder.parent_folder_id IS NULL)
-                  OR folder.parent_folder_id = :parentFolderId)
+                  OR folder.parent_folder_id = :parentFolderId) 
                 """.trimIndent(),
             ).bind("parentFolderId", parentFolderId?.value)
             .bind("folderName", folderName)
@@ -178,6 +179,7 @@ class JdbiStorageRepository(
             .singleOrNull()
 
     override fun isFolderNameExists(
+        userId: Id,
         parentFolderId: Id?,
         folderName: String,
     ): Boolean =
@@ -185,10 +187,11 @@ class JdbiStorageRepository(
             .createQuery(
                 """
                 select count(*) from dbo.Folders 
-                where folder_name = :folderName
+                where folder_name = :folderName and user_id = :userId
                 and parent_folder_id IS NOT DISTINCT FROM :parentFolderId
                 """.trimIndent(),
             ).bind("folderName", folderName)
+            .bind("userId", userId.value)
             .bind("parentFolderId", parentFolderId?.value)
             .mapTo<Int>()
             .single() == 1
@@ -209,7 +212,7 @@ class JdbiStorageRepository(
     override fun getFolderById(
         folderId: Id,
         members: Boolean,
-    ): Pair<Folder, List<UserInfo>>? {
+    ): FolderMembers? {
         val baseQuery =
             """
             select folder.*, users.username, users.email,
@@ -229,7 +232,7 @@ class JdbiStorageRepository(
 
         val membersList = if (members) membersInFolder(folderId) else emptyList()
 
-        return Pair(folder, membersList)
+        return FolderMembers(folder, membersList)
     }
 
     override fun getFiles(
