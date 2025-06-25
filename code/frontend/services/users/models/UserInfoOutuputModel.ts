@@ -1,10 +1,10 @@
 import { LocationType } from "@/domain/preferences/LocationType";
-import { PerformanceType } from "@/domain/preferences/PerformanceType";
+import { CostType } from "@/domain/preferences/CostType";
 
 export type UserInfoOutputModel = {
   userId: number;
   username: string;
   email: string;
   locationType: LocationType;
-  performanceType: PerformanceType;
+  costType: CostType;
 };

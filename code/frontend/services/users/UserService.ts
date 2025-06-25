@@ -2,7 +2,7 @@ import httpServiceInit, { apiRoutes, PREFIX_API } from "../utils/HttpService";
 import { LoginOutput } from "./models/LoginOutputModel";
 import { RegisterOutput } from "./models/RegisterOutputModel";
 import { LogoutOutput } from "./models/LogoutOutput";
-import { PerformanceType } from "@/domain/preferences/PerformanceType";
+import { CostType } from "@/domain/preferences/CostType";
 import { LocationType } from "@/domain/preferences/LocationType";
 import { CreateUserOutputModel } from "./models/CredentialOutputMode";
 import { UserInfoOutputModel } from "./models/UserInfoOutuputModel";
@@ -16,7 +16,7 @@ export async function register(
   password: string,
   salt: string,
   iterations: number,
-  performance: PerformanceType,
+  cost: CostType,
   location: LocationType
 ): Promise<RegisterOutput> {
   const path = PREFIX_API + apiRoutes.REGISTER_USER;
@@ -28,7 +28,7 @@ export async function register(
       password,
       salt,
       iterations,
-      performanceType: performance,
+      costType: cost,
       locationType: location,
     })
   );

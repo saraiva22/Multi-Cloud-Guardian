@@ -20,11 +20,11 @@ import {
   LocationTypeLabel,
 } from "@/domain/preferences/LocationType";
 import {
-  PERFORMANCE_ARRAY,
-  PerformanceType,
-  PerformanceTypeInfo,
-  PerformanceTypeLabel,
-} from "@/domain/preferences/PerformanceType";
+  COST_ARRAY,
+  CostType,
+  CostTypeInfo,
+  CostTypeLabel,
+} from "@/domain/preferences/CostType";
 import { apiRoutes, PREFIX_API } from "@/services/utils/HttpService";
 import {
   getProblemMessage,
@@ -42,7 +42,7 @@ type State =
       tag: "loaded";
       userInfo: UserInfoOutputModel;
       locationInfo: any;
-      performanceInfo: any;
+      costInfo: any;
     }
   | { tag: "error"; error: Problem | string; url: string };
 
@@ -53,7 +53,7 @@ type Action =
       type: "loading-success";
       userInfo: UserInfoOutputModel;
       locationInfo: any;
-      performanceInfo: any;
+      costInfo: any;
     }
   | { type: "loading-error"; error: Problem | string };
 
@@ -76,7 +76,7 @@ function reducer(state: State, action: Action): State {
         tag: "loaded",
         userInfo: action.userInfo,
         locationInfo: action.locationInfo,
-        performanceInfo: action.performanceInfo,
+        costInfo: action.costInfo,
       };
     case "loading-error":
       if (state.tag !== "loading") {
@@ -105,14 +105,14 @@ const Preferences = () => {
       const res = await getUserByUsername(username);
 
       const locationInfo = LocationTypeInfo[res.locationType as LocationType];
-      const performanceInfo =
-        PerformanceTypeInfo[res.performanceType as PerformanceType];
+      const costInfo =
+        CostTypeInfo[res.costType as CostType];
 
       dispatch({
         type: "loading-success",
         userInfo: res,
         locationInfo,
-        performanceInfo,
+        costInfo: costInfo,
       });
     } catch (error) {
       console.log("Error fetching preferences:", error);
@@ -227,14 +227,14 @@ const Preferences = () => {
           >
             <View>
               <Text className="text-[24px] font-semibold text-neutral-900">
-                Performance
+                Cost
               </Text>
               <Text className="text-[24px] text-neutral-400">
-                {state.performanceInfo.label}
+                {state.costInfo.label}
               </Text>
             </View>
             <Image
-              source={state.performanceInfo.icon}
+              source={state.costInfo.icon}
               className="w-[72px] h-[72px]"
               resizeMode="contain"
             />

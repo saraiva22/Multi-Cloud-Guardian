@@ -178,7 +178,7 @@ class JdbiUsersRepository(
         handle
             .createUpdate(
                 """
-                insert into dbo.Preferences (user_id,cost,location,storage_provider) values (:user_id, :cost, :location, :storage_provider)
+                insert into dbo.Preferences (user_id,location,cost, storage_provider) values (:user_id,:location,:cost, :storage_provider)
                 """.trimIndent(),
             ).bind("user_id", userId.value)
             .bind("cost", costType.ordinal)

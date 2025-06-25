@@ -2,10 +2,7 @@ import {
   LocationType,
   LocationTypeLabel,
 } from "@/domain/preferences/LocationType";
-import {
-  PerformanceType,
-  PerformanceTypeLabel,
-} from "@/domain/preferences/PerformanceType";
+import { PerformanceType, CostTypeLabel } from "@/domain/preferences/CostType";
 import Slider from "@react-native-community/slider";
 import { View, Text, Image } from "react-native";
 
@@ -33,7 +30,7 @@ const SliderState = ({
     if (title === "Location") {
       return LocationTypeLabel[stateItem.label as LocationType];
     } else {
-      return PerformanceTypeLabel[stateItem.label as PerformanceType];
+      return CostTypeLabel[stateItem.label as PerformanceType];
     }
   };
   return (

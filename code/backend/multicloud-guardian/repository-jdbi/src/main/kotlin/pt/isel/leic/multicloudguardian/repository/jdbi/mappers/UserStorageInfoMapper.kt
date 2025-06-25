@@ -22,6 +22,6 @@ class UserStorageInfoMapper : RowMapper<UserStorageInfo> {
             username = Username(rs.getString("username")),
             email = Email(rs.getString("email")),
             locationType = LocationType.entries[rs.getInt("location")],
-            costType = CostType.entries[rs.getInt("performance")],
+            costType = CostType.entries[rs.getInt("cost")],
         )
 }

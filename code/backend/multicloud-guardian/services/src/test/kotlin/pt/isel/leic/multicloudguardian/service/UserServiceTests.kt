@@ -147,6 +147,48 @@ class UserServiceTests : ServiceTests() {
     }
 
     @Test
+    fun `can create user and retrieve by id and username`() {
+        // given: a user service
+        val testClock = TestClock()
+        val sseService = SSEService()
+        val userService = createUsersService(sseService, testClock)
+
+        // when: creating a user
+        val username = newTestUserName()
+        val password = newTestPassword()
+        val email = newTestEmail(username)
+        val salt = newTestSalt()
+        val iteration = newTestIteration()
+        val performance = CostType.MEDIUM
+        val location = LocationType.EUROPE
+
+        val createUserResult = userService.createUser(username, email, password, salt, iteration, performance, location)
+        val userId =
+            when (createUserResult) {
+                is Success -> createUserResult.value.value
+                is Failure -> fail("Unexpected $createUserResult")
+            }
+
+        // when: retrieving by id
+        val byIdResult = userService.getUserStorageById(userId)
+        // when: retrieving by id
+        val userById =
+            (userService.getUserStorageById(userId) as? Success)?.value
+                ?: fail("User not found by id: $userId")
+        assertEquals(username, userById.username.value)
+
+        // when: retrieving by username
+        val byUsernameResult = userService.getUserByUsername(userById.username)
+        val userByUsername =
+            (byUsernameResult as? Success)?.value
+                ?: fail("User not found by username: ${userById.username}")
+        assertEquals(userId, userByUsername.id.value)
+
+        // clean up
+        clearData(jdbi, "dbo.Users", "id", userId)
+    }
+
+    @Test
     fun `can use token during rolling period but not after absolute TTL`() {
         // given: a user service
         val testClock = TestClock()

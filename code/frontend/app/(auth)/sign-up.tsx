@@ -11,10 +11,7 @@ import {
   generateRandomNumber,
   convertArrayBufferToString,
 } from "../../services/security/SecurityService";
-import {
-  PERFORMANCE_ARRAY,
-  PerformanceType,
-} from "@/domain/preferences/PerformanceType";
+import { COST_ARRAY, CostType } from "@/domain/preferences/CostType";
 import SliderState from "@/components/SliderState";
 import {
   LOCATION_ARRAY,
@@ -44,7 +41,7 @@ type State =
         username: string;
         email: string;
         password: string;
-        performance: PerformanceType;
+        cost: CostType;
         location: LocationType;
       };
     }
@@ -52,7 +49,7 @@ type State =
       tag: "submitting";
       username: string;
       email: string;
-      performance: PerformanceType;
+      cost: CostType;
       location: LocationType;
     }
   | { tag: "redirect" };
@@ -81,7 +78,7 @@ function reducer(state: State, action: Action): State {
           tag: "submitting",
           username: state.inputs.username,
           email: state.inputs.email,
-          performance: state.inputs.performance,
+          cost: state.inputs.cost,
           location: state.inputs.location,
         };
       } else {
@@ -100,7 +97,7 @@ function reducer(state: State, action: Action): State {
             username: state.username,
             email: state.email,
             password: "",
-            performance: PerformanceType.LOW,
+            cost: CostType.LOW,
             location: LocationType.NORTH_AMERICA,
           },
         };
@@ -121,7 +118,7 @@ const firstState: State = {
     username: "",
     email: "",
     password: "",
-    performance: PerformanceType.LOW,
+    cost: CostType.LOW,
     location: LocationType.NORTH_AMERICA,
   },
 };
@@ -154,7 +151,7 @@ const SignUp = () => {
     const username = state.inputs.username;
     const email = state.inputs.email;
     const password = state.inputs.password;
-    const performance = state.inputs.performance;
+    const cost = state.inputs.cost;
     const location = state.inputs.location;
 
     if (!username?.trim() || !password?.trim() || !email?.trim()) {
@@ -174,7 +171,7 @@ const SignUp = () => {
         password,
         salt,
         iterations,
-        performance,
+        cost,
         location
       );
 
@@ -210,10 +207,10 @@ const SignUp = () => {
   const password =
     state.tag === "submitting" ? "" : state.inputs?.password || "";
 
-  const performance =
-    state.tag === "submitting" && state.performance
-      ? state.performance
-      : state.inputs?.performance || 0;
+  const cost =
+    state.tag === "submitting" && state.cost
+      ? state.cost
+      : state.inputs?.cost || 0;
 
   const location =
     state.tag === "submitting" && state.location
@@ -265,11 +262,11 @@ const SignUp = () => {
           />
 
           <SliderState
-            title="Performance"
-            value={performance}
-            handleChange={(value) => handleChange("performance", value)}
+            title="Cost"
+            value={cost}
+            handleChange={(value) => handleChange("cost", value)}
             otherStyles="mt-5"
-            state={PERFORMANCE_ARRAY}
+            state={COST_ARRAY}
           />
 
           <CustomButtom
