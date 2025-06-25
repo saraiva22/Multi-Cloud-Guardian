@@ -593,7 +593,12 @@ class StorageService(
             storageRepository.folderInviteUpdated(guest.id, inviteId, inviteStatus)
 
             return@run when (inviteStatus) {
-                InviteStatus.ACCEPT -> success(InviteStatusResult.InviteAccepted(folderMembers))
+                InviteStatus.ACCEPT -> {
+                    val newMember = UserInfo(guest.id, guest.username, guest.email)
+                    val folder = folderMembers.folder
+                    sseService.sendNewMember(folder.user.id.value, newMember, folderId.value, folder.folderName)
+                    success(InviteStatusResult.InviteAccepted(folderMembers))
+                }
                 InviteStatus.REJECT -> success(InviteStatusResult.InviteRejected)
                 InviteStatus.PENDING -> failure(ValidateFolderInviteError.InvalidInvite)
             }

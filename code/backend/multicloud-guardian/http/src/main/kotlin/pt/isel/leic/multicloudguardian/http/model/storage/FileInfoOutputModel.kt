@@ -32,6 +32,7 @@ data class FileInfoOutputModel(
                         FolderInfoDetailsModel(
                             folderId = it.id.value,
                             folderName = it.folderName,
+                            folderType = it.folderType,
                         )
                     },
                 name = file.fileName,

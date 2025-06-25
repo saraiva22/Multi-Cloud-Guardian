@@ -7,6 +7,8 @@ import pt.isel.leic.multicloudguardian.domain.folder.FolderInfo
 import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
 import pt.isel.leic.multicloudguardian.domain.sse.Event
 import pt.isel.leic.multicloudguardian.domain.sse.EventEmitter
+import pt.isel.leic.multicloudguardian.domain.sse.FolderInfoOutput
+import pt.isel.leic.multicloudguardian.domain.sse.UserInfoOutput
 import pt.isel.leic.multicloudguardian.domain.user.UserInfo
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -22,6 +24,7 @@ class SSEService : NeedsShutdown {
     private val userListeners = mutableMapOf<Int, MutableList<Pair<String, EventEmitter>>>()
     private var currentId = 0L
     private var currentInviteId = 0L
+    private var currentNewMemberId = 0L
     private val lock = ReentrantLock()
 
     // A scheduler to send the periodic keep-alive events
@@ -81,13 +84,14 @@ class SSEService : NeedsShutdown {
         logger.info("sendFile")
         val id = currentId++
         val membersFolder = members.map { it.id.value }
+
         sendEventToAll(
             membersFolder,
             Event.File(
                 id,
                 fileId,
-                user,
-                folderInfo,
+                UserInfoOutput.fromDomain(user),
+                FolderInfoOutput.fromDomain(folderInfo),
                 fileName,
                 path,
                 size,
@@ -108,7 +112,18 @@ class SSEService : NeedsShutdown {
     ) = lock.withLock {
         logger.info("sendInvite")
         val id = currentInviteId++
-        sendEventToAll(listOf(guestId), Event.Invite(id, inviteId, status, inviterInfo, folderId, folderName))
+        sendEventToAll(listOf(guestId), Event.Invite(id, inviteId, status, UserInfoOutput.fromDomain(inviterInfo), folderId, folderName))
+    }
+
+    fun sendNewMember(
+        ownerId: Int,
+        newMember: UserInfo,
+        folderId: Int,
+        folderName: String,
+    ) = lock.withLock {
+        logger.info("newMember")
+        val id = currentNewMemberId++
+        sendEventToAll(listOf(ownerId), Event.NewMember(id, ownerId, UserInfoOutput.fromDomain(newMember), folderId, folderName))
     }
 
     fun disconnectListener(

@@ -34,6 +34,7 @@ data class FolderInfoOutputModel(
                     FolderInfoDetailsModel(
                         it.id.value,
                         it.folderName,
+                        it.folderType,
                     )
                 },
                 folder.folderName,

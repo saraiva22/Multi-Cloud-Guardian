@@ -28,6 +28,13 @@ class SseEmitterBasedEventEmitter(
                         .name("invite")
                         .data(event)
 
+                is Event.NewMember ->
+                    SseEmitter
+                        .event()
+                        .id(event.id.toString())
+                        .name("newMember")
+                        .data(event)
+
                 is Event.KeepAlive ->
                     SseEmitter
                         .event()
