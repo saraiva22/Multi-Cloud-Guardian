@@ -31,7 +31,11 @@ import {
 } from "@/services/media/Problem";
 import CustomButton from "@/components/CustomButton";
 import icons from "@/constants/icons";
-import { formatDate, formatSize } from "@/services/utils/Function";
+import {
+  formatDate,
+  formatFolderType,
+  formatSize,
+} from "@/services/utils/Function";
 import { removeValueFor } from "@/services/storage/SecureStorage";
 import { useAuthentication } from "@/context/AuthProvider";
 import { File } from "@/domain/storage/File";
@@ -40,7 +44,12 @@ import { Folder } from "@/domain/storage/Folder";
 import FileItemComponent from "@/components/FileItemComponent";
 import FolderCard from "@/components/FolderCard";
 import EmptyState from "@/components/EmptyState";
-import { FolderType } from "@/domain/storage/FolderType";
+import {
+  FolderType,
+  folderTypeFromString,
+  FolderTypeLabel,
+  FolderTypeValue,
+} from "@/domain/storage/FolderType";
 
 // The State
 type State =
@@ -169,6 +178,9 @@ const FolderInfoDetails = ({
         Folder Name: {folderDetails.folderName}
       </Text>
       <Text className="text-[16px] text-zinc-300">
+        Folder Type: {formatFolderType(folderDetails.type)}
+      </Text>
+      <Text className="text-[16px] text-zinc-300">
         Folder Size: {formatSize(folderDetails.size)}
       </Text>
       <Text className="text-[16px] text-zinc-300">
@@ -177,6 +189,11 @@ const FolderInfoDetails = ({
       <Text className="text-[16px] text-zinc-300">
         Created At: {formatDate(folderDetails.createdAt)}
       </Text>
+      {folderDetails.parentFolderInfo != null && (
+        <Text className="text-[16px] text-zinc-300">
+          Parent Folder: {folderDetails.parentFolderInfo.folderName}
+        </Text>
+      )}
     </View>
 
     <View>
@@ -200,15 +217,14 @@ const FolderDetails = () => {
   const fetchFileDetails = async () => {
     dispatch({ type: "start-loading" });
     try {
-      console.log("ENTROUUU ");
       const details = await getFolder(folderId.toString());
       const files = await getFilesInFolder(folderId.toString());
-      const folders =
-        details.type === FolderType.PRIVATE
-          ? await getFoldersInFolder(folderId.toString())
-          : null;
+      const isPrivate = details.type === FolderType.PRIVATE;
 
-      console.log("SAIU ");
+      const folders = isPrivate
+        ? await getFoldersInFolder(folderId.toString())
+        : null;
+
       dispatch({ type: "loading-success", details, files, folders });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
@@ -296,7 +312,7 @@ const FolderDetails = () => {
                   state={state}
                   handleDelete={handleDelete}
                 />
-                {state.folders && state.folders.content ? (
+                {state.folders != null ? (
                   <View className="w-full flex-1 pt-5 pb-8">
                     <View className="flex-row items-center justify-between mb-3">
                       <Text className="text-2xl font-bold text-gray-100 mb-3">
