@@ -337,7 +337,8 @@ export async function createFolder(
 
 export async function createSubFolder(
   folderId: string,
-  folderName: string
+  folderName: string,
+  folderType: FolderType
 ): Promise<RegisterOutput> {
   const path =
     PREFIX_API + apiRoutes.CREATE_FOLDER_IN_FOLDER.replace(":id", folderId);
@@ -345,6 +346,7 @@ export async function createSubFolder(
     path,
     JSON.stringify({
       folderName: folderName,
+      folderType: folderType,
     })
   );
 }

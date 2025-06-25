@@ -6,7 +6,7 @@ import { UserInfo } from "@/domain/user/UserInfo";
 export type FolderOutputModel = {
   folderId: number;
   user: UserInfo;
-  parentFolderId: FolderInfo | null;
+  parentFolderInfo: FolderInfo | null;
   folderName: string;
   size: number;
   numberFile: number;

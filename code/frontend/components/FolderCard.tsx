@@ -17,7 +17,6 @@ const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
   const router = useRouter();
   const isActive = activeItem === item.folderId;
 
-  console.log("ACTIVE ITME 234 ", activeItem)
   const handlePress = () => {
     setActiveItem(item.folderId);
     router.push(`/folders/${item.folderId}`);
@@ -65,8 +64,6 @@ const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
 const FolderCard = ({ folders }: any) => {
   const [activeItem, setActiveItem] = useState(folders[0]?.folderId);
 
-  console.log("FOLDER ", folders);
-  console.log("ACTIVE ITME ", activeItem)
   const viewableItemsChanged = ({ viewableItems }) => {
     if (viewableItems.length > 0) {
       setActiveItem(viewableItems[0].key);

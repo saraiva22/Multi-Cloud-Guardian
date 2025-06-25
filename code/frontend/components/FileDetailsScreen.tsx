@@ -160,6 +160,16 @@ const FileInfo = ({
       <Text className="text-[16px] text-zinc-300">
         Encrypted: {fileInfo.encryption ? "Yes" : "No"}
       </Text>
+      {fileInfo.folderInfo != null && (
+        <Text className="text-[16px] text-zinc-300">
+          ParentFolder Name: {fileInfo.folderInfo.folderName}
+        </Text>
+      )}
+      {fileInfo.folderInfo != null && (
+        <Text className="text-[16px] text-zinc-300">
+          ParentFolder Type: {fileInfo.folderInfo.folderType}
+        </Text>
+      )}
     </View>
 
     <View>

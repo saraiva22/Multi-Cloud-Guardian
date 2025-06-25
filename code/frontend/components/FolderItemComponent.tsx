@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, Image } from "react-native";
 import React from "react";
 import { Link, useRouter } from "expo-router";
 import { icons } from "@/constants";
-import { formatDate, formatSize } from "@/services/utils/Function";
+import { formatDate, formatFolderType, formatSize } from "@/services/utils/Function";
 import { Folder } from "@/domain/storage/Folder";
 import { MaterialIcons } from "@expo/vector-icons";
 
@@ -46,7 +46,7 @@ const FolderItemComponent = ({ item, onPress }: Props) => {
         </Text>
         <Text className="text-gray-400 text-base">
           {item.size ? `${formatSize(item.size)}, ` : ""}
-          Modified {formatDate(item.createdAt)}
+          Modified {formatDate(item.createdAt)} ({formatFolderType(item.type)})
         </Text>
       </View>
       <MaterialIcons name="more-vert" size={22} color="white" />

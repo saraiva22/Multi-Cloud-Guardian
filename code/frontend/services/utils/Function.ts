@@ -1,4 +1,5 @@
 import { months } from "@/constants/months";
+import { FolderType } from "@/domain/storage/FolderType";
 
 export const formatSize = (bytes?: number) => {
   if (!bytes) return "0 Kb";
@@ -12,4 +13,8 @@ export const formatDate = (date: number) => {
   return `${
     months[dateObj.getMonth()]
   } ${dateObj.getDate()}, ${dateObj.getFullYear()}`;
+};
+
+export const formatFolderType = (type: FolderType) => {
+  return type.charAt(0) + type.slice(1).toLowerCase();
 };

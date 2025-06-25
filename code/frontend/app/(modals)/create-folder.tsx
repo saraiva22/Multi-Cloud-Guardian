@@ -219,9 +219,13 @@ const CreateFolder = () => {
           });
           return;
         }
-        await createSubFolder(parentFolderId.toString(), folderName,folderType);
+        await createSubFolder(
+          parentFolderId.toString(),
+          folderName,
+          folderType
+        );
       } else {
-        await createFolder(folderName,folderType);
+        await createFolder(folderName, folderType);
       }
 
       dispatch({ type: "success" });
@@ -242,7 +246,7 @@ const CreateFolder = () => {
   const folderType =
     state.tag === "submitting" && state.folderType
       ? state.folderType
-      : state.inputs?.folderType || "";
+      : state.inputs?.folderType || FolderType.PRIVATE;
 
   return (
     <SafeAreaView className="bg-primary h-full">
@@ -278,8 +282,13 @@ const CreateFolder = () => {
         />
 
         <FolderTypeSelector
+          title="Folder Type"
           value={folderType}
           onChange={(type) => handleChange("folderType", type)}
+        />
+
+        <View
+          style={{ height: 1, backgroundColor: "#23232a", marginVertical: 18 }}
         />
 
         <View className="mt-2">

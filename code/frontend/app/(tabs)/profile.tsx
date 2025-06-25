@@ -12,7 +12,7 @@ import { icons } from "@/constants";
 import { useAuthentication } from "@/context/AuthProvider";
 import { removeValueFor } from "@/services/storage/SecureStorage";
 import { getUserByUsername, logout } from "@/services/users/UserService";
-import { router } from "expo-router";
+import { Href, router } from "expo-router";
 import React from "react";
 import CustomButtom from "../../components/CustomButton";
 
@@ -33,17 +33,18 @@ const ProfileScreen = () => {
     }
   }
 
-  const handlePreferences = async () => {
+  function goIfLogged(href: Href) {
     if (username) {
-      router.push("/(modals)/preferences");
+      router.push(href);
     }
-  };
+  }
 
-  const handleStorageDetails = async () => {
-    if (username) {
-      router.push("/(modals)/storage-details");
-    }
-  };
+  const handlePreferences = () => goIfLogged("/(modals)/preferences");
+  const handleStorageDetails = () => goIfLogged("/(modals)/storage-details");
+  const handleCreateInvite = () => goIfLogged("/(modals)/create-invite");
+  const handleReceivedInvites = () => goIfLogged("/(modals)/received-invites");
+  const handleSentInvites = () => goIfLogged("/(modals)/sent-invites");
+
   return (
     <SafeAreaView className="bg-primary h-full">
       <View className="items-center mt-16">
@@ -65,14 +66,49 @@ const ProfileScreen = () => {
       </View>
 
       <View className="space-y-5 px-4">
-        <TouchableOpacity className="flex-row items-center justify-between py-3 bg-primary rounded-lg">
+        <TouchableOpacity
+          onPress={handleCreateInvite}
+          className="flex-row items-center justify-between py-3 bg-primary rounded-lg"
+        >
           <View className="flex-row items-center space-x-4">
             <Image
               source={icons.add_friend}
               className="w-6 h-6"
               style={{ tintColor: "#FFFFFF" }}
             />
-            <Text className="text-[18px] text-white ml-7">Add Friend</Text>
+            <Text className="text-[18px] text-white ml-7">Invite Someone</Text>
+          </View>
+          <Text className="text-[22px] text-gray-200">{">"}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handleReceivedInvites}
+          className="flex-row items-center justify-between py-3 bg-primary rounded-lg"
+        >
+          <View className="flex-row items-center space-x-4">
+            <Image
+              source={icons.invite_in}
+              className="w-6 h-6"
+              style={{ tintColor: "#FFFFFF" }}
+            />
+            <Text className="text-[18px] text-white ml-7">
+              Incoming Invites
+            </Text>
+          </View>
+          <Text className="text-[22px] text-gray-200">{">"}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handleSentInvites}
+          className="flex-row items-center justify-between py-3 bg-primary rounded-lg"
+        >
+          <View className="flex-row items-center space-x-4">
+            <Image
+              source={icons.sent_invite}
+              className="w-6 h-6"
+              style={{ tintColor: "#FFFFFF" }}
+            />
+            <Text className="text-[18px] text-white ml-7">Sent Invites</Text>
           </View>
           <Text className="text-[22px] text-gray-200">{">"}</Text>
         </TouchableOpacity>
@@ -111,7 +147,7 @@ const ProfileScreen = () => {
       <CustomButtom
         title="Logout"
         handlePress={goLogout}
-        containerStyles="mt-48"
+        containerStyles="mt-32"
         isLoading={false}
         textStyles={""}
         color="bg-secondary rounded-full  mx-4 mb-4 h-[50px] w-[80%] self-center"

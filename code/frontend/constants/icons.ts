@@ -41,6 +41,8 @@ import image_icon from "../assets/icons/image_icon.png";
 import dots_vertical from "../assets/icons/dots_vertical.png";
 import folder from "../assets/icons/folder1.png";
 import document from "../assets/icons/document_icon.png";
+import invite_in from "../assets/icons/invite-in.png";
+import sent_invite from "../assets/icons/sent-invite.png";
 
 export default {
   europe,
@@ -86,4 +88,6 @@ export default {
   filter_black1,
   folder,
   document,
+  invite_in,
+  sent_invite,
 };
