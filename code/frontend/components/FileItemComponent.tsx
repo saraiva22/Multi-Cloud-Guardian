@@ -3,11 +3,11 @@ import React from "react";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { icons } from "@/constants";
 import { formatDate, formatSize } from "@/services/utils/Function";
-import { FileType } from "@/domain/storage/FileType";
+import { File } from "@/domain/storage/File";
 import { MaterialIcons } from "@expo/vector-icons";
 
 type Props = {
-  item: FileType;
+  item: File;
 };
 
 const FileItemComponent = ({ item }: Props) => {

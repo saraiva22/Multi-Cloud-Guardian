@@ -1,16 +1,15 @@
-
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import React from "react";
 import { images } from "@/constants";
 import { formatSize } from "@/services/utils/Function";
 import { useRouter } from "expo-router";
-import { FolderType } from "@/domain/storage/FolderType";
-import { MaterialIcons } from '@expo/vector-icons';
+import { Folder } from "@/domain/storage/Folder";
+import { MaterialIcons } from "@expo/vector-icons";
 
 type Props = {
-  item: FolderType;
+  item: Folder;
   activeItem?: string;
-  setActiveItem?:(id:string) => void
+  setActiveItem?: (id: string) => void;
 };
 
 const FolderGridItemComponent = ({ item }: Props) => {
@@ -32,7 +31,7 @@ const FolderGridItemComponent = ({ item }: Props) => {
           className="w-10 h-10"
           resizeMode="contain"
         />
-          <MaterialIcons name="more-vert" size={24} color="white" />
+        <MaterialIcons name="more-vert" size={24} color="white" />
       </View>
 
       <View>

@@ -25,6 +25,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
 
 class JdbiStorageRepositoryTests {
     @Test
@@ -295,16 +296,18 @@ class JdbiStorageRepositoryTests {
         runWithHandle { handle ->
             val repo = JdbiStorageRepository(handle)
             val userId = Id(1)
-            val createdAt = Clock.System.now()
+            val createdAt = TestClock()
 
             val fileA = fileCreation()
             val fileB = fileCreation()
 
-            val idA = repo.storeFile(fileA, "/A.txt", "http://a.com", userId, null, fileA.blobName, false, createdAt, null)
-            val idB = repo.storeFile(fileB, "/B.txt", "http://b.com", userId, null, fileB.blobName, false, createdAt, null)
+            val idA = repo.storeFile(fileA, "/A.txt", "http://a.com", userId, null, fileA.blobName, false, createdAt.now(), null)
+            createdAt.advance(1.minutes)
+            val idB = repo.storeFile(fileB, "/B.txt", "http://b.com", userId, null, fileB.blobName, false, createdAt.now(), null)
 
             val files = repo.getFiles(userId, 10, 0, "")
-            assertEquals(listOf(fileB.blobName, fileA.blobName), files.map { it.fileName })
+            createdAt.advance(1.minutes)
+            assertEquals(listOf(fileA.blobName, fileB.blobName), files.map { it.fileName })
 
             clearData(jdbi, "dbo.Files", "file_id", idA.value)
             clearData(jdbi, "dbo.Files", "file_id", idB.value)

@@ -1,5 +1,5 @@
-import { FileType } from "@/domain/storage/FileType";
+import { File } from "@/domain/storage/File";
 
 export type FilesListOutputModel = {
-  files: Array<FileType>;
+  files: Array<File>;
 };

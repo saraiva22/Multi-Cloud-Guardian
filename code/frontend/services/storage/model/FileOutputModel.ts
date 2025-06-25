@@ -1,9 +1,10 @@
 import { UserInfo } from "@/domain/user/UserInfo";
+import { FolderInfoDetailsModel } from "./FolderInfoDetailsModel";
 
 export type FileOutputModel = {
   fileId: number;
   user: UserInfo;
-  folderId: number | null;
+  folderInfo: FolderInfoDetailsModel | null;
   name: string;
   path: string;
   size: number;

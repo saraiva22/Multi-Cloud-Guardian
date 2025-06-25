@@ -154,11 +154,10 @@ class FoldersController(
     @GetMapping(Uris.Folders.GET_FOLDER_BY_ID)
     fun getFolder(
         @PathVariable @Validated folderId: Int,
-        @RequestParam(required = false) members: Boolean = false,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Folders.folderById(folderId)
-        val res = storageService.getFolderById(authenticatedUser.user, Id(folderId), members)
+        val res = storageService.getFolderById(authenticatedUser.user, Id(folderId))
         return when (res) {
             is Success ->
                 ResponseEntity

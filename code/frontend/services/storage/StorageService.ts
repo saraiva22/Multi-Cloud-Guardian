@@ -19,9 +19,11 @@ import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 import { Alert, Platform } from "react-native";
 import { PageResult } from "@/domain/utils/PageResult";
-import { FolderType } from "@/domain/storage/FolderType";
-import { FileType } from "@/domain/storage/FileType";
+import { Folder } from "@/domain/storage/Folder";
+import { File } from "@/domain/storage/File";
 import { FolderOutputModel } from "./model/FolderOutputModel";
+import { FolderType } from "@/domain/storage/FolderType";
+import { RegisterOutput } from "../users/models/RegisterOutputModel";
 
 const httpService = httpServiceInit();
 
@@ -263,9 +265,9 @@ export async function getFiles(
   sortBy: string = "created_at",
   page: number = 0,
   size: number = 10
-): Promise<PageResult<FileType>> {
+): Promise<PageResult<File>> {
   const path = PREFIX_API + apiRoutes.GET_FILES;
-  return await httpService.get<PageResult<FileType>>(path, {
+  return await httpService.get<PageResult<File>>(path, {
     sort: sortBy,
     page: String(page),
     size: String(size),
@@ -277,10 +279,10 @@ export async function getFilesInFolder(
   sortBy: string = "created_at",
   page: number = 0,
   size: number = 10
-): Promise<PageResult<FileType>> {
+): Promise<PageResult<File>> {
   const path =
     PREFIX_API + apiRoutes.GET_FILES_IN_FOLDER.replace(":id", fileId);
-  return await httpService.get<PageResult<FileType>>(path, {
+  return await httpService.get<PageResult<File>>(path, {
     sort: sortBy,
     page: String(page),
     size: String(size),
@@ -296,9 +298,9 @@ export async function getFolders(
   sortBy: string = "created_at",
   page: number = 0,
   size: number = 10
-): Promise<PageResult<FolderType>> {
+): Promise<PageResult<Folder>> {
   const path = PREFIX_API + apiRoutes.GET_FOLDERS;
-  return await httpService.get<PageResult<FolderType>>(path, {
+  return await httpService.get<PageResult<Folder>>(path, {
     sort: sortBy,
     page: String(page),
     size: String(size),
@@ -310,21 +312,25 @@ export async function getFoldersInFolder(
   sortBy: string = "created_at",
   page: number = 0,
   size: number = 10
-): Promise<PageResult<FolderType>> {
+): Promise<PageResult<Folder>> {
   const path =
     PREFIX_API + apiRoutes.GET_FOLDERS_IN_FOLDER.replace(":id", folderId);
-  return await httpService.get<PageResult<FolderType>>(path, {
+  return await httpService.get<PageResult<Folder>>(path, {
     sort: sortBy,
     page: String(page),
     size: String(size),
   });
 }
-export async function createFolder(folderName: string): Promise<any> {
+export async function createFolder(
+  folderName: string,
+  folderType: FolderType
+): Promise<RegisterOutput> {
   const path = PREFIX_API + apiRoutes.CREATE_FOLDER;
-  return await httpService.post<void>(
+  return await httpService.post<RegisterOutput>(
     path,
     JSON.stringify({
       folderName: folderName,
+      folderType: folderType,
     })
   );
 }
@@ -332,10 +338,10 @@ export async function createFolder(folderName: string): Promise<any> {
 export async function createSubFolder(
   folderId: string,
   folderName: string
-): Promise<any> {
+): Promise<RegisterOutput> {
   const path =
     PREFIX_API + apiRoutes.CREATE_FOLDER_IN_FOLDER.replace(":id", folderId);
-  return await httpService.post<any>(
+  return await httpService.post<RegisterOutput>(
     path,
     JSON.stringify({
       folderName: folderName,

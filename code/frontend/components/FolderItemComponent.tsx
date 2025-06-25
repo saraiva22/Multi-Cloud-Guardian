@@ -3,11 +3,11 @@ import React from "react";
 import { Link, useRouter } from "expo-router";
 import { icons } from "@/constants";
 import { formatDate, formatSize } from "@/services/utils/Function";
-import { FolderType } from "@/domain/storage/FolderType";
+import { Folder } from "@/domain/storage/Folder";
 import { MaterialIcons } from "@expo/vector-icons";
 
 type Props = {
-  item: FolderType;
+  item: Folder;
   onPress?: (folderId: number) => void;
 };
 

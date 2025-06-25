@@ -24,9 +24,11 @@ import FormField from "@/components/FormField";
 import { icons } from "@/constants";
 import CustomButton from "@/components/CustomButton";
 import SearchInput from "@/components/SearchBar";
-import { FolderType } from "@/domain/storage/FolderType";
+import { Folder } from "@/domain/storage/Folder";
 import { PageResult } from "@/domain/utils/PageResult";
 import FolderItemComponent from "@/components/FolderItemComponent";
+import { FolderType } from "@/domain/storage/FolderType";
+import FolderTypeSelector from "@/components/ FolderTypeSelector";
 
 // The State
 type State =
@@ -37,23 +39,25 @@ type State =
       error?: Problem | string;
       inputs: {
         folderName: string;
+        folderType: FolderType;
         parentFolderId: number | null;
       };
-      folders: PageResult<FolderType>;
+      folders: PageResult<Folder>;
     }
   | { tag: "error"; error: Problem | string }
   | {
       tag: "submitting";
       folderName: string;
+      folderType: FolderType;
       parentFolderId: number | null;
-      folders: PageResult<FolderType>;
+      folders: PageResult<Folder>;
     }
   | { tag: "redirect" };
 
 // The Action
 type Action =
   | { type: "start-loading" }
-  | { type: "loading-success"; folders: PageResult<FolderType> }
+  | { type: "loading-success"; folders: PageResult<Folder> }
   | { type: "loading-error"; error: Problem | string }
   | {
       type: "edit";
@@ -83,6 +87,7 @@ function reducer(state: State, action: Action): State {
           tag: "editing",
           inputs: {
             folderName: "",
+            folderType: FolderType.PRIVATE,
             parentFolderId: null,
           },
           folders: action.folders,
@@ -110,6 +115,7 @@ function reducer(state: State, action: Action): State {
         return {
           tag: "submitting",
           folderName: state.inputs.folderName,
+          folderType: state.inputs.folderType,
           parentFolderId: state.inputs.parentFolderId,
           folders: state.folders,
         };
@@ -127,7 +133,11 @@ function reducer(state: State, action: Action): State {
         return {
           tag: "editing",
           error: action.error,
-          inputs: { folderName: "", parentFolderId: null },
+          inputs: {
+            folderName: "",
+            folderType: state.folderType,
+            parentFolderId: null,
+          },
           folders: state.folders,
         };
       } else {
@@ -188,6 +198,7 @@ const CreateFolder = () => {
 
     const folderName = state.inputs.folderName;
     const parentFolderId = state.inputs.parentFolderId;
+    const folderType = state.inputs.folderType;
 
     if (!folderName?.trim()) {
       Alert.alert("Error", "Please fill in all fields");
@@ -197,9 +208,20 @@ const CreateFolder = () => {
 
     try {
       if (parentFolderId !== null) {
-        await createSubFolder(parentFolderId.toString(), folderName);
+        if (folderType == FolderType.SHARED) {
+          Alert.alert(
+            "Error",
+            "You cannot create subfolders inside shared folders."
+          );
+          dispatch({
+            type: "error",
+            error: "You cannot create subfolders inside shared folders.",
+          });
+          return;
+        }
+        await createSubFolder(parentFolderId.toString(), folderName,folderType);
       } else {
-        await createFolder(folderName);
+        await createFolder(folderName,folderType);
       }
 
       dispatch({ type: "success" });
@@ -216,6 +238,11 @@ const CreateFolder = () => {
     state.tag === "submitting" && state.folderName
       ? state.folderName
       : state.inputs?.folderName || "";
+
+  const folderType =
+    state.tag === "submitting" && state.folderType
+      ? state.folderType
+      : state.inputs?.folderType || "";
 
   return (
     <SafeAreaView className="bg-primary h-full">
@@ -248,6 +275,11 @@ const CreateFolder = () => {
 
         <View
           style={{ height: 1, backgroundColor: "#23232a", marginVertical: 18 }}
+        />
+
+        <FolderTypeSelector
+          value={folderType}
+          onChange={(type) => handleChange("folderType", type)}
         />
 
         <View className="mt-2">

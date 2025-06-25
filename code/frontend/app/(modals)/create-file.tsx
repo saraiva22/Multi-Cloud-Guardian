@@ -23,7 +23,7 @@ import {
 } from "@/services/media/Problem";
 import { getFolders, uploadFile } from "@/services/storage/StorageService";
 import { PageResult } from "@/domain/utils/PageResult";
-import { FolderType } from "@/domain/storage/FolderType";
+import { Folder } from "@/domain/storage/Folder";
 import FolderItemComponent from "@/components/FolderItemComponent";
 
 // The State
@@ -39,7 +39,7 @@ type State =
         file: any;
         parentFolderId: number | null;
       };
-      folders: PageResult<FolderType>;
+      folders: PageResult<Folder>;
     }
   | { tag: "error"; error: Problem | string }
   | {
@@ -48,14 +48,14 @@ type State =
       encryption: boolean;
       file: any;
       parentFolderId: number | null;
-      folders: PageResult<FolderType>;
+      folders: PageResult<Folder>;
     }
   | { tag: "redirect" };
 
 // The Action
 type Action =
   | { type: "start-loading" }
-  | { type: "loading-success"; folders: PageResult<FolderType> }
+  | { type: "loading-success"; folders: PageResult<Folder> }
   | { type: "loading-error"; error: Problem | string }
   | { type: "edit"; inputName: string; inputValue: string | boolean | any }
   | { type: "submit" }

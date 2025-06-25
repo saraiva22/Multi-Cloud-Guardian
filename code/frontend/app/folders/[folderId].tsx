@@ -34,12 +34,13 @@ import icons from "@/constants/icons";
 import { formatDate, formatSize } from "@/services/utils/Function";
 import { removeValueFor } from "@/services/storage/SecureStorage";
 import { useAuthentication } from "@/context/AuthProvider";
-import { FileType } from "@/domain/storage/FileType";
+import { File } from "@/domain/storage/File";
 import { PageResult } from "@/domain/utils/PageResult";
-import { FolderType } from "@/domain/storage/FolderType";
+import { Folder } from "@/domain/storage/Folder";
 import FileItemComponent from "@/components/FileItemComponent";
 import FolderCard from "@/components/FolderCard";
 import EmptyState from "@/components/EmptyState";
+import { FolderType } from "@/domain/storage/FolderType";
 
 // The State
 type State =
@@ -48,8 +49,8 @@ type State =
   | {
       tag: "loaded";
       details: FolderOutputModel;
-      files: PageResult<FileType>;
-      folders: PageResult<FolderType>;
+      files: PageResult<File>;
+      folders: PageResult<Folder> | null;
     }
   | { tag: "redirect" }
   | { tag: "error"; error: Problem | string };
@@ -60,8 +61,8 @@ type Action =
   | {
       type: "loading-success";
       details: FolderOutputModel;
-      files: PageResult<FileType>;
-      folders: PageResult<FolderType>;
+      files: PageResult<File>;
+      folders: PageResult<Folder> | null;
     }
   | { type: "loading-error"; error: Problem | string }
   | { type: "download-loading"; details: FolderOutputModel }
@@ -126,13 +127,17 @@ const firstState: State = {
 
 const KEY_NAME = "user_info";
 
-type FolderInfoProps = {
-  folderInfo: FolderOutputModel;
+type FolderInfoDetailsProps = {
+  folderDetails: FolderOutputModel;
   state: State;
   handleDelete: () => Promise<any>;
 };
 
-const FolderInfo = ({ folderInfo, state, handleDelete }: FolderInfoProps) => (
+const FolderInfoDetails = ({
+  folderDetails: folderDetails,
+  state,
+  handleDelete,
+}: FolderInfoDetailsProps) => (
   <>
     <TouchableOpacity
       className="absolute left-6 z-10 mt-6"
@@ -158,19 +163,19 @@ const FolderInfo = ({ folderInfo, state, handleDelete }: FolderInfoProps) => (
         resizeMode="contain"
       />
       <Text className="text-[24px] font-semibold text-white mb-4">
-        Created Folder: {folderInfo.user.username}
+        Created Folder: {folderDetails.user.username}
       </Text>
       <Text className="text-[16px] text-zinc-300">
-        Folder Name: {folderInfo.folderName}
+        Folder Name: {folderDetails.folderName}
       </Text>
       <Text className="text-[16px] text-zinc-300">
-        Folder Size: {formatSize(folderInfo.size)}
+        Folder Size: {formatSize(folderDetails.size)}
       </Text>
       <Text className="text-[16px] text-zinc-300">
-        Numbers File: {folderInfo.numberFile}
+        Numbers File: {folderDetails.numberFile}
       </Text>
       <Text className="text-[16px] text-zinc-300">
-        Created At: {formatDate(folderInfo.createdAt)}
+        Created At: {formatDate(folderDetails.createdAt)}
       </Text>
     </View>
 
@@ -195,9 +200,15 @@ const FolderDetails = () => {
   const fetchFileDetails = async () => {
     dispatch({ type: "start-loading" });
     try {
+      console.log("ENTROUUU ");
       const details = await getFolder(folderId.toString());
       const files = await getFilesInFolder(folderId.toString());
-      const folders = await getFoldersInFolder(folderId.toString());
+      const folders =
+        details.type === FolderType.PRIVATE
+          ? await getFoldersInFolder(folderId.toString())
+          : null;
+
+      console.log("SAIU ");
       dispatch({ type: "loading-success", details, files, folders });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
@@ -250,7 +261,7 @@ const FolderDetails = () => {
             : state.error
         }`
       );
-      router.replace(`/folders/${folderId}`);
+      router.replace(`/folders`);
     }
   }, [state.tag]);
 
@@ -280,20 +291,22 @@ const FolderDetails = () => {
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={() => (
               <View className="my-6 px-4 space-y-6">
-                <FolderInfo
-                  folderInfo={state.details}
+                <FolderInfoDetails
+                  folderDetails={state.details}
                   state={state}
                   handleDelete={handleDelete}
                 />
-                <View className="w-full flex-1 pt-5 pb-8">
-                  <View className="flex-row items-center justify-between mb-3">
-                    <Text className="text-2xl font-bold text-gray-100 mb-3">
-                      Folders in {`${state.details.folderName}`}
-                    </Text>
-                  </View>
+                {state.folders && state.folders.content ? (
+                  <View className="w-full flex-1 pt-5 pb-8">
+                    <View className="flex-row items-center justify-between mb-3">
+                      <Text className="text-2xl font-bold text-gray-100 mb-3">
+                        Folders in {`${state.details.folderName}`}
+                      </Text>
+                    </View>
 
-                  <FolderCard folders={state.folders.content} />
-                </View>
+                    <FolderCard folders={state.folders.content} />
+                  </View>
+                ) : null}
                 <View className="w-full flex-1 pt-2">
                   <Text className="text-2xl font-bold text-gray-100">
                     Files in {`${state.details.folderName}`}

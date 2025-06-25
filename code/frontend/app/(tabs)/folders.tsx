@@ -20,7 +20,7 @@ import {
   isProblem,
   Problem,
 } from "@/services/media/Problem";
-import { FolderType } from "@/domain/storage/FolderType";
+import { Folder } from "@/domain/storage/Folder";
 import { useRouter } from "expo-router";
 import { getFolders } from "@/services/storage/StorageService";
 import { removeValueFor } from "@/services/storage/SecureStorage";
@@ -37,7 +37,7 @@ type State =
   | { tag: "loading"; refreshing: boolean; sort: SortOption }
   | {
       tag: "loaded";
-      folders: PageResult<FolderType>;
+      folders: PageResult<Folder>;
       refreshing: boolean;
       sort: SortOption;
     }
@@ -48,7 +48,7 @@ type Action =
   | { type: "start-loading" }
   | {
       type: "loading-success";
-      folders: PageResult<FolderType>;
+      folders: PageResult<Folder>;
     }
   | { type: "loading-error"; error: Problem | string }
   | { type: "refreshing"; refreshing: boolean; sort: SortOption };

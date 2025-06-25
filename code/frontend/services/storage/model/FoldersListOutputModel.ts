@@ -1,5 +1,5 @@
-import { FolderType } from "@/domain/storage/FolderType";
+import { Folder } from "@/domain/storage/Folder";
 
 export type FoldersListOutputModel = {
-  folders: Array<FolderType>;
+  folders: Array<Folder>;
 };

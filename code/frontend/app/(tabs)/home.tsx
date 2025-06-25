@@ -26,8 +26,8 @@ import { removeValueFor } from "@/services/storage/SecureStorage";
 import FolderCard from "@/components/FolderCard";
 import FileItemComponent from "@/components/FileItemComponent";
 import { PageResult } from "@/domain/utils/PageResult";
-import { FileType } from "@/domain/storage/FileType";
-import { FolderType } from "@/domain/storage/FolderType";
+import { File } from "@/domain/storage/File";
+import { Folder } from "@/domain/storage/Folder";
 import BottomSheet from "@gorhom/bottom-sheet";
 import SortSelector, {
   SortOption,
@@ -40,8 +40,8 @@ type State =
   | { tag: "loading"; refreshing: boolean; sort: SortOption }
   | {
       tag: "loaded";
-      files: PageResult<FileType>;
-      folders: PageResult<FolderType>;
+      files: PageResult<File>;
+      folders: PageResult<Folder>;
       refreshing: boolean;
       sort: SortOption;
     }
@@ -52,8 +52,8 @@ type Action =
   | { type: "start-loading" }
   | {
       type: "loading-success";
-      files: PageResult<FileType>;
-      folders: PageResult<FolderType>;
+      files: PageResult<File>;
+      folders: PageResult<Folder>;
     }
   | { type: "loading-error"; error: Problem | string }
   | { type: "refreshing"; refreshing: boolean; sort: SortOption };
@@ -117,7 +117,6 @@ const HomeScreen = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   const sort = state.tag === "error" ? sortOptions[0] : state.sort;
-
 
   const openSortSheet = () => {
     bottomSheetRef.current?.expand();

@@ -696,12 +696,11 @@ class StorageService(
     fun getFolderById(
         user: User,
         folderId: Id,
-        members: Boolean = false,
     ): GetFolderResult =
         transactionManager.run {
             val storageRep = it.storageRepository
             val folderMembers =
-                storageRep.getFolderById(folderId, members)
+                storageRep.getFolderById(folderId, true)
                     ?: return@run failure(GetFolderByIdError.FolderNotFound)
 
             if (folderMembers.folder.type == FolderType.PRIVATE && folderMembers.folder.user.id != user.id) {

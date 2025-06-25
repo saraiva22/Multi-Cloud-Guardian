@@ -129,6 +129,7 @@ class StorageServiceTests : ServiceTests() {
             is Success -> {
                 assertEquals(folderName, getFolder.value.folder.folderName)
                 assertEquals(userInfo, getFolder.value.folder.user)
+                assertEquals(0, getFolder.value.members.size)
                 assertEquals(createFolder.value, getFolder.value.folder.folderId)
             }
             is Failure -> fail("Unexpected $getFolder")
@@ -1277,6 +1278,62 @@ class StorageServiceTests : ServiceTests() {
                 assertEquals(fileContent.encryption, downloadResult.value.first.encrypted)
             }
             is Failure -> fail("Unexpected $downloadResult")
+        }
+
+        // Cleanup
+        storageService.deleteFileInFolder(user, folderId, fileId)
+        storageService.deleteFolder(user, folderId)
+    }
+
+    @Test
+    fun `create shared folder, move file, and verify only owner is member`() {
+        // Arrange: initialize storage service and test user
+        val clock = TestClock()
+        val storageService = createStorageService(clock)
+        val user = testUser
+        val folderType = FolderType.SHARED
+
+        // Upload file to root
+        val fileContent = fileCreation()
+        val uploadFileResult = storageService.uploadFile(fileContent, fileContent.encryption, user)
+        val fileId =
+            when (uploadFileResult) {
+                is Success -> uploadFileResult.value
+                is Failure -> fail("Unexpected $uploadFileResult")
+            }
+
+        // Create a shared folder
+        val folderResult = storageService.createFolder("SharedFolder", user, folderType)
+        val folderId =
+            when (folderResult) {
+                is Success -> folderResult.value
+                is Failure -> fail("Unexpected $folderResult")
+            }
+
+        // Move file from root to shared folder
+        clock.advance(1.minutes)
+        val moveResult = storageService.moveFile(user, fileId, folderId)
+        when (moveResult) {
+            is Success -> assertTrue(moveResult.value)
+            is Failure -> fail("Unexpected $moveResult")
+        }
+
+        // Act: get folder by id
+        val getFolderResult = storageService.getFolderById(user, folderId)
+        when (getFolderResult) {
+            is Success -> {
+                val folderInfo = getFolderResult.value.folder
+                // Assert: folder type is SHARED and only the owner is a member
+                assertEquals(FolderType.SHARED, folderInfo.type)
+                assertEquals(1, getFolderResult.value.members.size)
+                assertEquals(
+                    user.id,
+                    getFolderResult.value.members
+                        .first()
+                        .id,
+                )
+            }
+            is Failure -> fail("Unexpected $getFolderResult")
         }
 
         // Cleanup

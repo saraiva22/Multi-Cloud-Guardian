@@ -15,7 +15,7 @@ import { icons } from "@/constants";
 import { useAuthentication } from "@/context/AuthProvider";
 import React, { useEffect, useReducer, useRef, useState } from "react";
 import { PageResult } from "@/domain/utils/PageResult";
-import { FileType } from "@/domain/storage/FileType";
+import { File } from "@/domain/storage/File";
 import {
   getProblemMessage,
   isProblem,
@@ -37,7 +37,7 @@ type State =
   | { tag: "loading"; refreshing: boolean; sort: SortOption }
   | {
       tag: "loaded";
-      files: PageResult<FileType>;
+      files: PageResult<File>;
       refreshing: boolean;
       sort: SortOption;
     }
@@ -48,7 +48,7 @@ type Action =
   | { type: "start-loading" }
   | {
       type: "loading-success";
-      files: PageResult<FileType>;
+      files: PageResult<File>;
     }
   | { type: "loading-error"; error: Problem | string }
   | { type: "refreshing"; refreshing: boolean; sort: SortOption };
