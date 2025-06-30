@@ -65,15 +65,14 @@ function reducer(state: State, action: Action): State {
 
 const firstState: State = { tag: "begin" };
 
-
 const StorageDetails = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
-  const { username, setUsername, setIsLogged } = useAuthentication();
+  const { token, username, setUsername, setIsLogged } = useAuthentication();
 
   async function handleStorageDetails(dispatch: (action: Action) => void) {
     dispatch({ type: "start-loading" });
     try {
-      const res = await getStorageDetails();
+      const res = await getStorageDetails(token);
       dispatch({ type: "loading-success", storageDetails: res });
     } catch (error) {
       console.log("Error fetching storage details:", error);

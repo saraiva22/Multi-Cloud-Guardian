@@ -17,15 +17,17 @@ import React from "react";
 import CustomButtom from "../../components/CustomButton";
 
 const ProfileScreen = () => {
-  const { username, setUsername, setIsLogged } = useAuthentication();
+  const { token, username, setUsername, setToken, setIsLogged } =
+    useAuthentication();
 
   async function goLogout() {
     try {
-      await logout();
+      await logout(token);
     } catch (error) {
       console.log(error);
     } finally {
       setUsername(null);
+      setToken(null);
       setIsLogged(false);
       removeValueFor(KEY_NAME);
       router.replace("/sign-in");

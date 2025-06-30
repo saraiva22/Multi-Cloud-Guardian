@@ -157,7 +157,7 @@ const sortBy = "created_desc  ";
 
 const CreateFile = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
-  const { keyMaster } = useAuthentication();
+  const { token, keyMaster } = useAuthentication();
 
   useEffect(() => {
     if (state.tag === "begin") {
@@ -181,7 +181,7 @@ const CreateFile = () => {
 
   async function handleGetFolder() {
     try {
-      const folders = await getFolders(sortBy, true);
+      const folders = await getFolders(token, sortBy, true);
       dispatch({ type: "loading-success", folders });
     } catch (error) {
       Alert.alert(
@@ -255,10 +255,11 @@ const CreateFile = () => {
           fileName,
           encryption,
           keyMaster,
+          token,
           parentFolderId.toString()
         );
       } else {
-        await uploadFile(file, fileName, encryption, keyMaster);
+        await uploadFile(file, fileName, encryption, keyMaster, token);
       }
 
       dispatch({ type: "success" });

@@ -99,6 +99,7 @@ class Problem(
         private val folderIsPrivate = URI("${FOLDER}folder-is-private")
         private val userAlreadyInFolder = URI("${FOLDER}user-already-in-folder")
         private val userIsNotFolderOwner = URI("${FOLDER}user-is-not-folder-owner")
+        private val userIsFolderOwner = URI("${FOLDER}user-is-folder-owner")
         private val invalidInviteFolder = URI("${FOLDER}invalid-invite-folder")
         private val userNotFoundInFolder = URI("${FOLDER}user-not-found-in-folder")
         private val errorLeavingFolder = URI("${FOLDER}error-leaving-folder")
@@ -529,6 +530,18 @@ class Problem(
                 title = "User is not folder owner",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = "User $username is not the owner of the folder",
+                instance = instance,
+            ).toResponse()
+
+        fun userIsFolderOwner(
+            username: String,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = userIsFolderOwner,
+                title = "User is the owner of the folder",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "User $username is the owner of the folder",
                 instance = instance,
             ).toResponse()
 

@@ -88,10 +88,9 @@ function reducer(state: State, action: Action): State {
 
 const firstState: State = { tag: "begin" };
 
-
 const Preferences = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
-  const { username, setIsLogged, setUsername } = useAuthentication();
+  const { token, username, setIsLogged, setUsername } = useAuthentication();
 
   async function handlePreferences(
     username: string,
@@ -102,11 +101,10 @@ const Preferences = () => {
 
     dispatch({ type: "start-loading", url: path });
     try {
-      const res = await getUserByUsername(username);
+      const res = await getUserByUsername(username, token);
 
       const locationInfo = LocationTypeInfo[res.locationType as LocationType];
-      const costInfo =
-        CostTypeInfo[res.costType as CostType];
+      const costInfo = CostTypeInfo[res.costType as CostType];
 
       dispatch({
         type: "loading-success",

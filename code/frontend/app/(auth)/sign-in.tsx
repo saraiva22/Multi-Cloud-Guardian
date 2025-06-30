@@ -13,6 +13,7 @@ import {
 import {
   KEY_MASTER,
   KEY_NAME,
+  TOKEN,
   useAuthentication,
 } from "@/context/AuthProvider";
 import { getCredentials, login } from "@/services/users/UserService";
@@ -84,7 +85,7 @@ const firstState: State = {
 };
 const SignIn = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
-  const { setUsername, setKeyMaster } = useAuthentication();
+  const { setUsername, setToken, setKeyMaster } = useAuthentication();
 
   useEffect(() => {
     if (state.tag === "redirect") {
@@ -114,15 +115,21 @@ const SignIn = () => {
         dispatch({ type: "error", message: "Invalid username or password" });
         return;
       }
+
       const result = await login(username, password);
       if (!result) {
         dispatch({ type: "error", message: "Invalid username or password" });
         return;
       }
+      await save(
+        `${TOKEN}${username}`,
+        JSON.stringify({ token: result.token })
+      );
+      setToken(result.token);
       await save(KEY_NAME, JSON.stringify({ username: username }));
       const isMasterKey = await getValueFor(`${KEY_MASTER}${username}`);
       if (isMasterKey === null) {
-        const credentials = await getCredentials();
+        const credentials = await getCredentials(result.token);
         const salt = convertStringToArrayBuffer(credentials.salt);
         const masterKey = await generateMasterKey(
           salt,
@@ -135,6 +142,7 @@ const SignIn = () => {
         );
         setKeyMaster(masterKey);
       }
+
       setUsername(username);
       initializeSSE();
       dispatch({ type: "success" });

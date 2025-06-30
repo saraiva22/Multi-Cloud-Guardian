@@ -108,7 +108,7 @@ const firstState: State = {
 };
 
 const HomeScreen = () => {
-  const { username, setUsername, setIsLogged } = useAuthentication();
+  const { token, username, setUsername, setIsLogged } = useAuthentication();
   const [state, dispatch] = useReducer(reducer, firstState);
   const router = useRouter();
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -128,8 +128,8 @@ const HomeScreen = () => {
     try {
       dispatch({ type: "start-loading" });
 
-      const files = await getFiles(sort.sortBy);
-      const folders = await getFolders();
+      const files = await getFiles(token, sort.sortBy);
+      const folders = await getFolders(token);
       dispatch({
         type: "loading-success",
         files,

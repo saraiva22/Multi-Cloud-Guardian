@@ -101,9 +101,8 @@ const firstState: State = {
   sort: sortOptions[0],
 };
 
-
 const FilesScreen = () => {
-  const { username, setUsername, setIsLogged } = useAuthentication();
+  const { token, setUsername, setIsLogged } = useAuthentication();
   const [state, dispatch] = useReducer(reducer, firstState);
   const router = useRouter();
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -121,7 +120,7 @@ const FilesScreen = () => {
   const loadData = async () => {
     try {
       dispatch({ type: "start-loading" });
-      const files = await getFiles(sort.sortBy);
+      const files = await getFiles(token, sort.sortBy);
       dispatch({ type: "loading-success", files });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });

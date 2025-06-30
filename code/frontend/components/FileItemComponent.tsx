@@ -14,7 +14,6 @@ const FileItemComponent = ({ item }: Props) => {
   const router = useRouter();
   const { folderId } = useLocalSearchParams();
 
-  console.log("FOLDER ID ", folderId);
   const handlePress = () => {
     if (folderId) {
       router.push({

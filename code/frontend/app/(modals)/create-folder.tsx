@@ -160,7 +160,7 @@ const firstState: State = { tag: "begin" };
 
 const CreateFolder = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
-  const { setIsLogged, setUsername } = useAuthentication();
+  const { token, setIsLogged, setUsername } = useAuthentication();
 
   useEffect(() => {
     if (state.tag === "begin") {
@@ -202,7 +202,7 @@ const CreateFolder = () => {
   // Handle FetchRecentFolders()
   async function handleGetFolder() {
     try {
-      const folders = await getFolders();
+      const folders = await getFolders(token);
       dispatch({ type: "loading-success", folders });
     } catch (error) {
       Alert.alert(
@@ -245,10 +245,11 @@ const CreateFolder = () => {
         await createSubFolder(
           parentFolderId.toString(),
           folderName,
-          folderType
+          folderType,
+          token
         );
       } else {
-        await createFolder(folderName, folderType);
+        await createFolder(folderName, folderType, token);
       }
 
       dispatch({ type: "success" });

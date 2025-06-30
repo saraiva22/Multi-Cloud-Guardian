@@ -115,7 +115,7 @@ type CustomEvents = "invite";
 
 const ReceivedInvites = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
-  const { setIsLogged, setUsername } = useAuthentication();
+  const { token, setIsLogged, setUsername } = useAuthentication();
   const listener = getSSE();
 
   useEffect(() => {
@@ -169,7 +169,7 @@ const ReceivedInvites = () => {
   // Handle FetchInvites()
   async function handleGetInvites() {
     try {
-      const invites = await getReceivedInvites();
+      const invites = await getReceivedInvites(token);
       dispatch({ type: "loading-success", invites });
     } catch (error) {
       Alert.alert(
@@ -191,7 +191,8 @@ const ReceivedInvites = () => {
       await validateFolderInvite(
         folderId.toString(),
         inviteId.toString(),
-        status
+        status,
+        token
       );
 
       if (status === InviteStatusType.ACCEPT) {

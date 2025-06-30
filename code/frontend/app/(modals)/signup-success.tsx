@@ -29,7 +29,7 @@ const SignUpSuccess = () => {
         />
 
         <Text className="text-white text-2xl font-semibold mb-20">
-          Sign up Successfully
+          Registration Complete
         </Text>
 
         <CustomButton

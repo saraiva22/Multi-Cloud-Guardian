@@ -165,7 +165,7 @@ const firstState: State = { tag: "begin" };
 
 const CreateInvite = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
-  const { setIsLogged, setUsername } = useAuthentication();
+  const { token, setIsLogged, setUsername } = useAuthentication();
 
   useEffect(() => {
     if (state.tag === "begin") {
@@ -207,7 +207,7 @@ const CreateInvite = () => {
   // Handle FetchRecentFolders()
   async function handleGetFolders() {
     try {
-      const folders = await getFolders();
+      const folders = await getFolders(token);
       dispatch({ type: "loading-success", folders });
     } catch (error) {
       Alert.alert(
@@ -234,7 +234,7 @@ const CreateInvite = () => {
     }
 
     try {
-      await createInviteFolder(folderId.toString(), username);
+      await createInviteFolder(folderId.toString(), username, token);
 
       dispatch({ type: "success" });
     } catch (error) {

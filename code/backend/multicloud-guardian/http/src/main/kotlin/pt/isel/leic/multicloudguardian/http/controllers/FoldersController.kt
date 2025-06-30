@@ -560,6 +560,7 @@ class FoldersController(
                             instance,
                         )
                     LeaveFolderError.ErrorLeavingFolder -> Problem.errorLeavingFolder(folderId, instance)
+                    LeaveFolderError.UserIsOwner -> Problem.userIsFolderOwner(authenticatedUser.user.username.value, instance)
                 }
         }
     }

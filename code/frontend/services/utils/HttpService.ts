@@ -1,3 +1,4 @@
+import { useAuthentication } from "@/context/AuthProvider";
 import { MEDIA_TYPE_PROBLEM, Problem } from "../media/Problem";
 
 const LOCAL_IP = "192.168.1.71";
@@ -38,11 +39,11 @@ export const apiRoutes = {
   DOWNLOAD_FILE_IN_FOLDER: "/folders/:folderId/files/:fileId/download",
   DELETE_FOLDER: "/folders/:id",
   DELETE_FILE_IN_FOLDER: "/folders/:folderId/files/:fileId",
-  CREATE_INVITE_FOLDER: "/folders/:folderId/invites",
+  CREATE_INVITE_FOLDER: "/folders/:id/invites",
   VALIDATE_FOLDER_INVITE: "/folders/:folderId/invites/:inviteId",
   RECEIVED_FOLDER_INVITES: "/folders/invites/received",
   SENT_FOLDER_INVITES: "/folders/invites/sent",
-  LEAVE_SHARED_FOLDER: "/folders/:folderId/leave", // TODO()
+  LEAVE_SHARED_FOLDER: "/folders/:id/leave",
 };
 
 export default function httpService() {
@@ -66,14 +67,20 @@ export default function httpService() {
   async function processRequest<T>(
     uri: string,
     method: string,
-    body?: string
+    body?: string,
+    token?: string
   ): Promise<T> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    console.log("TOKEN", token);
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const config: RequestInit = {
       method,
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: headers,
       body: body,
     };
     console.log("URI ", uri);
@@ -95,45 +102,50 @@ export default function httpService() {
   }
   async function get<T>(
     path: string,
+    token?: string,
     params?: Record<string, string>
   ): Promise<T> {
     const url = buildUrl(path, params);
-    return processRequest<T>(url, "GET");
+    return processRequest<T>(url, "GET",undefined, token);
   }
 
   async function post<T>(
     path: string,
     body?: string,
+    token?: string,
     params?: Record<string, string>
   ): Promise<T> {
     const url = buildUrl(path, params);
-    return processRequest<T>(url, "POST", body);
+    return processRequest<T>(url, "POST", body, token);
   }
 
   async function put<T>(
     path: string,
     body?: string,
+    token?: string,
     params?: Record<string, string>
   ): Promise<T> {
     const url = buildUrl(path, params);
-    return processRequest<T>(url, "PUT", body);
+    return processRequest<T>(url, "PUT", body, token);
   }
 
   async function del<T>(
     path: string,
     body?: string,
+    token?: string,
     params?: Record<string, string>
   ): Promise<T> {
     const url = buildUrl(path, params);
-    return processRequest<T>(url, "DELETE", body);
+    return processRequest<T>(url, "DELETE", body, token);
   }
 
   async function patch<T>(
     path: string,
     body?: string,
+    token?: string,
     params?: Record<string, string>
   ): Promise<T> {
     const url = buildUrl(path, params);
-    return processRequest<T>(url, "PATCH", body);
+    return processRequest<T>(url, "PATCH", body, token);
   }
 }

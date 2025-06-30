@@ -48,25 +48,30 @@ export async function login(
   );
 }
 
-export async function logout(): Promise<LogoutOutput> {
+export async function logout(token: string): Promise<LogoutOutput> {
   const path = PREFIX_API + apiRoutes.LOGOUT;
-  return await httpService.post<LogoutOutput>(path);
+  return await httpService.post<LogoutOutput>(path, undefined, token);
 }
 
-export async function getCredentials(): Promise<CreateUserOutputModel> {
+export async function getCredentials(
+  token: string
+): Promise<CreateUserOutputModel> {
   const path = PREFIX_API + apiRoutes.GET_USER_CREDENTIALS;
-  return await httpService.get<CreateUserOutputModel>(path);
+  return await httpService.get<CreateUserOutputModel>(path, token);
 }
 
 export async function getUserByUsername(
-  username: string
+  username: string,
+  token: string
 ): Promise<UserInfoOutputModel> {
   const params = new URLSearchParams({ username }).toString();
   const path = `${PREFIX_API}${apiRoutes.GET_USER_BY_USERNAME}?${params}`;
-  return await httpService.get<UserInfoOutputModel>(path);
+  return await httpService.get<UserInfoOutputModel>(path, token);
 }
 
-export async function getStorageDetails(): Promise<StorageDetailsOutputModel> {
+export async function getStorageDetails(
+  token: string
+): Promise<StorageDetailsOutputModel> {
   const path = PREFIX_API + apiRoutes.GET_STORAGE_DETAILS;
-  return await httpService.get<StorageDetailsOutputModel>(path);
+  return await httpService.get<StorageDetailsOutputModel>(path, token);
 }

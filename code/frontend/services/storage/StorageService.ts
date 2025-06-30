@@ -26,6 +26,7 @@ import { FolderType } from "@/domain/storage/FolderType";
 import { RegisterOutput } from "../users/models/RegisterOutputModel";
 import { Invite } from "@/domain/storage/Invite";
 import { InviteStatusType } from "@/domain/storage/InviteStatusType";
+import { useAuthentication } from "@/context/AuthProvider";
 
 const httpService = httpServiceInit();
 
@@ -34,6 +35,7 @@ export async function uploadFile(
   fileName: string,
   encryption: boolean,
   keyMaster: any,
+  token: string,
   parentFolderId?: string
 ): Promise<UploadOutput> {
   const apiRoute = parentFolderId
@@ -112,13 +114,18 @@ export async function uploadFile(
     formData.append("encryptedKey", "");
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
   // Send the request
-  const options = {
+  const options: RequestInit = {
     method: "POST",
+    headers: headers,
     body: formData,
-    headers: {
-      Accept: "application/json",
-    },
   };
   console.log("OPTION ", options);
 
@@ -140,15 +147,17 @@ export async function uploadFile(
 }
 
 export async function downloadFile(
-  fileId: string
+  fileId: string,
+  token: string
 ): Promise<DownloadOutputModel> {
   const path = PREFIX_API + apiRoutes.DOWNLOAD_FILE.replace(":id", fileId);
-  return await httpService.get<DownloadOutputModel>(path);
+  return await httpService.get<DownloadOutputModel>(path, token);
 }
 
 export async function downloadFileInFolder(
   folderId: string,
-  fileId: string
+  fileId: string,
+  token: string
 ): Promise<DownloadOutputModel> {
   const path =
     PREFIX_API +
@@ -156,17 +165,18 @@ export async function downloadFileInFolder(
       ":fileId",
       fileId
     );
-  return await httpService.get<DownloadOutputModel>(path);
+  return await httpService.get<DownloadOutputModel>(path, token);
 }
 
-export async function deleteFile(fileId: string): Promise<void> {
+export async function deleteFile(fileId: string, token: string): Promise<void> {
   const path = PREFIX_API + apiRoutes.DELETE_FILE.replace(":id", fileId);
-  return await httpService.delete<void>(path);
+  return await httpService.delete<void>(path, undefined, token);
 }
 
 export async function deleteFileInFolder(
   folderId: string,
-  fileId: string
+  fileId: string,
+  token: string
 ): Promise<void> {
   const path =
     PREFIX_API +
@@ -174,30 +184,36 @@ export async function deleteFileInFolder(
       ":fileId",
       fileId
     );
-  return await httpService.delete<void>(path);
+  return await httpService.delete<void>(path, undefined, token);
 }
 
 export async function generateTemporaryUrl(
   fileId: string,
-  minutes: number
+  minutes: number,
+  token: string
 ): Promise<FileOutputModel> {
   const path = PREFIX_API + apiRoutes.CREATE_TEMP_URL.replace(":id", fileId);
   return await httpService.post<FileOutputModel>(
     path,
     JSON.stringify({
       expiresIn: minutes,
-    })
+    }),
+    token
   );
 }
 
-export async function getFile(fileId: string): Promise<FileOutputModel> {
+export async function getFile(
+  fileId: string,
+  token: string
+): Promise<FileOutputModel> {
   const path = PREFIX_API + apiRoutes.GET_FILE_BY_ID.replace(":id", fileId);
-  return await httpService.get<FileOutputModel>(path);
+  return await httpService.get<FileOutputModel>(path, token);
 }
 
 export async function getFileInFolder(
   folderId: string,
-  fileId: string
+  fileId: string,
+  token: string
 ): Promise<FileOutputModel> {
   const path =
     PREFIX_API +
@@ -205,16 +221,17 @@ export async function getFileInFolder(
       ":fileId",
       fileId
     );
-  return await httpService.get<FileOutputModel>(path);
+  return await httpService.get<FileOutputModel>(path, token);
 }
 
 export async function getFiles(
+  token: string,
   sortBy: string = "created_at",
   page: number = 0,
   size: number = 10
 ): Promise<PageResult<File>> {
   const path = PREFIX_API + apiRoutes.GET_FILES;
-  return await httpService.get<PageResult<File>>(path, {
+  return await httpService.get<PageResult<File>>(path, token, {
     sort: sortBy,
     page: String(page),
     size: String(size),
@@ -223,32 +240,37 @@ export async function getFiles(
 
 export async function getFilesInFolder(
   fileId: string,
+  token: string,
   sortBy: string = "created_at",
   page: number = 0,
   size: number = 10
 ): Promise<PageResult<File>> {
   const path =
     PREFIX_API + apiRoutes.GET_FILES_IN_FOLDER.replace(":id", fileId);
-  return await httpService.get<PageResult<File>>(path, {
+  return await httpService.get<PageResult<File>>(path, token, {
     sort: sortBy,
     page: String(page),
     size: String(size),
   });
 }
 
-export async function getFolder(folderId: string): Promise<FolderOutputModel> {
+export async function getFolder(
+  folderId: string,
+  token: string
+): Promise<FolderOutputModel> {
   const path = PREFIX_API + apiRoutes.GET_FOLDER_BY_ID.replace(":id", folderId);
-  return await httpService.get<FolderOutputModel>(path);
+  return await httpService.get<FolderOutputModel>(path, token);
 }
 
 export async function getFolders(
+  token: string,
   sortBy: string = "created_at",
   shared: boolean = false,
   page: number = 0,
   size: number = 10
 ): Promise<PageResult<Folder>> {
   const path = PREFIX_API + apiRoutes.GET_FOLDERS;
-  return await httpService.get<PageResult<Folder>>(path, {
+  return await httpService.get<PageResult<Folder>>(path, token, {
     sort: sortBy,
     shared: String(shared),
     page: String(page),
@@ -258,13 +280,14 @@ export async function getFolders(
 
 export async function getFoldersInFolder(
   folderId: string,
+  token: string,
   sortBy: string = "created_at",
   page: number = 0,
   size: number = 10
 ): Promise<PageResult<Folder>> {
   const path =
     PREFIX_API + apiRoutes.GET_FOLDERS_IN_FOLDER.replace(":id", folderId);
-  return await httpService.get<PageResult<Folder>>(path, {
+  return await httpService.get<PageResult<Folder>>(path, token, {
     sort: sortBy,
     page: String(page),
     size: String(size),
@@ -272,7 +295,8 @@ export async function getFoldersInFolder(
 }
 export async function createFolder(
   folderName: string,
-  folderType: FolderType
+  folderType: FolderType,
+  token: string
 ): Promise<RegisterOutput> {
   const path = PREFIX_API + apiRoutes.CREATE_FOLDER;
   return await httpService.post<RegisterOutput>(
@@ -280,14 +304,16 @@ export async function createFolder(
     JSON.stringify({
       folderName: folderName,
       folderType: folderType,
-    })
+    }),
+    token
   );
 }
 
 export async function createSubFolder(
   folderId: string,
   folderName: string,
-  folderType: FolderType
+  folderType: FolderType,
+  token: string
 ): Promise<RegisterOutput> {
   const path =
     PREFIX_API + apiRoutes.CREATE_FOLDER_IN_FOLDER.replace(":id", folderId);
@@ -296,22 +322,36 @@ export async function createSubFolder(
     JSON.stringify({
       folderName: folderName,
       folderType: folderType,
-    })
+    }),
+    token
   );
 }
 
-export async function deleteFolder(folderId: string): Promise<void> {
+export async function deleteFolder(
+  folderId: string,
+  token: string
+): Promise<void> {
   const path = PREFIX_API + apiRoutes.DELETE_FOLDER.replace(":id", folderId);
-  return await httpService.delete<void>(path);
+  return await httpService.delete<void>(path, undefined, token);
+}
+
+export async function leaveFolder(
+  folderId: string,
+  token: string
+): Promise<void> {
+  const path =
+    PREFIX_API + apiRoutes.LEAVE_SHARED_FOLDER.replace(":id", folderId);
+  return await httpService.post<void>(path, undefined, token);
 }
 
 export async function getReceivedInvites(
+  token: string,
   sortBy: string = "created_at",
   page: number = 0,
   size: number = 10
 ): Promise<PageResult<Invite>> {
   const path = PREFIX_API + apiRoutes.RECEIVED_FOLDER_INVITES;
-  return await httpService.get<PageResult<Invite>>(path, {
+  return await httpService.get<PageResult<Invite>>(path, token, {
     sort: sortBy,
     page: String(page),
     size: String(size),
@@ -319,12 +359,13 @@ export async function getReceivedInvites(
 }
 
 export async function getSentInvites(
+  token: string,
   sortBy: string = "created_at",
   page: number = 0,
   size: number = 10
 ): Promise<PageResult<Invite>> {
   const path = PREFIX_API + apiRoutes.SENT_FOLDER_INVITES;
-  return await httpService.get<PageResult<Invite>>(path, {
+  return await httpService.get<PageResult<Invite>>(path, token, {
     sort: sortBy,
     page: String(page),
     size: String(size),
@@ -334,7 +375,8 @@ export async function getSentInvites(
 export async function validateFolderInvite(
   folderId: string,
   inviteId: string,
-  status: InviteStatusType
+  status: InviteStatusType,
+  token: string
 ): Promise<void> {
   const path =
     PREFIX_API +
@@ -347,19 +389,22 @@ export async function validateFolderInvite(
     path,
     JSON.stringify({
       inviteStatus: status,
-    })
+    }),
+    token
   );
 }
 
 export async function createInviteFolder(
   folderId: string,
-  username: string
+  username: string,
+  token: string
 ): Promise<RegisterOutput> {
   const path =
-    PREFIX_API + apiRoutes.CREATE_INVITE_FOLDER.replace(":folderId", folderId);
+    PREFIX_API + apiRoutes.CREATE_INVITE_FOLDER.replace(":id", folderId);
   return await httpService.post<RegisterOutput>(
     path,
-    JSON.stringify({ username: username })
+    JSON.stringify({ username: username }),
+    token
   );
 }
 

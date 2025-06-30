@@ -228,9 +228,9 @@ const FileInfo = ({
 
 type Props = {
   fileId: string;
-  getFileFunc: (fileId: string) => Promise<FileOutputModel>;
-  downloadFunc: (fileId: string) => Promise<any>;
-  deleteFunc: (fileId: string) => Promise<any>;
+  getFileFunc: (fileId: string, token: string) => Promise<FileOutputModel>;
+  downloadFunc: (fileId: string, token: string) => Promise<any>;
+  deleteFunc: (fileId: string, token: string) => Promise<any>;
 };
 
 const FileDetailsScreen = ({
@@ -240,12 +240,12 @@ const FileDetailsScreen = ({
   deleteFunc,
 }: Props) => {
   const [state, dispatch] = useReducer(reducer, firstState);
-  const { keyMaster, setUsername, setIsLogged } = useAuthentication();
+  const { token, keyMaster, setUsername, setIsLogged } = useAuthentication();
 
   const fetchFileDetails = async () => {
     dispatch({ type: "start-loading" });
     try {
-      const details = await getFileFunc(fileId);
+      const details = await getFileFunc(fileId, token);
       dispatch({ type: "loading-success", details });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
@@ -273,7 +273,7 @@ const FileDetailsScreen = ({
     dispatch({ type: "download-loading", details: state.details });
 
     try {
-      const result = await downloadFunc(fileId);
+      const result = await downloadFunc(fileId, token);
       await processAndSaveDownloadedFile(result, keyMaster);
       dispatch({ type: "loading-success", details: state.details });
     } catch (error) {
@@ -285,7 +285,7 @@ const FileDetailsScreen = ({
     if (state.tag !== "loaded") return;
     dispatch({ type: "delete-loading" });
     try {
-      await deleteFunc(fileId);
+      await deleteFunc(fileId, token);
       dispatch({ type: "success-delete" });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
@@ -297,7 +297,7 @@ const FileDetailsScreen = ({
     dispatch({ type: "url-loading", details: state.details });
     try {
       const defaultTime = 15; // 15 minutes
-      const value = await generateTemporaryUrl(fileId, defaultTime);
+      const value = await generateTemporaryUrl(fileId, defaultTime, token);
       dispatch({ type: "loading-success", details: value });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });

@@ -68,7 +68,7 @@ const firstState: State = { tag: "begin" };
 
 const SentInvites = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
-  const { setIsLogged, setUsername } = useAuthentication();
+  const { token, setIsLogged, setUsername } = useAuthentication();
 
   useEffect(() => {
     if (state.tag === "begin") {
@@ -98,7 +98,7 @@ const SentInvites = () => {
 
   async function handleGetInvites() {
     try {
-      const invites = await getSentInvites();
+      const invites = await getSentInvites(token);
       dispatch({ type: "loading-success", invites });
     } catch (error) {
       Alert.alert(
