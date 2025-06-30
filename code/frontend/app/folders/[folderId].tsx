@@ -37,7 +37,7 @@ import {
   formatSize,
 } from "@/services/utils/Function";
 import { removeValueFor } from "@/services/storage/SecureStorage";
-import { useAuthentication } from "@/context/AuthProvider";
+import { KEY_NAME, useAuthentication } from "@/context/AuthProvider";
 import { File } from "@/domain/storage/File";
 import { PageResult } from "@/domain/utils/PageResult";
 import { Folder } from "@/domain/storage/Folder";
@@ -133,8 +133,6 @@ function reducer(state: State, action: Action): State {
 const firstState: State = {
   tag: "begin",
 };
-
-const KEY_NAME = "user_info";
 
 type FolderInfoDetailsProps = {
   folderDetails: FolderOutputModel;

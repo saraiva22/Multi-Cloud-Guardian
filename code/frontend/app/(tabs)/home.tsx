@@ -12,7 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import EmptyState from "@/components/EmptyState";
 import SearchBar from "@/components/SearchBar";
 import { icons } from "@/constants";
-import { useAuthentication } from "@/context/AuthProvider";
+import { KEY_NAME, useAuthentication } from "@/context/AuthProvider";
 import React, { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useRouter } from "expo-router";
 import { getFiles, getFolders } from "@/services/storage/StorageService";
@@ -107,8 +107,7 @@ const firstState: State = {
   sort: sortOptions[0],
 };
 
-// User info key
-const KEY_NAME = "user_info";
+
 
 const HomeScreen = () => {
   const { username, setUsername, setIsLogged } = useAuthentication();

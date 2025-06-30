@@ -19,7 +19,7 @@ import {
   isProblem,
   Problem,
 } from "@/services/media/Problem";
-import { useAuthentication } from "@/context/AuthProvider";
+import { KEY_NAME, useAuthentication } from "@/context/AuthProvider";
 import { removeValueFor } from "@/services/storage/SecureStorage";
 import { icons } from "@/constants";
 import CustomButton from "@/components/CustomButton";
@@ -99,8 +99,6 @@ function reducer(state: State, action: Action): State {
 const firstState: State = {
   tag: "begin",
 };
-
-const KEY_NAME = "user_info";
 
 type FileInfoProps = {
   fileInfo: FileOutputModel;

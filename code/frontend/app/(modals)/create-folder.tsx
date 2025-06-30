@@ -29,6 +29,8 @@ import { PageResult } from "@/domain/utils/PageResult";
 import FolderItemComponent from "@/components/FolderItemComponent";
 import { FolderType } from "@/domain/storage/FolderType";
 import FolderTypeSelector from "@/components/ FolderTypeSelector";
+import { KEY_NAME, useAuthentication } from "@/context/AuthProvider";
+import { removeValueFor } from "@/services/storage/SecureStorage";
 
 // The State
 type State =
@@ -155,11 +157,29 @@ const firstState: State = { tag: "begin" };
 
 const CreateFolder = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
+  const { setIsLogged, setUsername } = useAuthentication();
 
   useEffect(() => {
     if (state.tag === "begin") {
       dispatch({ type: "start-loading" });
       handleGetFolder();
+    }
+
+    if (state.tag === "error") {
+      Alert.alert(
+        "Error",
+        `${
+          isProblem(state.error)
+            ? getProblemMessage(state.error)
+            : isProblem(state.error.body)
+            ? getProblemMessage(state.error.body)
+            : state.error
+        }`
+      );
+      setUsername(null);
+      setIsLogged(false);
+      removeValueFor(KEY_NAME);
+      router.replace("/sign-in");
     }
 
     if (state.tag === "redirect") {

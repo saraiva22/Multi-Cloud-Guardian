@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Image,
+  FlatList,
 } from "react-native";
 import React, { useCallback, useEffect, useReducer } from "react";
 import { PageResult } from "@/domain/utils/PageResult";
@@ -15,28 +16,36 @@ import {
   isProblem,
   Problem,
 } from "@/services/media/Problem";
-import { useAuthentication } from "@/context/AuthProvider";
+import { KEY_NAME, useAuthentication } from "@/context/AuthProvider";
 import { getSSE } from "@/services/notifications/SSEManager";
 import { EventSourceListener } from "react-native-sse";
-import { getInvites } from "@/services/storage/StorageService";
+import {
+  getInvites,
+  validateFolderInvite,
+} from "@/services/storage/StorageService";
 import { router } from "expo-router";
 import { icons } from "@/constants";
 import { GetStringOptions } from "expo-clipboard";
 import { removeValueFor } from "@/services/storage/SecureStorage";
+import { InviteStatusType } from "@/domain/storage/InviteStatusType";
+import InviteItemComponente from "@/components/InviteItemComponent";
 
 // The State
 type State =
   | { tag: "begin" }
   | { tag: "loading" }
   | { tag: "loaded"; invites: PageResult<Invite> }
-  | { tag: "error"; error: Problem | string };
+  | { tag: "error"; error: Problem | string }
+  | { tag: "redirect"; folderId: number };
 
 // The Action
 type Action =
   | { type: "start-loading" }
   | { type: "loading-success"; invites: PageResult<Invite> }
   | { type: "loading-error"; error: Problem | string }
-  | { type: "new-invite"; invite: Invite };
+  | { type: "new-invite"; invite: Invite }
+  | { type: "accepted-invite"; folderId: number }
+  | { type: "reject-invite"; inviteId: number };
 
 // The Logger
 function logUnexpectedAction(state: State, action: Action) {
@@ -75,11 +84,32 @@ function reducer(state: State, action: Action): State {
           totalElements: state.invites.totalElements + 1,
         },
       };
+
+    case "accepted-invite":
+      if (state.tag !== "loaded") {
+        return logUnexpectedAction(state, action);
+      }
+      return { tag: "redirect", folderId: action.folderId };
+
+    case "reject-invite":
+      if (state.tag !== "loaded") {
+        return logUnexpectedAction(state, action);
+      }
+      return {
+        ...state,
+        invites: {
+          ...state.invites,
+          content: state.invites.content.map((invite) =>
+            invite.inviteId === action.inviteId
+              ? { ...invite, status: InviteStatusType.REJECT }
+              : invite
+          ),
+        },
+      };
   }
 }
 
 const firstState: State = { tag: "begin" };
-const KEY_NAME = "user_info";
 type CustomEvents = "invite";
 
 const ReceivedInvites = () => {
@@ -108,15 +138,20 @@ const ReceivedInvites = () => {
       removeValueFor(KEY_NAME);
       router.replace("/sign-in");
     }
+
+    if (state.tag === "redirect") {
+      router.replace(`/folders/${state.folderId}`);
+    }
   }, [state]);
 
   useEffect(() => {
     console.log("LISTENER ", listener);
-    if ( listener) {
+    if (listener) {
       listener.addEventListener("invite", handleInvite);
     }
   }, []);
 
+  // Handle EventListener - New Invite
   const handleInvite: EventSourceListener<CustomEvents> = (event) => {
     if (event.type === "invite") {
       const eventData = JSON.parse(event.data);
@@ -143,6 +178,33 @@ const ReceivedInvites = () => {
         `${isProblem(error) ? getProblemMessage(error) : error}`
       );
       dispatch({ type: "loading-error", error: error });
+    }
+  }
+
+  // Handle Validate Invite()
+
+  async function handleValidationInvite(
+    folderId: number,
+    inviteId: number,
+    status: InviteStatusType
+  ) {
+    try {
+      await validateFolderInvite(
+        folderId.toString(),
+        inviteId.toString(),
+        status
+      );
+
+      if (status === InviteStatusType.ACCEPT) {
+        dispatch({ type: "accepted-invite", folderId });
+      } else {
+        dispatch({ type: "reject-invite", inviteId });
+      }
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        `${isProblem(error) ? getProblemMessage(error) : error}`
+      );
     }
   }
 
@@ -178,11 +240,19 @@ const ReceivedInvites = () => {
           <Text className="text-[24px] font-semibold text-white text-center mb-16 mt-4">
             Received Invites
           </Text>
-          {state.invites.content.map((invite) => (
-            <Text key={invite.inviteId}>
-              📩 {invite.user.username} convidou-te para {invite.folderName}
-            </Text>
-          ))}
+          <FlatList
+            data={state.invites.content}
+            keyExtractor={(item) => String(item.inviteId)}
+            renderItem={({ item }) => (
+              <InviteItemComponente
+                isReceived={true}
+                item={item}
+                onPress={(status) =>
+                  handleValidationInvite(item.folderId, item.inviteId, status)
+                }
+              />
+            )}
+          />
         </SafeAreaView>
       );
     }

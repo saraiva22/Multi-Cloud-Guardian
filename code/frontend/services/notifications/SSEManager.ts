@@ -1,19 +1,19 @@
 import EventSource from "react-native-sse";
 import { apiRoutes, PREFIX_API } from "../utils/HttpService";
+import { cache } from "react";
 
 let listener: EventSource | null = null;
 
 const url = PREFIX_API + apiRoutes.NOTIFICATIONS;
 
-export function initializeSSE(): EventSource {
+export function initializeSSE(): EventSource | null {
   if (!listener) {
-    listener = new EventSource(url);
-
-    listener.addEventListener("error", (event) => {
-      console.error("Error Event Source", event);
+    try {
+      listener = new EventSource(url);
+    } catch (error) {
       listener?.close();
       listener = null;
-    });
+    }
   }
   return listener;
 }

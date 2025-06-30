@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useReducer, useState } from "react";
-import { useAuthentication } from "@/context/AuthProvider";
+import { KEY_NAME, useAuthentication } from "@/context/AuthProvider";
 import { icons } from "@/constants";
 import { Link, router } from "expo-router";
 import { UserInfoOutputModel } from "@/services/users/models/UserInfoOutuputModel";
@@ -87,7 +87,7 @@ function reducer(state: State, action: Action): State {
 }
 
 const firstState: State = { tag: "begin" };
-const KEY_NAME = "user_info";
+
 
 const Preferences = () => {
   const [state, dispatch] = useReducer(reducer, firstState);

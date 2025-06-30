@@ -10,7 +10,11 @@ import {
   isProblem,
   Problem,
 } from "@/services/media/Problem";
-import { useAuthentication } from "@/context/AuthProvider";
+import {
+  KEY_MASTER,
+  KEY_NAME,
+  useAuthentication,
+} from "@/context/AuthProvider";
 import { getCredentials, login } from "@/services/users/UserService";
 import {
   convertStringToArrayBuffer,
@@ -18,9 +22,6 @@ import {
 } from "@/services/security/SecurityService";
 import { getValueFor, save } from "@/services/storage/SecureStorage";
 import { initializeSSE } from "@/services/notifications/SSEManager";
-
-const KEY_NAME = "user_info";
-const KEY_MASTER = "key_master-";
 
 type State =
   | {

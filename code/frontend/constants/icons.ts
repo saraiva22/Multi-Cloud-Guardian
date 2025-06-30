@@ -43,6 +43,8 @@ import folder from "../assets/icons/folder1.png";
 import document from "../assets/icons/document_icon.png";
 import invite_in from "../assets/icons/invite-in.png";
 import sent_invite from "../assets/icons/sent-invite.png";
+import accept from "../assets/icons/accept.png";
+import reject from "../assets/icons/reject.png";
 
 export default {
   europe,
@@ -90,4 +92,6 @@ export default {
   document,
   invite_in,
   sent_invite,
+  accept,
+  reject,
 };

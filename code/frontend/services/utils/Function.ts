@@ -1,5 +1,6 @@
 import { months } from "@/constants/months";
 import { FolderType } from "@/domain/storage/FolderType";
+import { InviteStatusType } from "@/domain/storage/InviteStatusType";
 
 export const formatSize = (bytes?: number) => {
   if (!bytes) return "0 Kb";
@@ -17,4 +18,8 @@ export const formatDate = (date: number) => {
 
 export const formatFolderType = (type: FolderType) => {
   return type.charAt(0) + type.slice(1).toLowerCase();
+};
+
+export const formatInviteStatus = (status: InviteStatusType) => {
+  return status.charAt(0) + status.slice(1).toLowerCase();
 };

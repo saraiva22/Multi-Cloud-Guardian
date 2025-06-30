@@ -28,10 +28,7 @@ import {
   MAX_ITERATIONS,
   MIN_ITERATIONS,
 } from "@/domain/credentials/Credentials";
-import { useAuthentication } from "@/context/AuthProvider";
-
-const KEY_NAME = "user_info";
-const KEY_MASTER = "key_master-";
+import { KEY_MASTER, KEY_NAME, useAuthentication } from "@/context/AuthProvider";
 
 type State =
   | {

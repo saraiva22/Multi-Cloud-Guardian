@@ -9,14 +9,13 @@ import {
   Image,
 } from "react-native";
 import { icons } from "@/constants";
-import { useAuthentication } from "@/context/AuthProvider";
+import { KEY_NAME, useAuthentication } from "@/context/AuthProvider";
 import { removeValueFor } from "@/services/storage/SecureStorage";
 import { getUserByUsername, logout } from "@/services/users/UserService";
 import { Href, router } from "expo-router";
 import React from "react";
 import CustomButtom from "../../components/CustomButton";
 
-const KEY_NAME = "user_info";
 const ProfileScreen = () => {
   const { username, setUsername, setIsLogged } = useAuthentication();
 

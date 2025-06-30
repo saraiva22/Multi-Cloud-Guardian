@@ -7,7 +7,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
 } from "react-native";
-import { useAuthentication } from "@/context/AuthProvider";
+import { KEY_NAME, useAuthentication } from "@/context/AuthProvider";
 import {
   getProblemMessage,
   isProblem,
@@ -64,7 +64,7 @@ function reducer(state: State, action: Action): State {
 }
 
 const firstState: State = { tag: "begin" };
-const KEY_NAME = "user_info";
+
 
 const StorageDetails = () => {
   const [state, dispatch] = useReducer(reducer, firstState);

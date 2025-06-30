@@ -25,6 +25,7 @@ import { FolderOutputModel } from "./model/FolderOutputModel";
 import { FolderType } from "@/domain/storage/FolderType";
 import { RegisterOutput } from "../users/models/RegisterOutputModel";
 import { Invite } from "@/domain/storage/Invite";
+import { InviteStatusType } from "@/domain/storage/InviteStatusType";
 
 const httpService = httpServiceInit();
 
@@ -189,61 +190,6 @@ export async function generateTemporaryUrl(
   );
 }
 
-export async function processAndSaveDownloadedFile(
-  downloadFile: DownloadOutputModel,
-  keyMaster: any
-): Promise<any> {
-  const fileContent = downloadFile.file.fileContent;
-  const fileEncrypted = downloadFile.file.encrypted;
-  const encryptedKeyBase64 = downloadFile.fileKeyEncrypted;
-  const fileName = downloadFile.file.fileName;
-  const mimeType = downloadFile.file.mimeType;
-
-  let finalData: Uint8Array;
-
-  if (fileEncrypted) {
-    //  Extract IV and encrypted data from the file
-    const fileBuffer = Buffer.from(fileContent, "base64");
-
-    // Extract signature (first 32 bytes for SHA-256)
-    const signatureFromFile = fileBuffer.slice(0, 32);
-
-    // Extrair IV + encrypted data
-    const fileIV = fileBuffer.slice(32, 44); // 12 bytes after the signature
-    const encryptedFile = fileBuffer.slice(44); // File Content
-
-    // Decrypt the file's AES key using the masterKey
-    const encryptedKeyBuffer = Buffer.from(encryptedKeyBase64, "base64");
-    const keyIV = encryptedKeyBuffer.slice(0, 12);
-    const encryptedFileKey = encryptedKeyBuffer.slice(12);
-
-    const fileKey = await decryptData(encryptedFileKey, keyMaster, keyIV);
-
-    // Recreate the content that was signed (IV + encrypted)
-    const fileEncryptedWithIV = Buffer.concat([fileIV, encryptedFile]);
-
-    const calculatedSignature = createHmacSHA256(
-      new Uint8Array(fileEncryptedWithIV),
-      new Uint8Array(fileKey)
-    );
-
-    if (calculatedSignature !== signatureFromFile.toString("hex")) {
-      console.log("ERROR, invalidSignature");
-      throw new Error("Invalid signature! The file may have been corrupted");
-    }
-    // Decrypt the file content
-    const decryptedFile = await decryptData(encryptedFile, fileKey, fileIV);
-
-    finalData = new Uint8Array(decryptedFile);
-  } else {
-    // If the file is not encrypted
-    finalData = new Uint8Array(Buffer.from(fileContent, "base64"));
-  }
-
-  // Save the file locally
-  await saveFileLocally(finalData, fileName);
-}
-
 export async function getFile(fileId: string): Promise<FileOutputModel> {
   const path = PREFIX_API + apiRoutes.GET_FILE_BY_ID.replace(":id", fileId);
   return await httpService.get<FileOutputModel>(path);
@@ -370,7 +316,82 @@ export async function getInvites(
   });
 }
 
+export async function validateFolderInvite(
+  folderId: string,
+  inviteId: string,
+  status: InviteStatusType
+): Promise<void> {
+  const path =
+    PREFIX_API +
+    apiRoutes.VALIDATE_FOLDER_INVITE.replace(":folderId", folderId).replace(
+      ":inviteId",
+      inviteId
+    );
+
+  return await httpService.post<void>(
+    path,
+    JSON.stringify({
+      inviteStatus: status,
+    })
+  );
+}
+
 // Utils
+
+export async function processAndSaveDownloadedFile(
+  downloadFile: DownloadOutputModel,
+  keyMaster: any
+): Promise<any> {
+  const fileContent = downloadFile.file.fileContent;
+  const fileEncrypted = downloadFile.file.encrypted;
+  const encryptedKeyBase64 = downloadFile.fileKeyEncrypted;
+  const fileName = downloadFile.file.fileName;
+  const mimeType = downloadFile.file.mimeType;
+
+  let finalData: Uint8Array;
+
+  if (fileEncrypted) {
+    //  Extract IV and encrypted data from the file
+    const fileBuffer = Buffer.from(fileContent, "base64");
+
+    // Extract signature (first 32 bytes for SHA-256)
+    const signatureFromFile = fileBuffer.slice(0, 32);
+
+    // Extrair IV + encrypted data
+    const fileIV = fileBuffer.slice(32, 44); // 12 bytes after the signature
+    const encryptedFile = fileBuffer.slice(44); // File Content
+
+    // Decrypt the file's AES key using the masterKey
+    const encryptedKeyBuffer = Buffer.from(encryptedKeyBase64, "base64");
+    const keyIV = encryptedKeyBuffer.slice(0, 12);
+    const encryptedFileKey = encryptedKeyBuffer.slice(12);
+
+    const fileKey = await decryptData(encryptedFileKey, keyMaster, keyIV);
+
+    // Recreate the content that was signed (IV + encrypted)
+    const fileEncryptedWithIV = Buffer.concat([fileIV, encryptedFile]);
+
+    const calculatedSignature = createHmacSHA256(
+      new Uint8Array(fileEncryptedWithIV),
+      new Uint8Array(fileKey)
+    );
+
+    if (calculatedSignature !== signatureFromFile.toString("hex")) {
+      console.log("ERROR, invalidSignature");
+      throw new Error("Invalid signature! The file may have been corrupted");
+    }
+    // Decrypt the file content
+    const decryptedFile = await decryptData(encryptedFile, fileKey, fileIV);
+
+    finalData = new Uint8Array(decryptedFile);
+  } else {
+    // If the file is not encrypted
+    finalData = new Uint8Array(Buffer.from(fileContent, "base64"));
+  }
+
+  // Save the file locally
+  await saveFileLocally(finalData, fileName);
+}
 
 async function saveFileLocally(data: Uint8Array, fileName: string) {
   try {

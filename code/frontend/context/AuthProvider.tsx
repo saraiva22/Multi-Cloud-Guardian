@@ -5,10 +5,9 @@ import {
   initializeSSE,
   setSSE,
 } from "@/services/notifications/SSEManager";
-import { apiRoutes, PREFIX_API } from "@/services/utils/HttpService";
 
-const KEY_NAME = "user_info";
-const KEY_MASTER = "key_master-";
+export const KEY_NAME = "user_info";
+export const KEY_MASTER = "key_master-";
 
 type State = {
   username: string | undefined;
@@ -52,7 +51,9 @@ export function AuthProvider({ children }: any) {
           }
           if (!eventSource) {
             const newEventSource = initializeSSE();
-            setSSE(newEventSource);
+            if (newEventSource) {
+              setSSE(newEventSource);
+            }
           }
         } else {
           setIsLogged(false);
