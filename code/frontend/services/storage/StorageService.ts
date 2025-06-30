@@ -305,6 +305,12 @@ export async function deleteFolder(folderId: string): Promise<void> {
   return await httpService.delete<void>(path);
 }
 
+export async function leaveFolder(folderId: string): Promise<void> {
+  const path =
+    PREFIX_API + apiRoutes.LEAVE_SHARED_FOLDER.replace(":id", folderId);
+  return await httpService.post<void>(path);
+}
+
 export async function getReceivedInvites(
   sortBy: string = "created_at",
   page: number = 0,
@@ -356,7 +362,7 @@ export async function createInviteFolder(
   username: string
 ): Promise<RegisterOutput> {
   const path =
-    PREFIX_API + apiRoutes.CREATE_INVITE_FOLDER.replace(":folderId", folderId);
+    PREFIX_API + apiRoutes.CREATE_INVITE_FOLDER.replace(":id", folderId);
   return await httpService.post<RegisterOutput>(
     path,
     JSON.stringify({ username: username })

@@ -1797,4 +1797,102 @@ class StorageServiceTests : ServiceTests() {
         storageService.deleteFileInFolder(user1, folderId, fileId)
         storageService.deleteFolder(user1, folderId)
     }
+
+    @Test
+    fun `shared folder - invited user cannot access file before accepting invite, can after`() {
+        // Arrange
+        val clock = TestClock()
+        val storageService = createStorageService(clock)
+        val owner = testUser
+        val invitedUser = testUser2
+        val folderType = FolderType.SHARED
+        val folderName = "SharedFolder"
+
+        // Owner creates a shared folder
+        val createFolderResult = storageService.createFolder(folderName, owner, folderType)
+        val folderId =
+            when (createFolderResult) {
+                is Success -> createFolderResult.value
+                is Failure -> fail("Unexpected $createFolderResult")
+            }
+
+        // Owner uploads a file to the shared folder
+        val fileContent = fileCreation()
+        val uploadFileResult = storageService.uploadFileInFolder(fileContent, fileContent.encryption, owner, folderId)
+        val fileId =
+            when (uploadFileResult) {
+                is Success -> uploadFileResult.value
+                is Failure -> fail("Unexpected $uploadFileResult")
+            }
+
+        // Owner invites user1 to the shared folder
+        val inviteResult = storageService.inviteFolder(folderId, owner, invitedUser.username)
+        when (inviteResult) {
+            is Success -> assertTrue(inviteResult.value.value > 0)
+            is Failure -> fail("Unexpected $inviteResult")
+        }
+
+        // Invited user tries to download the file before accepting invite (should fail)
+        val downloadBeforeAccept = storageService.downloadFileInFolder(invitedUser, folderId, fileId)
+        when (downloadBeforeAccept) {
+            is Success -> fail("User should not have access before accepting invite")
+            is Failure -> assertTrue(true) // Expected failure
+        }
+
+        // Invited user accepts the invite
+        val acceptInviteResult =
+            storageService.validateFolderInvite(
+                invitedUser,
+                folderId,
+                inviteResult.value,
+                InviteStatus.ACCEPT,
+            )
+        when (acceptInviteResult) {
+            is Success ->
+                when (val result = acceptInviteResult.value) {
+                    is InviteStatusResult.InviteAccepted -> {
+                        val folder = result.folderMembers.folder
+                        assertEquals(folderName, folder.folderName)
+                        assertEquals(folderId, folder.folderId)
+                        assertEquals(folderType, folder.type)
+                    }
+                    is InviteStatusResult.InviteRejected -> fail("Expected InviteAccepted but got ${acceptInviteResult.value}")
+                }
+
+            is Failure -> fail("Unexpected $acceptInviteResult")
+        }
+
+        // Invited user tries to download the file after accepting invite (should succeed)
+        val downloadAfterAccept = storageService.downloadFileInFolder(invitedUser, folderId, fileId)
+        when (downloadAfterAccept) {
+            is Success -> {
+                assertContentEquals(fileContent.fileContent, downloadAfterAccept.value.first.fileContent)
+                assertEquals(fileContent.blobName, downloadAfterAccept.value.first.fileName)
+                assertEquals(fileContent.contentType, downloadAfterAccept.value.first.mimeType)
+                assertEquals(fileContent.encryption, downloadAfterAccept.value.first.encrypted)
+            }
+            is Failure -> fail("Unexpected $downloadAfterAccept")
+        }
+
+        // Cleanup
+        storageService.deleteFileInFolder(owner, folderId, fileId)
+        storageService.deleteFolder(owner, folderId)
+    }
+
+    @Test
+    fun `shared folder - owner cannot leave their own folder`() {
+        // Arrange: create shared folder as owner
+        val storageService = createStorageService()
+        val owner = testUser
+        val sharedFolderId = (storageService.createFolder("OwnerShared", owner, FolderType.SHARED) as Success).value
+
+        // Act: owner tries to leave the shared folder
+        val leaveResult = storageService.leaveFolder(owner, sharedFolderId)
+
+        // Assert: should fail (owner cannot leave)
+        assertTrue(leaveResult is Failure)
+
+        // Cleanup
+        storageService.deleteFolder(owner, sharedFolderId)
+    }
 }

@@ -342,7 +342,8 @@ class StorageService(
                 return@run failure(DownloadFileError.FileNotFound)
             }
 
-            val provider = usersRepository.getProvider(user.id)
+            val selectUser = folderMembers?.folder?.user?.id ?: user.id
+            val provider = usersRepository.getProvider(selectUser)
             val bucketName = providerDomain.getBucketName(provider)
 
             when (val contextStorage = createContextStorage(provider, bucketName)) {
@@ -646,20 +647,10 @@ class StorageService(
 
             if (!storageRepository.isMemberOfFolder(user.id, folderId)) return@run failure(LeaveFolderError.UserNotInFolder)
 
-            val isOwner = storageRepository.isOwnerOfFolder(user.id, folderId)
+            if (storageRepository.isOwnerOfFolder(user.id, folderId)) return@run failure(LeaveFolderError.UserIsOwner)
 
-            if (isOwner) {
-                val result = deleteFolder(user, folderId)
-                when (result) {
-                    is Failure -> return@run failure(LeaveFolderError.ErrorLeavingFolder)
-                    is Success -> {
-                        return@run success(Unit)
-                    }
-                }
-            } else {
-                if (!storageRepository.leaveFolder(user.id, folderId)) return@run failure(LeaveFolderError.ErrorLeavingFolder)
-                success(Unit)
-            }
+            if (!storageRepository.leaveFolder(user.id, folderId)) return@run failure(LeaveFolderError.ErrorLeavingFolder)
+            success(Unit)
         }
 
     fun getFiles(

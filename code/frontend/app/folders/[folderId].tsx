@@ -21,6 +21,7 @@ import {
   getFolder,
   getFolders,
   getFoldersInFolder,
+  leaveFolder,
   processAndSaveDownloadedFile,
 } from "@/services/storage/StorageService";
 import { FolderOutputModel } from "@/services/storage/model/FolderOutputModel";
@@ -77,7 +78,9 @@ type Action =
   | { type: "download-loading"; details: FolderOutputModel }
   | { type: "url-loading"; details: FolderOutputModel }
   | { type: "delete-loading" }
-  | { type: "success-delete" };
+  | { type: "leave-loading" }
+  | { type: "success-delete" }
+  | { type: "success-leave" };
 
 function logUnexpectedAction(state: State, action: Action) {
   console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
@@ -105,6 +108,8 @@ function reducer(state: State, action: Action): State {
         return { tag: "error", error: action.error };
       } else if (action.type === "success-delete") {
         return { tag: "redirect" };
+      } else if (action.type === "success-leave") {
+        return { tag: "redirect" };
       } else {
         logUnexpectedAction(state, action);
         return state;
@@ -116,6 +121,8 @@ function reducer(state: State, action: Action): State {
       } else if (action.type === "url-loading") {
         return { tag: "loading" };
       } else if (action.type === "delete-loading") {
+        return { tag: "loading" };
+      } else if (action.type === "leave-loading") {
         return { tag: "loading" };
       } else {
         logUnexpectedAction(state, action);
@@ -139,6 +146,7 @@ type FolderInfoDetailsProps = {
   username: string | undefined;
   state: State;
   handleDelete: () => Promise<any>;
+  handleLeave: () => Promise<any>;
 };
 
 const FolderInfoDetails = ({
@@ -146,6 +154,7 @@ const FolderInfoDetails = ({
   username,
   state,
   handleDelete,
+  handleLeave,
 }: FolderInfoDetailsProps) => (
   <>
     <TouchableOpacity
@@ -205,6 +214,20 @@ const FolderInfoDetails = ({
         />
       </View>
     )}
+    {username &&
+      folderDetails.user.username != username &&
+      folderDetails.type == FolderType.SHARED && (
+        <View>
+          <CustomButton
+            title="Leave"
+            handlePress={handleLeave}
+            containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
+            textStyles="text-black text-center font-bold"
+            isLoading={state.tag === "loading"}
+            color="border-secondary"
+          />
+        </View>
+      )}
   </>
 );
 
@@ -251,6 +274,17 @@ const FolderDetails = () => {
     dispatch({ type: "delete-loading" });
     try {
       await deleteFolder(folderId.toString());
+      dispatch({ type: "success-delete" });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
+  }
+
+  async function handleLeave() {
+    if (state.tag !== "loaded") return;
+    dispatch({ type: "delete-loading" });
+    try {
+      await leaveFolder(folderId.toString());
       dispatch({ type: "success-delete" });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
@@ -311,6 +345,7 @@ const FolderDetails = () => {
                   username={username}
                   state={state}
                   handleDelete={handleDelete}
+                  handleLeave={handleLeave}
                 />
                 {state.folders != null ? (
                   <View className="w-full flex-1 pt-5 pb-8">

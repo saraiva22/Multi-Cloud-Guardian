@@ -223,6 +223,8 @@ sealed class LeaveFolderError {
     data object FolderIsPrivate : LeaveFolderError()
 
     data object ErrorLeavingFolder : LeaveFolderError()
+
+    data object UserIsOwner : LeaveFolderError()
 }
 
 typealias LeaveFolderResult = Either<LeaveFolderError, Unit>
