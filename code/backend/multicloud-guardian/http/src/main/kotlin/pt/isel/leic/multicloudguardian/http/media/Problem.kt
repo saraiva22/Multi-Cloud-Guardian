@@ -106,6 +106,7 @@ class Problem(
         private val notMemberOfFolder = URI("${FOLDER}not-member-of-folder")
         private val userPermissionsDeniedType = URI("${FOLDER}user-permissions-denied-type")
         private val encryptionNotSupportedInSharedFolder = URI("${FOLDER}encryption-not-supported-in-shared-folder")
+        private val hasPendingInvite = URI("${FOLDER}invite-pending")
 
         fun internalServerError(instance: URI?): ResponseEntity<*> =
             Problem(
@@ -576,6 +577,18 @@ class Problem(
                 title = "Encryption not supported in shared folder",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = "Encryption is not supported in shared folders. Folder with id $folderId is shared.",
+                instance = instance,
+            ).toResponse()
+
+        fun inviteAlreadyPending(
+            username: String,
+            instance: URI?,
+        ): ResponseEntity<*> =
+            Problem(
+                type = hasPendingInvite,
+                title = "Invite already pending",
+                status = HttpStatus.BAD_REQUEST.value(),
+                detail = "There is already a pending invite for user $username.",
                 instance = instance,
             ).toResponse()
     }

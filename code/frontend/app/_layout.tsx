@@ -52,8 +52,6 @@ export default function RootLayout() {
           name="folders/[folderId]/files/[fileId]"
           options={{ headerShown: false }}
         />
-
-        <Stack.Screen name="search/[query]" options={{ headerShown: false }} />
       </Stack>
     </AuthProvider>
   );

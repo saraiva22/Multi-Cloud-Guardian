@@ -441,6 +441,7 @@ class FoldersController(
                     InviteFolderError.UserAlreadyInFolder -> Problem.userAlreadyInFolder(input.username, instance)
                     InviteFolderError.GuestNotFound -> Problem.userNotFoundByUsername(input.username, instance)
                     InviteFolderError.UserIsNotOwner -> Problem.userIsNotFolderOwner(authenticatedUser.user.username.value, instance)
+                    InviteFolderError.InviteAlreadyPending -> Problem.inviteAlreadyPending(input.username, instance)
                 }
         }
     }

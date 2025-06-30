@@ -1,7 +1,7 @@
 import { MEDIA_TYPE_PROBLEM, Problem } from "../media/Problem";
 
 const LOCAL_IP = "192.168.1.71";
-const PORT = "8088";
+const PORT = "8080";
 
 export const PREFIX_API = `http://${LOCAL_IP}:${PORT}/api`;
 
@@ -16,6 +16,7 @@ export const apiRoutes = {
   GET_STORAGE_DETAILS: "/users/storage",
   SEARCH_USERS: "/users",
   HOME: "/me",
+  NOTIFICATIONS: "/users/notifications",
 
   // Files
   UPLOAD_FILE: "/files",
@@ -37,6 +38,11 @@ export const apiRoutes = {
   DOWNLOAD_FILE_IN_FOLDER: "/folders/:folderId/files/:fileId/download",
   DELETE_FOLDER: "/folders/:id",
   DELETE_FILE_IN_FOLDER: "/folders/:folderId/files/:fileId",
+  CREATE_INVITE_FOLDER: "/folders/{folderId}/invites", // TODO()
+  VALIDATE_FOLDER_INVITE: "/folders/:folderId/invites/:inviteId", // TODO()
+  RECEIVED_FOLDER_INVITES: "/folders/invites/received",
+  SENT_FOLDER_INVITES: "/folders/invites/sent", // TODO()
+  LEAVE_SHARED_FOLDER: "/folders/{folderId}/leave", // TODO()
 };
 
 export default function httpService() {

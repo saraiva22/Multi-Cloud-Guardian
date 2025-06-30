@@ -17,6 +17,7 @@ import {
   generateMasterKey,
 } from "@/services/security/SecurityService";
 import { getValueFor, save } from "@/services/storage/SecureStorage";
+import { initializeSSE } from "@/services/notifications/SSEManager";
 
 const KEY_NAME = "user_info";
 const KEY_MASTER = "key_master-";
@@ -134,6 +135,7 @@ const SignIn = () => {
         setKeyMaster(masterKey);
       }
       setUsername(username);
+      initializeSSE();
       dispatch({ type: "success" });
     } catch (error) {
       Alert.alert(

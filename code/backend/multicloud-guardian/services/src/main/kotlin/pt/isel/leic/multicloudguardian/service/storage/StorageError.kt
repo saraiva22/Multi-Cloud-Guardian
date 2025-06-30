@@ -190,6 +190,8 @@ sealed class InviteFolderError {
     data object GuestNotFound : InviteFolderError()
 
     data object UserIsNotOwner : InviteFolderError()
+
+    data object InviteAlreadyPending : InviteFolderError()
 }
 
 typealias InviteFolderResult = Either<InviteFolderError, Id>

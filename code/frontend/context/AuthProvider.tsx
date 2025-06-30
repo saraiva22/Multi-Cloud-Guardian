@@ -1,5 +1,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { getValueFor, removeValueFor } from "@/services/storage/SecureStorage";
+import {
+  getSSE,
+  initializeSSE,
+  setSSE,
+} from "@/services/notifications/SSEManager";
+import { apiRoutes, PREFIX_API } from "@/services/utils/HttpService";
 
 const KEY_NAME = "user_info";
 const KEY_MASTER = "key_master-";
@@ -26,11 +32,12 @@ const AuthContext = createContext({
   setLoading: (_) => {},
 });
 
-export function AuthProvider({ children }) {
+export function AuthProvider({ children }: any) {
   const [observedUsername, setUsername] = useState(undefined);
   const [observedKeyMaster, setKeyMaster] = useState(undefined);
   const [isLogged, setIsLogged] = useState(false);
   const [loading, setLoading] = useState(true);
+  const eventSource = getSSE();
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -42,6 +49,10 @@ export function AuthProvider({ children }) {
           const masterKey = await getValueFor(`${KEY_MASTER}${res.username}`);
           if (masterKey) {
             setKeyMaster(masterKey);
+          }
+          if (!eventSource) {
+            const newEventSource = initializeSSE();
+            setSSE(newEventSource);
           }
         } else {
           setIsLogged(false);

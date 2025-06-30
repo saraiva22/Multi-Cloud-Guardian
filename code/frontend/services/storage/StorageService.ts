@@ -24,6 +24,7 @@ import { File } from "@/domain/storage/File";
 import { FolderOutputModel } from "./model/FolderOutputModel";
 import { FolderType } from "@/domain/storage/FolderType";
 import { RegisterOutput } from "../users/models/RegisterOutputModel";
+import { Invite } from "@/domain/storage/Invite";
 
 const httpService = httpServiceInit();
 
@@ -354,6 +355,19 @@ export async function createSubFolder(
 export async function deleteFolder(folderId: string): Promise<void> {
   const path = PREFIX_API + apiRoutes.DELETE_FOLDER.replace(":id", folderId);
   return await httpService.delete<void>(path);
+}
+
+export async function getInvites(
+  sortBy: string = "created_at",
+  page: number = 0,
+  size: number = 10
+): Promise<PageResult<Invite>> {
+  const path = PREFIX_API + apiRoutes.RECEIVED_FOLDER_INVITES;
+  return await httpService.get<PageResult<Invite>>(path, {
+    sort: sortBy,
+    page: String(page),
+    size: String(size),
+  });
 }
 
 // Utils

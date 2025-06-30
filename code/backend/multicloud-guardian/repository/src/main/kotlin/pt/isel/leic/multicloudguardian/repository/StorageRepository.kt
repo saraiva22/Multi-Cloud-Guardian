@@ -150,6 +150,11 @@ interface StorageRepository {
         folderId: Id,
     ): Boolean
 
+    fun hasPendingInvite(
+        guestId: Id,
+        folderId: Id,
+    ): Boolean
+
     fun createInviteFolder(
         inviterId: Id,
         guestId: Id,

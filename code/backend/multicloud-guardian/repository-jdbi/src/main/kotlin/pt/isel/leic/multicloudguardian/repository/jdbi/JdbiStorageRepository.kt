@@ -629,6 +629,23 @@ class JdbiStorageRepository(
             .mapTo<Int>()
             .single() == 1
 
+    override fun hasPendingInvite(
+        guestId: Id,
+        folderId: Id,
+    ): Boolean =
+        handle
+            .createQuery(
+                """
+                select count(*) from dbo.invited_folders 
+                where guest_id = :guestId and folder_id = :folderId 
+                and status = :status
+                """.trimIndent(),
+            ).bind("guestId", guestId.value)
+            .bind("folderId", folderId.value)
+            .bind("status", InviteStatus.PENDING.ordinal)
+            .mapTo<Int>()
+            .single() > 0
+
     override fun createInviteFolder(
         inviterId: Id,
         guestId: Id,

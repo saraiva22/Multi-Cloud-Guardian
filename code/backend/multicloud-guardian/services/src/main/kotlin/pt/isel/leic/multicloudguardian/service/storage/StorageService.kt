@@ -554,6 +554,8 @@ class StorageService(
 
             if (storageRepository.isMemberOfFolder(guest.id, folderId)) return@run failure(InviteFolderError.UserAlreadyInFolder)
 
+            if (storageRepository.hasPendingInvite(guest.id, folderId)) return@run failure(InviteFolderError.InviteAlreadyPending)
+
             val inviterInfo = UserInfo(user.id, user.username, user.email)
 
             val inviteId = storageRepository.createInviteFolder(user.id, guest.id, folderId)
