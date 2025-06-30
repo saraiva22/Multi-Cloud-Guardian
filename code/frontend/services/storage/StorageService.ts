@@ -351,6 +351,18 @@ export async function validateFolderInvite(
   );
 }
 
+export async function createInviteFolder(
+  folderId: string,
+  username: string
+): Promise<RegisterOutput> {
+  const path =
+    PREFIX_API + apiRoutes.CREATE_INVITE_FOLDER.replace(":folderId", folderId);
+  return await httpService.post<RegisterOutput>(
+    path,
+    JSON.stringify({ username: username })
+  );
+}
+
 // Utils
 
 export async function processAndSaveDownloadedFile(

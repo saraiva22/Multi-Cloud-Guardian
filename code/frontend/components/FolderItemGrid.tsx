@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import React from "react";
 import { images } from "@/constants";
-import { formatSize } from "@/services/utils/Function";
+import { formatFolderType, formatSize } from "@/services/utils/Function";
 import { useRouter } from "expo-router";
 import { Folder } from "@/domain/storage/Folder";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -34,15 +34,17 @@ const FolderGridItemComponent = ({ item }: Props) => {
         <MaterialIcons name="more-vert" size={24} color="white" />
       </View>
 
-      <View>
+      <View className="flex-row justify-between items-center mt-2">
         <Text
           numberOfLines={1}
-          className="text-white text-base font-semibold mt-2"
+          className="text-white text-base font-semibold flex-1"
         >
           {item.folderName}
         </Text>
+        <Text className="text-white text-xs font-semibold ">
+          {formatFolderType(item.type)}
+        </Text>
       </View>
-
       <View>
         <Text className="text-white text-xs opacity-80">
           Used: {item.size > 0 ? formatSize(item.size) : "0 Kb"}

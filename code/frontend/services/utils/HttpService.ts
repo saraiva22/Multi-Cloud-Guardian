@@ -38,11 +38,11 @@ export const apiRoutes = {
   DOWNLOAD_FILE_IN_FOLDER: "/folders/:folderId/files/:fileId/download",
   DELETE_FOLDER: "/folders/:id",
   DELETE_FILE_IN_FOLDER: "/folders/:folderId/files/:fileId",
-  CREATE_INVITE_FOLDER: "/folders/{folderId}/invites", // TODO()
+  CREATE_INVITE_FOLDER: "/folders/:folderId/invites",
   VALIDATE_FOLDER_INVITE: "/folders/:folderId/invites/:inviteId",
   RECEIVED_FOLDER_INVITES: "/folders/invites/received",
-  SENT_FOLDER_INVITES: "/folders/invites/sent", // TODO()
-  LEAVE_SHARED_FOLDER: "/folders/{folderId}/leave", // TODO()
+  SENT_FOLDER_INVITES: "/folders/invites/sent",
+  LEAVE_SHARED_FOLDER: "/folders/:folderId/leave", // TODO()
 };
 
 export default function httpService() {

@@ -472,12 +472,11 @@ class JdbiStorageRepository(
                 from dbo.Files 
                 inner join dbo.folders on files.folder_id = folders.folder_id 
                 inner join dbo.users on folders.user_id = users.id 
-                where folders.folder_id = :folderId and users.id = :userId
+                where folders.folder_id = :folderId
                 order by $order
                 LIMIT :limit OFFSET :offset
                 """.trimIndent(),
-            ).bind("userId", userId.value)
-            .bind("folderId", folderId.value)
+            ).bind("folderId", folderId.value)
             .bind("limit", limit)
             .bind("offset", offset)
             .mapTo<File>()

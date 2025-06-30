@@ -62,10 +62,13 @@ type Action =
   | { type: "error"; message: Problem | string }
   | { type: "success" };
 
+// The Logger
 function logUnexpectedAction(state: State, action: Action) {
   console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
+  return state;
 }
 
+// The Reducer
 function reducer(state: State, action: Action): State {
   switch (state.tag) {
     case "begin":

@@ -136,12 +136,14 @@ const firstState: State = {
 
 type FolderInfoDetailsProps = {
   folderDetails: FolderOutputModel;
+  username: string | undefined;
   state: State;
   handleDelete: () => Promise<any>;
 };
 
 const FolderInfoDetails = ({
   folderDetails: folderDetails,
+  username,
   state,
   handleDelete,
 }: FolderInfoDetailsProps) => (
@@ -158,11 +160,9 @@ const FolderInfoDetails = ({
         tintColor="white"
       />
     </TouchableOpacity>
-
     <Text className="text-[24px] font-semibold text-white text-center mb-16 mt-4">
       Folder Details
     </Text>
-
     <View className="items-center mb-12">
       <Image
         source={icons.folder}
@@ -193,24 +193,25 @@ const FolderInfoDetails = ({
         </Text>
       )}
     </View>
-
-    <View>
-      <CustomButton
-        title="Delete"
-        handlePress={handleDelete}
-        containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
-        textStyles="text-black text-center font-bold"
-        isLoading={state.tag === "loading"}
-        color="border-secondary"
-      />
-    </View>
+    {username && folderDetails.user.username == username && (
+      <View>
+        <CustomButton
+          title="Delete"
+          handlePress={handleDelete}
+          containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
+          textStyles="text-black text-center font-bold"
+          isLoading={state.tag === "loading"}
+          color="border-secondary"
+        />
+      </View>
+    )}
   </>
 );
 
 const FolderDetails = () => {
   const { folderId } = useLocalSearchParams();
   const [state, dispatch] = useReducer(reducer, firstState);
-  const { keyMaster, setIsLogged, setUsername } = useAuthentication();
+  const { username, setIsLogged, setUsername } = useAuthentication();
 
   const fetchFileDetails = async () => {
     dispatch({ type: "start-loading" });
@@ -307,6 +308,7 @@ const FolderDetails = () => {
               <View className="my-6 px-4 space-y-6">
                 <FolderInfoDetails
                   folderDetails={state.details}
+                  username={username}
                   state={state}
                   handleDelete={handleDelete}
                 />

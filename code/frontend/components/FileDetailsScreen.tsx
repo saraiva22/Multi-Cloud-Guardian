@@ -25,6 +25,7 @@ import { icons } from "@/constants";
 import CustomButton from "@/components/CustomButton";
 import { formatDate, formatSize } from "@/services/utils/Function";
 import * as Clipboard from "expo-clipboard";
+import { FolderType } from "@/domain/storage/FolderType";
 
 // The State
 type State =
@@ -179,16 +180,17 @@ const FileInfo = ({
         isLoading={state.tag === "loading"}
         color="border-secondary"
       />
-      {fileInfo.encryption === false && (
-        <CustomButton
-          title="Generate Temporary URL "
-          handlePress={handleGenerateTemporaryUrl}
-          containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
-          textStyles="text-black text-center font-bold"
-          isLoading={state.tag === "loading"}
-          color="border-secondary"
-        />
-      )}
+      {fileInfo.encryption === false &&
+        fileInfo.folderInfo?.folderType !== FolderType.SHARED && (
+          <CustomButton
+            title="Generate Temporary URL "
+            handlePress={handleGenerateTemporaryUrl}
+            containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
+            textStyles="text-black text-center font-bold"
+            isLoading={state.tag === "loading"}
+            color="border-secondary"
+          />
+        )}
       <CustomButton
         title="Delete"
         handlePress={handleDelete}

@@ -21,7 +21,8 @@ import { removeValueFor } from "@/services/storage/SecureStorage";
 import { router } from "expo-router";
 import { getSentInvites } from "@/services/storage/StorageService";
 import { icons } from "@/constants";
-import InviteItemComponente from "@/components/InviteItemComponent";
+import InviteItemComponent from "@/components/InviteItemComponent";
+import EmptyState from "@/components/EmptyState";
 
 // The State
 type State =
@@ -144,7 +145,15 @@ const SentInvites = () => {
             data={state.invites.content}
             keyExtractor={(item) => String(item.inviteId)}
             renderItem={({ item }) => (
-              <InviteItemComponente isReceived={true} item={item} />
+              <InviteItemComponent isReceived={true} item={item} />
+            )}
+            ListEmptyComponent={() => (
+              <EmptyState
+                title="No Invites Sent"
+                subtitle="You haven't sent any invites yet"
+                page="/(modals)/create-invite"
+                titleButton="Send Invite"
+              />
             )}
           />
         </SafeAreaView>

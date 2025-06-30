@@ -28,7 +28,8 @@ import { icons } from "@/constants";
 import { GetStringOptions } from "expo-clipboard";
 import { removeValueFor } from "@/services/storage/SecureStorage";
 import { InviteStatusType } from "@/domain/storage/InviteStatusType";
-import InviteItemComponente from "@/components/InviteItemComponent";
+import InviteItemComponent from "@/components/InviteItemComponent";
+import EmptyState from "@/components/EmptyState";
 
 // The State
 type State =
@@ -145,7 +146,6 @@ const ReceivedInvites = () => {
   }, [state]);
 
   useEffect(() => {
-    console.log("LISTENER ", listener);
     if (listener) {
       listener.addEventListener("invite", handleInvite);
     }
@@ -162,7 +162,6 @@ const ReceivedInvites = () => {
         user: eventData.user,
         status: eventData.status,
       };
-      console.log("EVENTO ", eventData);
       dispatch({ type: "new-invite", invite: newInvite });
     }
   };
@@ -244,13 +243,18 @@ const ReceivedInvites = () => {
             data={state.invites.content}
             keyExtractor={(item) => String(item.inviteId)}
             renderItem={({ item }) => (
-              <InviteItemComponente
+              <InviteItemComponent
                 isReceived={true}
                 item={item}
                 onPress={(status) =>
                   handleValidationInvite(item.folderId, item.inviteId, status)
                 }
               />
+            )}
+            ListEmptyComponent={() => (
+              <Text className="text-[18px] font-semibold text-white text-center mb-16 mt-4">
+                Not Received Invite
+              </Text>
             )}
           />
         </SafeAreaView>
