@@ -243,12 +243,14 @@ export async function getFolder(folderId: string): Promise<FolderOutputModel> {
 
 export async function getFolders(
   sortBy: string = "created_at",
+  shared: boolean = false,
   page: number = 0,
   size: number = 10
 ): Promise<PageResult<Folder>> {
   const path = PREFIX_API + apiRoutes.GET_FOLDERS;
   return await httpService.get<PageResult<Folder>>(path, {
     sort: sortBy,
+    shared: String(shared),
     page: String(page),
     size: String(size),
   });
@@ -303,12 +305,25 @@ export async function deleteFolder(folderId: string): Promise<void> {
   return await httpService.delete<void>(path);
 }
 
-export async function getInvites(
+export async function getReceivedInvites(
   sortBy: string = "created_at",
   page: number = 0,
   size: number = 10
 ): Promise<PageResult<Invite>> {
   const path = PREFIX_API + apiRoutes.RECEIVED_FOLDER_INVITES;
+  return await httpService.get<PageResult<Invite>>(path, {
+    sort: sortBy,
+    page: String(page),
+    size: String(size),
+  });
+}
+
+export async function getSentInvites(
+  sortBy: string = "created_at",
+  page: number = 0,
+  size: number = 10
+): Promise<PageResult<Invite>> {
+  const path = PREFIX_API + apiRoutes.SENT_FOLDER_INVITES;
   return await httpService.get<PageResult<Invite>>(path, {
     sort: sortBy,
     page: String(page),

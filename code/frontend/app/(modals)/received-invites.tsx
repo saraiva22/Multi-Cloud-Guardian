@@ -20,7 +20,7 @@ import { KEY_NAME, useAuthentication } from "@/context/AuthProvider";
 import { getSSE } from "@/services/notifications/SSEManager";
 import { EventSourceListener } from "react-native-sse";
 import {
-  getInvites,
+  getReceivedInvites,
   validateFolderInvite,
 } from "@/services/storage/StorageService";
 import { router } from "expo-router";
@@ -170,7 +170,7 @@ const ReceivedInvites = () => {
   // Handle FetchInvites()
   async function handleGetInvites() {
     try {
-      const invites = await getInvites();
+      const invites = await getReceivedInvites();
       dispatch({ type: "loading-success", invites });
     } catch (error) {
       Alert.alert(

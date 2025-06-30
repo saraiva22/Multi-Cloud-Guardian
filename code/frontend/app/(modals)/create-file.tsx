@@ -178,7 +178,7 @@ const CreateFile = () => {
 
   async function handleGetFolder() {
     try {
-      const folders = await getFolders(sortBy);
+      const folders = await getFolders(sortBy, true);
       dispatch({ type: "loading-success", folders });
     } catch (error) {
       Alert.alert(

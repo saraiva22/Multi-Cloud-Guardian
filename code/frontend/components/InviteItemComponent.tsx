@@ -7,7 +7,7 @@ import { TouchableOpacity, View, Text, Image } from "react-native";
 type Props = {
   isReceived: boolean;
   item: Invite;
-  onPress: (status: InviteStatusType) => void;
+  onPress?: (status: InviteStatusType) => void;
 };
 
 const statusColors = {
@@ -19,7 +19,7 @@ const statusColors = {
 const InviteItemComponente = ({ isReceived, item, onPress }: Props) => {
   const statusColor = statusColors[item.status];
 
-  const isPending = item.status === "PENDING";
+  const isPending = item.status === InviteStatusType.PENDING;
 
   return (
     <View className="w-[95%] self-center my-3">
@@ -43,7 +43,7 @@ const InviteItemComponente = ({ isReceived, item, onPress }: Props) => {
           </Text>
         </View>
 
-        {isReceived && isPending && (
+        {isReceived && isPending && onPress && (
           <View className="flex-row ml-3">
             <TouchableOpacity
               onPress={() => onPress(InviteStatusType.ACCEPT)}

@@ -107,8 +107,6 @@ const firstState: State = {
   sort: sortOptions[0],
 };
 
-
-
 const HomeScreen = () => {
   const { username, setUsername, setIsLogged } = useAuthentication();
   const [state, dispatch] = useReducer(reducer, firstState);
@@ -211,7 +209,7 @@ const HomeScreen = () => {
               <View className="w-full flex-1 pt-5 pb-8">
                 <View className="flex-row items-center justify-between mb-3">
                   <Text className="text-2xl font-bold text-gray-100 mb-3">
-                    Folders
+                    My Folders
                   </Text>
                   <Text className="text-xl font-pregular text-secondary-200 mb-3">
                     <TouchableOpacity

@@ -101,8 +101,6 @@ const firstState: State = {
   sort: sortOptions[0],
 };
 
-
-
 const FoldersScreen = () => {
   const { username, setUsername, setIsLogged } = useAuthentication();
   const [state, dispatch] = useReducer(reducer, firstState);
@@ -124,7 +122,7 @@ const FoldersScreen = () => {
   const loadData = async () => {
     try {
       dispatch({ type: "start-loading" });
-      const folders = await getFolders(sort.sortBy);
+      const folders = await getFolders(sort.sortBy, true);
       dispatch({ type: "loading-success", folders });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
