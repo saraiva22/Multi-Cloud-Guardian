@@ -8,7 +8,7 @@ import {
   SafeAreaView,
   FlatList,
 } from "react-native";
-import React, { useEffect, useReducer } from "react";
+import React, { act, useEffect, useReducer } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import {
   deleteFile,
@@ -46,6 +46,8 @@ import FileItemComponent from "@/components/FileItemComponent";
 import FolderCard from "@/components/FolderCard";
 import EmptyState from "@/components/EmptyState";
 import { FolderType } from "@/domain/storage/FolderType";
+import { getSSE } from "@/services/notifications/SSEManager";
+import { EventSourceListener } from "react-native-sse";
 
 // The State
 type State =
@@ -75,7 +77,8 @@ type Action =
   | { type: "delete-loading" }
   | { type: "leave-loading" }
   | { type: "success-delete" }
-  | { type: "success-leave" };
+  | { type: "success-leave" }
+  | { type: "new-file"; file: File };
 
 function logUnexpectedAction(state: State, action: Action) {
   console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
@@ -119,6 +122,22 @@ function reducer(state: State, action: Action): State {
         return { tag: "loading" };
       } else if (action.type === "leave-loading") {
         return { tag: "loading" };
+      } else if (action.type === "new-file") {
+        return {
+          tag: "loaded",
+          details: {
+            ...state.details,
+            numberFile: state.details.numberFile + 1,
+            createdAt: action.file.createdAt,
+            size: action.file.size,
+          },
+          files: {
+            ...state.files,
+            content: [...state.files.content, action.file],
+            totalElements: state.files.totalElements + 1,
+          },
+          folders: state.folders,
+        };
       } else {
         logUnexpectedAction(state, action);
         return state;
@@ -135,6 +154,7 @@ function reducer(state: State, action: Action): State {
 const firstState: State = {
   tag: "begin",
 };
+type CustomEvents = "file";
 
 type FolderInfoDetailsProps = {
   folderDetails: FolderOutputModel;
@@ -230,6 +250,58 @@ const FolderDetails = () => {
   const { folderId } = useLocalSearchParams();
   const [state, dispatch] = useReducer(reducer, firstState);
   const { token, username, setIsLogged, setUsername } = useAuthentication();
+  const listener = getSSE();
+
+  useEffect(() => {
+    if (state.tag === "begin") {
+      fetchFileDetails();
+    }
+    if (state.tag === "redirect") {
+      router.replace("/folders");
+    }
+
+    if (state.tag === "error") {
+      Alert.alert(
+        "Error",
+        `${
+          isProblem(state.error)
+            ? getProblemMessage(state.error)
+            : isProblem(state.error.body)
+            ? getProblemMessage(state.error.body)
+            : state.error
+        }`
+      );
+      router.replace(`/folders`);
+    }
+  }, [state.tag]);
+
+  useEffect(() => {
+    if (listener) {
+      listener.addEventListener("file", handleNewFile);
+    }
+  }, []);
+
+  // Handle EventListener - New File
+  const handleNewFile: EventSourceListener<CustomEvents> = (event) => {
+    if (event.type === "file") {
+      const eventData = JSON.parse(event.data);
+      console.log("eventData", eventData);
+      const newFile = {
+        fileId: eventData.fileId,
+        userInfo: eventData.user,
+        folderInfo: eventData.folderInfo,
+        name: eventData.fileName,
+        path: eventData.path,
+        size: eventData.size,
+        contentType: eventData.contentType,
+        createdAt: eventData.createdAt,
+        encryption: eventData.encryption,
+        url: null,
+      };
+
+      dispatch({ type: "new-file", file: newFile });
+    }
+  };
 
   const fetchFileDetails = async () => {
     dispatch({ type: "start-loading" });
@@ -285,40 +357,6 @@ const FolderDetails = () => {
       dispatch({ type: "loading-error", error: error });
     }
   }
-
-  async function handleLeave() {
-    if (state.tag !== "loaded") return;
-    dispatch({ type: "delete-loading" });
-    try {
-      await leaveFolder(folderId.toString());
-      dispatch({ type: "success-delete" });
-    } catch (error) {
-      dispatch({ type: "loading-error", error: error });
-    }
-  }
-
-  useEffect(() => {
-    if (state.tag === "begin") {
-      fetchFileDetails();
-    }
-    if (state.tag === "redirect") {
-      router.replace("/folders");
-    }
-
-    if (state.tag === "error") {
-      Alert.alert(
-        "Error",
-        `${
-          isProblem(state.error)
-            ? getProblemMessage(state.error)
-            : isProblem(state.error.body)
-            ? getProblemMessage(state.error.body)
-            : state.error
-        }`
-      );
-      router.replace(`/folders`);
-    }
-  }, [state.tag]);
 
   switch (state.tag) {
     case "begin":

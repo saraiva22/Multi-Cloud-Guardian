@@ -152,7 +152,7 @@ class StorageService(
                                     path,
                                     file.size,
                                     file.contentType,
-                                    now.toString(),
+                                    now.epochSeconds,
                                     file.encryption,
                                     folderMembers.members,
                                 )

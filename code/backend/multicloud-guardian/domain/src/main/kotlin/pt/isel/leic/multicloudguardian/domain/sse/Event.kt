@@ -13,7 +13,7 @@ sealed interface Event {
         val path: String,
         val size: Long,
         val contentType: String,
-        val createdAt: String,
+        val createdAt: Long,
         val encryption: Boolean,
     ) : Event
 

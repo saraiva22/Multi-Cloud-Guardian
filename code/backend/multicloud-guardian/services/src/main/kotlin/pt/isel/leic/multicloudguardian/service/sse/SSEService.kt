@@ -77,7 +77,7 @@ class SSEService : NeedsShutdown {
         path: String,
         size: Long,
         contentType: String,
-        createdAt: String,
+        createdAt: Long,
         encryption: Boolean,
         members: List<UserInfo>,
     ) = lock.withLock {
