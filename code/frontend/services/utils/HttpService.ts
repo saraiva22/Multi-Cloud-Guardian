@@ -73,7 +73,7 @@ export default function httpService() {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
-    console.log("TOKEN", token);
+
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -106,7 +106,7 @@ export default function httpService() {
     params?: Record<string, string>
   ): Promise<T> {
     const url = buildUrl(path, params);
-    return processRequest<T>(url, "GET",undefined, token);
+    return processRequest<T>(url, "GET", undefined, token);
   }
 
   async function post<T>(

@@ -115,7 +115,7 @@ export async function uploadFile(
   }
 
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    Accept: "application/json",
   };
 
   if (token) {
