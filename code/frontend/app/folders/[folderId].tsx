@@ -286,6 +286,17 @@ const FolderDetails = () => {
     }
   }
 
+  async function handleLeave() {
+    if (state.tag !== "loaded") return;
+    dispatch({ type: "delete-loading" });
+    try {
+      await leaveFolder(folderId.toString());
+      dispatch({ type: "success-delete" });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
+  }
+
   useEffect(() => {
     if (state.tag === "begin") {
       fetchFileDetails();
