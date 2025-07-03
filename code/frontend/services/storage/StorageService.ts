@@ -344,12 +344,6 @@ export async function leaveFolder(
   return await httpService.post<void>(path, undefined, token);
 }
 
-export async function leaveFolder(folderId: string): Promise<void> {
-  const path =
-    PREFIX_API + apiRoutes.LEAVE_SHARED_FOLDER.replace(":id", folderId);
-  return await httpService.post<void>(path);
-}
-
 export async function getReceivedInvites(
   token: string,
   sortBy: string = "created_at",
