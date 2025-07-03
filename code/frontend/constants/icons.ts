@@ -45,6 +45,8 @@ import invite_in from "../assets/icons/invite-in.png";
 import sent_invite from "../assets/icons/sent-invite.png";
 import accept from "../assets/icons/accept.png";
 import reject from "../assets/icons/reject.png";
+import leave from "../assets/icons/leave.png";
+import delete_icon from "../assets/icons/delete.png";
 
 export default {
   europe,
@@ -94,4 +96,6 @@ export default {
   sent_invite,
   accept,
   reject,
+  leave,
+  delete_icon,
 };

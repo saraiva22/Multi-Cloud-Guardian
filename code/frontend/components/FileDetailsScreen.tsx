@@ -323,7 +323,7 @@ const FileDetailsScreen = ({
             : state.error
         }`
       );
-      router.replace(`/files/${fileId}`);
+      router.replace(`/files`);
     }
   }, [state.tag]);
 

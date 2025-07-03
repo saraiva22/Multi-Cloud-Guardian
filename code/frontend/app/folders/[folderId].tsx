@@ -48,6 +48,8 @@ import EmptyState from "@/components/EmptyState";
 import { FolderType } from "@/domain/storage/FolderType";
 import { getSSE } from "@/services/notifications/SSEManager";
 import { EventSourceListener } from "react-native-sse";
+import { UserInfo } from "@/domain/user/UserInfo";
+import MemberCard from "@/components/MemberCard";
 
 // The State
 type State =
@@ -78,7 +80,8 @@ type Action =
   | { type: "leave-loading" }
   | { type: "success-delete" }
   | { type: "success-leave" }
-  | { type: "new-file"; file: File };
+  | { type: "new-file"; file: File }
+  | { type: "new-member"; member: UserInfo };
 
 function logUnexpectedAction(state: State, action: Action) {
   console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
@@ -138,6 +141,16 @@ function reducer(state: State, action: Action): State {
           },
           folders: state.folders,
         };
+      } else if (action.type === "new-member") {
+        return {
+          tag: "loaded",
+          details: {
+            ...state.details,
+            members: [...state.details.members, action.member],
+          },
+          files: state.files,
+          folders: state.folders,
+        };
       } else {
         logUnexpectedAction(state, action);
         return state;
@@ -154,10 +167,12 @@ function reducer(state: State, action: Action): State {
 const firstState: State = {
   tag: "begin",
 };
-type CustomEvents = "file";
+type CustomEventsFile = "file";
+type CustomEventsMember = "newMember";
 
 type FolderInfoDetailsProps = {
   folderDetails: FolderOutputModel;
+  members: Array<UserInfo>;
   username: string | undefined;
   state: State;
   handleDelete: () => Promise<any>;
@@ -166,28 +181,51 @@ type FolderInfoDetailsProps = {
 
 const FolderInfoDetails = ({
   folderDetails: folderDetails,
+  members: members,
   username,
   state,
   handleDelete,
   handleLeave,
 }: FolderInfoDetailsProps) => (
   <>
-    <TouchableOpacity
-      className="absolute left-6 z-10 mt-6"
-      onPress={() => router.back()}
-      hitSlop={12}
-    >
-      <Image
-        source={icons.back}
-        className="w-6 h-6"
-        resizeMode="contain"
-        tintColor="white"
-      />
-    </TouchableOpacity>
-    <Text className="text-[24px] font-semibold text-white text-center mb-16 mt-4">
-      Folder Details
-    </Text>
-    <View className="items-center mb-12">
+    <View className="flex-row items-center justify-between px-4 mt-12 mb-10">
+      <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
+        <Image
+          source={icons.back}
+          className="w-6 h-6"
+          resizeMode="contain"
+          tintColor="white"
+        />
+      </TouchableOpacity>
+
+      <Text className="text-[24px] font-semibold text-white text-center">
+        Folder Details
+      </Text>
+
+      {username &&
+        folderDetails.user.username !== username &&
+        folderDetails.type === FolderType.SHARED && (
+          <TouchableOpacity onPress={handleLeave} hitSlop={12}>
+            <Image
+              source={icons.leave}
+              className="w-8 h-8"
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        )}
+
+      {username && folderDetails.user.username === username && (
+        <TouchableOpacity onPress={handleDelete} hitSlop={12}>
+          <Image
+            source={icons.delete_icon}
+            className="w-8 h-8"
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      )}
+    </View>
+
+    <View className="items-center mb-17">
       <Image
         source={icons.folder}
         className="w-20 h-20 mb-8"
@@ -216,33 +254,10 @@ const FolderInfoDetails = ({
           Parent Folder: {folderDetails.parentFolderInfo.folderName}
         </Text>
       )}
-    </View>
-    {username && folderDetails.user.username == username && (
-      <View>
-        <CustomButton
-          title="Delete"
-          handlePress={handleDelete}
-          containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
-          textStyles="text-black text-center font-bold"
-          isLoading={state.tag === "loading"}
-          color="border-secondary"
-        />
-      </View>
-    )}
-    {username &&
-      folderDetails.user.username != username &&
-      folderDetails.type == FolderType.SHARED && (
-        <View>
-          <CustomButton
-            title="Leave"
-            handlePress={handleLeave}
-            containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
-            textStyles="text-black text-center font-bold"
-            isLoading={state.tag === "loading"}
-            color="border-secondary"
-          />
-        </View>
+      {username && folderDetails.type === FolderType.SHARED && (
+        <MemberCard members={members} />
       )}
+    </View>
   </>
 );
 
@@ -278,14 +293,14 @@ const FolderDetails = () => {
   useEffect(() => {
     if (listener) {
       listener.addEventListener("file", handleNewFile);
+      listener.addEventListener("newMember", handleNewMember);
     }
   }, []);
 
   // Handle EventListener - New File
-  const handleNewFile: EventSourceListener<CustomEvents> = (event) => {
+  const handleNewFile: EventSourceListener<CustomEventsFile> = (event) => {
     if (event.type === "file") {
       const eventData = JSON.parse(event.data);
-      console.log("eventData", eventData);
       const newFile = {
         fileId: eventData.fileId,
         userInfo: eventData.user,
@@ -300,6 +315,20 @@ const FolderDetails = () => {
       };
 
       dispatch({ type: "new-file", file: newFile });
+    }
+  };
+
+  // Handle EventListener - New Member
+  const handleNewMember: EventSourceListener<CustomEventsMember> = (event) => {
+    if (event.type === "newMember") {
+      const eventData = JSON.parse(event.data);
+      const member = {
+        userId: eventData.newMember.id,
+        username: eventData.newMember.username,
+        email: eventData.newMember.email,
+      };
+
+      dispatch({ type: "new-member", member });
     }
   };
 
@@ -386,6 +415,7 @@ const FolderDetails = () => {
               <View className="my-6 px-4 space-y-6">
                 <FolderInfoDetails
                   folderDetails={state.details}
+                  members={state.details.members}
                   username={username}
                   state={state}
                   handleDelete={handleDelete}
