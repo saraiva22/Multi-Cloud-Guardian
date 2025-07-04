@@ -291,10 +291,14 @@ const FolderDetails = () => {
   }, [state.tag]);
 
   useEffect(() => {
-    if (listener) {
-      listener.addEventListener("file", handleNewFile);
-      listener.addEventListener("newMember", handleNewMember);
-    }
+    if (!listener) return;
+    listener.addEventListener("file", handleNewFile);
+    listener.addEventListener("newMember", handleNewMember);
+
+    return () => {
+      listener.removeEventListener("file", handleNewFile);
+      listener.removeEventListener("newMember", handleNewMember);
+    };
   }, []);
 
   // Handle EventListener - New File
@@ -408,7 +412,12 @@ const FolderDetails = () => {
           <FlatList
             data={state.files.content}
             keyExtractor={(item) => String(item.fileId)}
-            renderItem={({ item }) => <FileItemComponent item={item} />}
+            renderItem={({ item }) => (
+              <FileItemComponent
+                item={item}
+                owner={state.details.user.username}
+              />
+            )}
             contentContainerStyle={{ paddingBottom: 80 }}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={() => (

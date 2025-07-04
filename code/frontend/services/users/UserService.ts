@@ -4,9 +4,12 @@ import { RegisterOutput } from "./models/RegisterOutputModel";
 import { LogoutOutput } from "./models/LogoutOutput";
 import { CostType } from "@/domain/preferences/CostType";
 import { LocationType } from "@/domain/preferences/LocationType";
-import { CreateUserOutputModel } from "./models/CredentialOutputMode";
+import { CreateUserOutputModel } from "./models/CredentialOutputModel";
 import { UserInfoOutputModel } from "./models/UserInfoOutuputModel";
 import { StorageDetailsOutputModel } from "./models/StorageDetailsOutputModel";
+import { UserListOutputModel } from "./models/UsersListOutputModel";
+import { PageResult } from "@/domain/utils/PageResult";
+import { UserHomeOutputModel } from "./models/UserHomeOutputModel";
 
 const httpService = httpServiceInit();
 
@@ -74,4 +77,18 @@ export async function getStorageDetails(
 ): Promise<StorageDetailsOutputModel> {
   const path = PREFIX_API + apiRoutes.GET_STORAGE_DETAILS;
   return await httpService.get<StorageDetailsOutputModel>(path, token);
+}
+
+export async function getUsers(
+  username: string,
+  token: string,
+  page: number = 0,
+  size: number = 10
+): Promise<PageResult<UserHomeOutputModel>> {
+  const path = PREFIX_API + apiRoutes.SEARCH_USERS;
+  return await httpService.get<PageResult<UserHomeOutputModel>>(path, token, {
+    username: username,
+    page: String(page),
+    size: String(size),
+  });
 }

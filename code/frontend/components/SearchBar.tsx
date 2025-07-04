@@ -1,62 +1,31 @@
-import { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Image,
-  Alert,
-} from "react-native";
+import { View, TextInput, Image } from "react-native";
 
 import { icons } from "../constants";
-import { router, usePathname } from "expo-router";
 
 type SearchInputProps = {
-  title?: string;
-  value?: string;
+  value: string;
   placeholder?: string;
-  handleChangeText?: (text: string) => void;
-  otherStyles?: object;
-  [key: string]: any;
+  onChangeText: (text: string) => void;
 };
 
 const SearchInput = ({
-  title,
   value,
   placeholder,
-  handleChangeText,
-  otherStyles,
-  ...props
+  onChangeText,
 }: SearchInputProps) => {
-  const pathname = usePathname();
-  const [query, setQuery] = useState("");
-
   return (
     <View
       className="flex-row items-center px-5 py-2 bg-black-100 
     rounded-full border-2 border-black-200 focus:border-secondary"
     >
-      <TouchableOpacity
-        onPress={() => {
-          if (query === "")
-            return Alert.alert(
-              "Missing Query",
-              "Please input something to search results across database"
-            );
-
-          if (pathname.startsWith("/search")) router.setParams({ query });
-          else router.push(`/search/${query}`);
-        }}
-      >
-        <Image source={icons.search} className="size-5" resizeMode="contain" />
-      </TouchableOpacity>
+      <Image source={icons.search} className="size-5" resizeMode="contain" />
 
       <TextInput
         className="text-base ml-2 text-white flex-1 font-pregular"
-        value={query}
+        value={value}
         placeholder={`Search ${placeholder ? placeholder : ""}`}
         placeholderTextColor="#CDCDE0"
-        onChangeText={(e) => setQuery(e)}
+        onChangeText={onChangeText}
       ></TextInput>
     </View>
   );

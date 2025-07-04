@@ -214,7 +214,7 @@ const FoldersScreen = () => {
                   </TouchableOpacity>
                 </View>
               </View>
-              <SearchInput />
+              <SearchInput value={""} onChangeText={() => console.log("")} />
             </View>
           )}
           ListEmptyComponent={() =>

@@ -5,12 +5,14 @@ import { icons } from "@/constants";
 import { formatDate, formatSize } from "@/services/utils/Function";
 import { File } from "@/domain/storage/File";
 import { MaterialIcons } from "@expo/vector-icons";
+import { UserInfo } from "@/domain/user/UserInfo";
 
 type Props = {
   item: File;
+  owner?: string;
 };
 
-const FileItemComponent = ({ item }: Props) => {
+const FileItemComponent = ({ item, owner }: Props) => {
   const router = useRouter();
   const { folderId } = useLocalSearchParams();
 
@@ -18,7 +20,11 @@ const FileItemComponent = ({ item }: Props) => {
     if (folderId) {
       router.push({
         pathname: "/folders/[folderId]/files/[fileId]",
-        params: { folderId: folderId.toString(), fileId: item.fileId },
+        params: {
+          folderId: folderId.toString(),
+          fileId: item.fileId,
+          owner: owner?.toString(),
+        },
       });
     } else {
       router.push({

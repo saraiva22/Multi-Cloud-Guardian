@@ -103,6 +103,8 @@ const firstState: State = {
 
 type FileInfoProps = {
   fileInfo: FileOutputModel;
+  username: string;
+  owner: string;
   state: State;
   handleDownload: (func: () => void) => Promise<any>;
   handleDelete: (func: () => void) => Promise<any>;
@@ -111,6 +113,8 @@ type FileInfoProps = {
 
 const FileInfo = ({
   fileInfo,
+  username,
+  owner,
   state,
   handleDownload,
   handleDelete,
@@ -191,14 +195,17 @@ const FileInfo = ({
             color="border-secondary"
           />
         )}
-      <CustomButton
-        title="Delete"
-        handlePress={handleDelete}
-        containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
-        textStyles="text-black text-center font-bold"
-        isLoading={state.tag === "loading"}
-        color="border-secondary"
-      />
+      {fileInfo.folderInfo?.folderType === FolderType.SHARED &&
+        (fileInfo.user.username === username || owner === username) && (
+          <CustomButton
+            title="Delete"
+            handlePress={handleDelete}
+            containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
+            textStyles="text-black text-center font-bold"
+            isLoading={state.tag === "loading"}
+            color="border-secondary"
+          />
+        )}
     </View>
     {state.tag === "loaded" &&
       fileInfo.encryption === false &&
@@ -228,6 +235,7 @@ const FileInfo = ({
 
 type Props = {
   fileId: string;
+  owner: string;
   getFileFunc: (fileId: string, token: string) => Promise<FileOutputModel>;
   downloadFunc: (fileId: string, token: string) => Promise<any>;
   deleteFunc: (fileId: string, token: string) => Promise<any>;
@@ -235,12 +243,14 @@ type Props = {
 
 const FileDetailsScreen = ({
   fileId,
+  owner,
   getFileFunc,
   downloadFunc,
   deleteFunc,
 }: Props) => {
   const [state, dispatch] = useReducer(reducer, firstState);
-  const { token, keyMaster, setUsername, setIsLogged } = useAuthentication();
+  const { username, token, keyMaster, setUsername, setIsLogged } =
+    useAuthentication();
 
   const fetchFileDetails = async () => {
     dispatch({ type: "start-loading" });
@@ -346,6 +356,8 @@ const FileDetailsScreen = ({
       return (
         <FileInfo
           fileInfo={state.details}
+          username={username ? username : ""}
+          owner={owner}
           state={state}
           handleDownload={handleDownload}
           handleDelete={handleDelete}
