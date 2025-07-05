@@ -34,8 +34,8 @@ import { removeValueFor } from "@/services/storage/SecureStorage";
 
 // The State
 type State =
-  | { tag: "begin" }
-  | { tag: "loading" }
+  | { tag: "begin"; search: string }
+  | { tag: "loading"; search: string }
   | {
       tag: "editing";
       error?: Problem | string;
@@ -43,6 +43,7 @@ type State =
         folderName: string;
         folderType: FolderType;
         parentFolderId: number | null;
+        searchValue: string;
       };
       folders: PageResult<Folder>;
     }

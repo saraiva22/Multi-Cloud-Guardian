@@ -266,34 +266,33 @@ const FilesScreen = () => {
       );
     case "loaded":
       return (
-        <SafeAreaView className="bg-primary flex-1">
-          <View className="px-6 py-12 flex-1">
-            <View className="justify-between items-start flex-row mb-6">
-              <View>
+        <SafeAreaView className="bg-primary h-full">
+          <View>
+            <View className="my-6 px-5 space-y-6">
+              <View className="justify-between items-start flex-row mb-6">
                 <Text className="text-2xl font-psemibold text-white">
                   Files
                 </Text>
-              </View>
 
-              <View className="mt-1.5">
-                <TouchableOpacity
-                  onPress={openSortSheet}
-                  className="borderrounded-full p-2 ml-2"
-                  activeOpacity={0.85}
-                >
-                  <Image
-                    source={icons.filter_white}
-                    className="w-[18px] h-[20px]"
-                    resizeMode="contain"
-                  />
-                </TouchableOpacity>
+                <View className="mt-1.5 flex-row gap-2">
+                  <TouchableOpacity
+                    onPress={openSortSheet}
+                    activeOpacity={0.85}
+                  >
+                    <Image
+                      source={icons.filter_white}
+                      className="w-[18px] h-[20px]"
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
+              <SearchInput
+                placeholder="Files"
+                value={searchValue}
+                onChangeText={(text) => handleChange("searchValue", text)}
+              />
             </View>
-            <SearchInput
-              placeholder="Files"
-              value={searchValue}
-              onChangeText={(text) => handleChange("searchValue", text)}
-            />
 
             <FlatList
               className="mt-5"

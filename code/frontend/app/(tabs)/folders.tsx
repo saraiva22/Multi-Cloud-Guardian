@@ -264,7 +264,7 @@ const FoldersScreen = () => {
       return (
         <SafeAreaView className="bg-primary h-full">
           <View>
-            <View className="my-6 px-4 space-y-6">
+            <View className="my-6 px-5 space-y-6">
               <View className="justify-between items-start flex-row mb-6">
                 <Text className="text-2xl font-psemibold text-white">
                   Folders
