@@ -208,6 +208,7 @@ const CreateFile = () => {
       const file = result.assets[0];
 
       const fileExtension = file.name.split(".").pop();
+
       const nameFile = `${fileName}.${fileExtension}`;
 
       dispatch({
@@ -287,108 +288,142 @@ const CreateFile = () => {
       ? state.file
       : state.inputs?.file || null;
 
-  return (
-    <SafeAreaView className="bg-primary h-full">
-      <ScrollView className="px-4 my-6 mt-12">
-        <View className="flex-row items-center mb-8">
-          <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
-            <Image
-              source={icons.back}
-              className="w-6 h-6"
-              resizeMode="contain"
-              tintColor="white"
-            />
-          </TouchableOpacity>
-          <Text className="text-2xl text-white font-psemibold ml-32">
-            Upload Flie
+  // Render UI
+
+  switch (state.tag) {
+    case "begin":
+      return (
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
+        </SafeAreaView>
+      );
+    case "submitting":
+      return (
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
+          <Text className="mt-4 text-white text-lg font-semibold">
+            Upload File...
           </Text>
-        </View>
-
-        <FormField
-          title="File Name"
-          value={fileName}
-          placeholder="Enter a title for your file..."
-          handleChangeText={(text) => handleChange("fileName", text)}
-          otherStyles="mt-7"
-        />
-
-        <View
-          style={{ height: 0.5, backgroundColor: "#F8F8F8", marginTop: 20 }}
-        />
-
-        <EncryptionToggle
-          value={encryption}
-          onChange={(value) => handleChange("encryption", value)}
-          otherStyles=" mt-7"
-        />
-
-        <View
-          style={{ height: 0.5, backgroundColor: "#F8F8F8", marginTop: 20 }}
-        />
-        <View className="mt-7 space-y-2">
-          <Text className="text-base text-gray-100 font-pmedium">
-            Upload Video
+        </SafeAreaView>
+      );
+    case "error":
+      return (
+        <SafeAreaView className="bg-primary flex-1">
+          <ActivityIndicator />
+          <Text className="text-[24px] font-semibold text-white text-center mb-16 mt-4">
+            {state.tag === "error" &&
+              (typeof state.error === "string"
+                ? state.error
+                : state.error?.detail)}
           </Text>
-
-          <TouchableOpacity onPress={openPicker} className="mt-3">
-            <View className="w-full h-40 px-4 bg-black-100 rounded-2xl border border-black-200 flex justify-center items-center">
-              <View className="w-14 h-14 border border-dashed border-secondary-100 flex justify-center items-center">
-                {file === null ? (
-                  <Image
-                    source={icons.upload}
-                    resizeMode="contain"
-                    alt="upload"
-                    className="w-1/2 h-1/2"
-                  />
-                ) : (
-                  <Image
-                    source={icons.uploadFile}
-                    resizeMode="contain"
-                    alt="upload"
-                    className="w-1/2 h-1/2"
-                  />
-                )}
-              </View>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        <View className="mt-2">
-          <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-xl text-white font-semibold">
-              Recent Folders
-            </Text>
-          </View>
-
-          {state.tag === "loading" && (
-            <View className="flex-1 items-center justify-center">
-              <ActivityIndicator size="large" color="#FFFFFF" />
-              <Text className="mt-4 text-white text-base">
-                Loading files...
+        </SafeAreaView>
+      );
+    case "loading":
+      return (
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
+          <Text className="mt-4 text-white text-lg font-semibold">
+            Loading...
+          </Text>
+        </SafeAreaView>
+      );
+    case "editing":
+      return (
+        <SafeAreaView className="bg-primary h-full">
+          <ScrollView className="px-4 my-6 mt-12">
+            <View className="flex-row items-center mb-8">
+              <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
+                <Image
+                  source={icons.back}
+                  className="w-6 h-6"
+                  resizeMode="contain"
+                  tintColor="white"
+                />
+              </TouchableOpacity>
+              <Text className="text-2xl text-white font-psemibold ml-32">
+                Upload Flie
               </Text>
             </View>
-          )}
 
-          {state.tag === "editing" &&
-            state.folders.content.map((folder) => (
-              <FolderItemComponent
-                key={folder.folderId}
-                item={folder}
-                onPress={(folderId) => handleChange("parentFolderId", folderId)}
-              />
-            ))}
-        </View>
-        <CustomButton
-          title="Submit & Publish"
-          handlePress={handleSubmit}
-          containerStyles="mt-7"
-          isLoading={state.tag === "submitting"}
-          textStyles={""}
-          color="bg-secondary"
-        />
-      </ScrollView>
-    </SafeAreaView>
-  );
+            <FormField
+              title="File Name"
+              value={fileName}
+              placeholder="Enter a title for your file..."
+              handleChangeText={(text) => handleChange("fileName", text)}
+              otherStyles="mt-7"
+            />
+
+            <View
+              style={{ height: 0.5, backgroundColor: "#F8F8F8", marginTop: 20 }}
+            />
+
+            <EncryptionToggle
+              value={encryption}
+              onChange={(value) => handleChange("encryption", value)}
+              otherStyles=" mt-7"
+            />
+
+            <View
+              style={{ height: 0.5, backgroundColor: "#F8F8F8", marginTop: 20 }}
+            />
+            <View className="mt-7 space-y-2">
+              <Text className="text-base text-gray-100 font-pmedium">
+                Upload Video
+              </Text>
+
+              <TouchableOpacity onPress={openPicker} className="mt-3">
+                <View className="w-full h-40 px-4 bg-black-100 rounded-2xl border border-black-200 flex justify-center items-center">
+                  <View className="w-14 h-14 border border-dashed border-secondary-100 flex justify-center items-center">
+                    {file === null ? (
+                      <Image
+                        source={icons.upload}
+                        resizeMode="contain"
+                        alt="upload"
+                        className="w-1/2 h-1/2"
+                      />
+                    ) : (
+                      <Image
+                        source={icons.uploadFile}
+                        resizeMode="contain"
+                        alt="upload"
+                        className="w-1/2 h-1/2"
+                      />
+                    )}
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            <View className="mt-2">
+              <View className="flex-row items-center justify-between mb-2">
+                <Text className="text-xl text-white font-semibold">
+                  Recent Folders
+                </Text>
+              </View>
+
+              {state.tag === "editing" &&
+                state.folders.content.map((folder) => (
+                  <FolderItemComponent
+                    key={folder.folderId}
+                    item={folder}
+                    onPress={(folderId) =>
+                      handleChange("parentFolderId", folderId)
+                    }
+                  />
+                ))}
+            </View>
+            <CustomButton
+              title="Submit & Publish"
+              handlePress={handleSubmit}
+              containerStyles="mt-7"
+              isLoading={false}
+              textStyles={""}
+              color="bg-secondary"
+            />
+          </ScrollView>
+        </SafeAreaView>
+      );
+  }
 };
 
 export default CreateFile;

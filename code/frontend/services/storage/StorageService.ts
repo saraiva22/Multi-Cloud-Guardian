@@ -26,7 +26,7 @@ import { FolderType } from "@/domain/storage/FolderType";
 import { RegisterOutput } from "../users/models/RegisterOutputModel";
 import { Invite } from "@/domain/storage/Invite";
 import { InviteStatusType } from "@/domain/storage/InviteStatusType";
-import { useAuthentication } from "@/context/AuthProvider";
+
 
 const httpService = httpServiceInit();
 
@@ -45,6 +45,7 @@ export async function uploadFile(
   const path = PREFIX_API + apiRoute;
 
   const formData = new FormData();
+  const originalType = file.type || "application/octet-stream";
 
   if (encryption) {
     // Generate File Key and IV per file
@@ -99,17 +100,18 @@ export async function uploadFile(
     formData.append("file", {
       uri: encryptedFilePath,
       name: fileName,
-      type: file.type || "application/octet-stream",
+      type: originalType,
     });
-
+    formData.append("mimeType", originalType);
     formData.append("encryption", encryption.toString());
     formData.append("encryptedKey", keyWithIV.toString("base64"));
   } else {
     formData.append("file", {
       uri: file.uri,
       name: fileName,
-      type: file.type || "application/octet-stream",
+      type: originalType,
     });
+    formData.append("mimeType", originalType);
     formData.append("encryption", encryption.toString());
     formData.append("encryptedKey", "");
   }
@@ -122,12 +124,12 @@ export async function uploadFile(
     headers["Authorization"] = `Bearer ${token}`;
   }
   // Send the request
+
   const options: RequestInit = {
     method: "POST",
     headers: headers,
     body: formData,
   };
-  console.log("OPTION ", options);
 
   const response = await fetch(path, options);
 
@@ -472,42 +474,46 @@ export async function processAndSaveDownloadedFile(
   }
 
   // Save the file locally
-  await saveFileLocally(finalData, fileName);
+  await saveFileLocally(finalData, fileName, mimeType);
 }
 
-async function saveFileLocally(data: Uint8Array, fileName: string) {
+async function saveFileLocally(
+  data: Uint8Array,
+  fileName: string,
+  mimeType: string
+) {
   try {
-    const fileUri = `${FileSystem.documentDirectory}${fileName}`;
-
-    // Write the content to the file
-    await FileSystem.writeAsStringAsync(
-      fileUri,
-      Buffer.from(data).toString("base64"),
-      {
-        encoding: FileSystem.EncodingType.Base64,
-      }
-    );
-
     if (Platform.OS === "android") {
-      // Save to gallery or downloads folder
-      const permission = await MediaLibrary.requestPermissionsAsync();
-      if (permission.granted) {
-        const asset = await MediaLibrary.createAssetAsync(fileUri);
-        await MediaLibrary.createAlbumAsync("Download", asset, false);
-        return Alert.alert("Save", "Success Download");
-      } else {
-        return Alert.alert("Error", "Permissions not granted to save files");
+      const base64Data = Buffer.from(data).toString("base64");
+      const permissions =
+        await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+      if (!permissions.granted) {
+        Alert.alert("Error", "Permission not granted");
+        return;
       }
+      const dirUri = permissions.directoryUri;
+      const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+        dirUri,
+        fileName,
+        mimeType
+      );
+      await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
     } else {
-      // iOS: open direct sharing (Files, AirDrop, etc.)
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+      await FileSystem.writeAsStringAsync(
+        fileUri,
+        Buffer.from(data).toString("base64"),
+        { encoding: FileSystem.EncodingType.Base64 }
+      );
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(fileUri);
-      } else {
-        Alert.alert("Error", "Sharing not available");
       }
     }
+    Alert.alert("Success", "File saved successfully.");
   } catch (error) {
     console.error("Error saving the file:", error);
-    Alert.alert("Error", "Could not save the file");
+    Alert.alert("Error", "Could not save the file.");
   }
 }

@@ -195,17 +195,18 @@ const FileInfo = ({
             color="border-secondary"
           />
         )}
-      {fileInfo.folderInfo?.folderType === FolderType.SHARED &&
-        (fileInfo.user.username === username || owner === username) && (
-          <CustomButton
-            title="Delete"
-            handlePress={handleDelete}
-            containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
-            textStyles="text-black text-center font-bold"
-            isLoading={state.tag === "loading"}
-            color="border-secondary"
-          />
-        )}
+      {(fileInfo.user.username === username ||
+        (fileInfo.folderInfo?.folderType === FolderType.SHARED &&
+          owner === username)) && (
+        <CustomButton
+          title="Delete"
+          handlePress={handleDelete}
+          containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
+          textStyles="text-black text-center font-bold"
+          isLoading={state.tag === "loading"}
+          color="border-secondary"
+        />
+      )}
     </View>
     {state.tag === "loaded" &&
       fileInfo.encryption === false &&

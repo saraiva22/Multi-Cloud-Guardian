@@ -22,7 +22,6 @@ import {
   getFolders,
   getFoldersInFolder,
   leaveFolder,
-  processAndSaveDownloadedFile,
 } from "@/services/storage/StorageService";
 import { FolderOutputModel } from "@/services/storage/model/FolderOutputModel";
 import {

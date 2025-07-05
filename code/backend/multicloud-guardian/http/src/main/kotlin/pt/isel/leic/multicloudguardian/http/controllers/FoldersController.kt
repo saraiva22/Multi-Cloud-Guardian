@@ -271,13 +271,14 @@ class FoldersController(
     @PostMapping(Uris.Folders.UPLOAD_FILE_IN_FOLDER)
     fun uploadFileInFolder(
         @RequestParam("file") fileMultiPart: MultipartFile,
+        @RequestParam("mimeType") mimeType: String,
         @RequestParam("encryption") encryption: Boolean,
         @RequestParam("encryptedKey") encryptedKey: String,
         @Validated @PathVariable folderId: Int,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Folders.uploadFileInFolder(folderId)
-        val fileCreateInputModel = FileCreateInputModel(fileMultiPart, encryption, encryptedKey)
+        val fileCreateInputModel = FileCreateInputModel(fileMultiPart, mimeType, encryption, encryptedKey)
         val fileDomain = fileCreateInputModel.toDomain()
         val file =
             storageService.uploadFileInFolder(

@@ -6,6 +6,7 @@ import java.util.UUID
 
 data class FileCreateInputModel(
     val file: MultipartFile,
+    val mimeType: String,
     val encryption: Boolean,
     val encryptedKey: String?,
 ) {
@@ -13,7 +14,7 @@ data class FileCreateInputModel(
         FileCreate(
             blobName = safeFileName(file.originalFilename),
             fileContent = file.bytes,
-            contentType = file.contentType ?: "application/unknown",
+            contentType = mimeType,
             size = file.size,
             encryptedKey = encryptedKey,
             encryption = encryption,

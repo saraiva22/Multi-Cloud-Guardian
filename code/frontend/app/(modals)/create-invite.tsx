@@ -220,7 +220,7 @@ const CreateInvite = () => {
     }
 
     if (state.tag === "redirect") {
-      router.push("/(modals)/sent-invites");
+      router.replace("/(modals)/sent-invites");
     }
   }, [state]);
 
@@ -293,6 +293,8 @@ const CreateInvite = () => {
       try {
         dispatch({ type: "user-search" });
         const users = await getUsers(value, token);
+        console.log("SER ", users);
+        console.log("SER ", users.content);
         dispatch({ type: "search-success", users: users.content });
       } catch (error) {
         dispatch({ type: "search-error", error: error });
@@ -308,8 +310,8 @@ const CreateInvite = () => {
   switch (state.tag) {
     case "begin":
       return (
-        <SafeAreaView className="bg-primary flex-1">
-          <ActivityIndicator />
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
         </SafeAreaView>
       );
     case "loading":
@@ -373,7 +375,7 @@ const CreateInvite = () => {
               )}
               style={{
                 marginTop: 8,
-                maxHeight: state.users.length > 1 ? 150 : 0,
+                maxHeight: state.users.length > 0 ? 150 : 0,
               }}
             />
 

@@ -41,11 +41,12 @@ class FilesController(
     @PostMapping(Uris.Files.UPLOAD)
     fun uploadFile(
         @RequestParam("file") fileMultiPart: MultipartFile,
+        @RequestParam("mimeType") mimeType: String,
         @RequestParam("encryption") encryption: Boolean,
         @RequestParam("encryptedKey") encryptedKey: String,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
-        val fileCreateInputModel = FileCreateInputModel(fileMultiPart, encryption, encryptedKey)
+        val fileCreateInputModel = FileCreateInputModel(fileMultiPart, mimeType, encryption, encryptedKey)
         val instance = Uris.Files.uploadFile()
         val fileDomain = fileCreateInputModel.toDomain()
         val file =

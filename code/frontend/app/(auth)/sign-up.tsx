@@ -1,4 +1,11 @@
-import { View, Image, Text, ScrollView, Alert } from "react-native";
+import {
+  View,
+  Image,
+  Text,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { useEffect, useReducer, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { images } from "../../constants";
@@ -28,7 +35,11 @@ import {
   MAX_ITERATIONS,
   MIN_ITERATIONS,
 } from "@/domain/credentials/Credentials";
-import { KEY_MASTER, KEY_NAME, useAuthentication } from "@/context/AuthProvider";
+import {
+  KEY_MASTER,
+  KEY_NAME,
+  useAuthentication,
+} from "@/context/AuthProvider";
 
 type State =
   | {
@@ -213,83 +224,106 @@ const SignUp = () => {
     state.tag === "submitting" && state.location
       ? state.location
       : state.inputs?.location || 0;
-  return (
-    <SafeAreaView className="bg-primary h-full">
-      <ScrollView>
-        <View className="w-full justify-center min-h-[83h] px-4 my-6">
-          <View className="relative flex-row items-center justify-center mt-2 mb-2 h-[50px]">
-            <Image
-              source={images.logo}
-              resizeMode="contain"
-              className="absolute left-0 w-[72px] h-[78px]"
-            />
 
-            <Text className="text-[24px] text-white font-psemibold text-center">
-              Register
-            </Text>
-          </View>
-          <FormField
-            title="Username"
-            value={username}
-            handleChangeText={(text) => handleChange("username", text)}
-            otherStyles="mt-5"
-            placeholder={"At least 5 characters"}
-          />
-          <FormField
-            title="Email"
-            value={email}
-            handleChangeText={(text) => handleChange("email", text)}
-            otherStyles="mt-5"
-            keyboardType="email-address"
-            placeholder={"Enter a valid email"}
-          />
-          <FormField
-            title="Password"
-            value={password}
-            handleChangeText={(text) => handleChange("password", text)}
-            otherStyles="mt-5"
-            placeholder={"Min 8 chars, 1 upper, 1 lower, 1 special"}
-          />
-          <SliderState
-            title="Location"
-            value={location}
-            handleChange={(value) => handleChange("location", value)}
-            otherStyles="mt-5"
-            state={LOCATION_ARRAY}
-          />
+  // Render UI
+  switch (state.tag) {
+    case "submitting":
+      return (
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
+          <Text className="mt-4 text-white text-lg font-semibold">
+            Creating your account...
+          </Text>
+        </SafeAreaView>
+      );
+    case "redirect":
+      return (
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
+          <Text className="mt-4 text-white text-lg font-semibold">
+            Redirecting...
+          </Text>
+        </SafeAreaView>
+      );
+    case "editing":
+      return (
+        <SafeAreaView className="bg-primary h-full">
+          <ScrollView>
+            <View className="w-full justify-center min-h-[83h] px-4 my-6">
+              <View className="relative flex-row items-center justify-center mt-2 mb-2 h-[50px]">
+                <Image
+                  source={images.logo}
+                  resizeMode="contain"
+                  className="absolute left-0 w-[72px] h-[78px]"
+                />
 
-          <SliderState
-            title="Cost"
-            value={cost}
-            handleChange={(value) => handleChange("cost", value)}
-            otherStyles="mt-5"
-            state={COST_ARRAY}
-          />
+                <Text className="text-[24px] text-white font-psemibold text-center">
+                  Register
+                </Text>
+              </View>
+              <FormField
+                title="Username"
+                value={username}
+                handleChangeText={(text) => handleChange("username", text)}
+                otherStyles="mt-5"
+                placeholder={"At least 5 characters"}
+              />
+              <FormField
+                title="Email"
+                value={email}
+                handleChangeText={(text) => handleChange("email", text)}
+                otherStyles="mt-5"
+                keyboardType="email-address"
+                placeholder={"Enter a valid email"}
+              />
+              <FormField
+                title="Password"
+                value={password}
+                handleChangeText={(text) => handleChange("password", text)}
+                otherStyles="mt-5"
+                placeholder={"Min 8 chars, 1 upper, 1 lower, 1 special"}
+              />
+              <SliderState
+                title="Location"
+                value={location}
+                handleChange={(value) => handleChange("location", value)}
+                otherStyles="mt-5"
+                state={LOCATION_ARRAY}
+              />
 
-          <CustomButtom
-            title="Sign In"
-            handlePress={handleSubmit}
-            containerStyles="mt-5"
-            isLoading={state.tag === "submitting"}
-            textStyles={""}
-            color="bg-secondary"
-          />
+              <SliderState
+                title="Cost"
+                value={cost}
+                handleChange={(value) => handleChange("cost", value)}
+                otherStyles="mt-5"
+                state={COST_ARRAY}
+              />
 
-          <View className="flex justify-center pt-5 flex-row gap-2">
-            <Text className="text-lg text-gray-100 font-pregular">
-              Already have an account?
-            </Text>
-            <Link
-              href="/sign-in"
-              className="text-lg font-psemibold text-secondary"
-            >
-              Login
-            </Link>
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+              <CustomButtom
+                title="Sign In"
+                handlePress={handleSubmit}
+                containerStyles="mt-5"
+                isLoading={false}
+                textStyles={""}
+                color="bg-secondary"
+              />
+
+              <View className="flex justify-center pt-5 flex-row gap-2">
+                <Text className="text-lg text-gray-100 font-pregular">
+                  Already have an account?
+                </Text>
+                <Link
+                  href="/sign-in"
+                  className="text-lg font-psemibold text-secondary"
+                >
+                  Login
+                </Link>
+              </View>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      );
+  }
 };
 
 export default SignUp;
