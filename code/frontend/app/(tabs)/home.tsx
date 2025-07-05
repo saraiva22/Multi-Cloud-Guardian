@@ -160,7 +160,9 @@ const HomeScreen = () => {
   }, [state]);
 
   const onRefresh = async () => {
-    dispatch({ type: "refreshing", refreshing: true, sort: sort });
+    setTimeout(() => {
+      dispatch({ type: "refreshing", refreshing: true, sort: sort });
+    }, 200);
   };
 
   const files =

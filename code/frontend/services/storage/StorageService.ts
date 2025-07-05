@@ -227,15 +227,20 @@ export async function getFileInFolder(
 export async function getFiles(
   token: string,
   sortBy: string = "created_at",
+  search: string = "",
   page: number = 0,
   size: number = 10
 ): Promise<PageResult<File>> {
   const path = PREFIX_API + apiRoutes.GET_FILES;
-  return await httpService.get<PageResult<File>>(path, token, {
+  const params: Record<string, string> = {
     sort: sortBy,
     page: String(page),
     size: String(size),
-  });
+  };
+  if (search.length > 0) {
+    params.search = search;
+  }
+  return await httpService.get<PageResult<File>>(path, token, params);
 }
 
 export async function getFilesInFolder(
@@ -266,16 +271,21 @@ export async function getFolders(
   token: string,
   sortBy: string = "created_at",
   shared: boolean = false,
+  search: string = "",
   page: number = 0,
   size: number = 10
 ): Promise<PageResult<Folder>> {
   const path = PREFIX_API + apiRoutes.GET_FOLDERS;
-  return await httpService.get<PageResult<Folder>>(path, token, {
+  const params: Record<string, string> = {
     sort: sortBy,
     shared: String(shared),
     page: String(page),
     size: String(size),
-  });
+  };
+  if (search.length > 0) {
+    params.search = search;
+  }
+  return await httpService.get<PageResult<Folder>>(path, token, params);
 }
 
 export async function getFoldersInFolder(

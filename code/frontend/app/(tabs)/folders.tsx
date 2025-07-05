@@ -149,9 +149,10 @@ const FoldersScreen = () => {
   }, [state]);
 
   const onRefresh = async () => {
-    dispatch({ type: "refreshing", refreshing: true, sort: sort });
+    setTimeout(() => {
+      dispatch({ type: "refreshing", refreshing: true, sort: sort });
+    }, 200);
   };
-
   const folders =
     state.tag === "loaded" && Array.isArray(state.folders.content)
       ? state.folders.content
@@ -214,7 +215,7 @@ const FoldersScreen = () => {
                   </TouchableOpacity>
                 </View>
               </View>
-              <SearchInput value={""} onChangeText={() => console.log("")} />
+              <SearchInput  />
             </View>
           )}
           ListEmptyComponent={() =>

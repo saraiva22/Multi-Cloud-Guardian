@@ -290,14 +290,11 @@ const CreateInvite = () => {
     }
 
     const timeoutId = setTimeout(async () => {
-      console.log("CHEGOU AO TIMEOUT");
       try {
         dispatch({ type: "user-search" });
         const users = await getUsers(value, token);
-        console.log("USE.    34", users.content);
         dispatch({ type: "search-success", users: users.content });
       } catch (error) {
-        console.log("ERRO ", error);
         dispatch({ type: "search-error", error: error });
       }
     }, 500);

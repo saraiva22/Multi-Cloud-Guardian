@@ -33,15 +33,23 @@ import BottomSheet from "@gorhom/bottom-sheet";
 
 // The State
 type State =
-  | { tag: "begin"; refreshing: boolean; sort: SortOption }
-  | { tag: "loading"; refreshing: boolean; sort: SortOption }
+  | { tag: "begin"; refreshing: boolean; sort: SortOption; search: string }
+  | {
+      tag: "loading";
+      refreshing: boolean;
+      sort: SortOption;
+      search: string;
+    }
   | {
       tag: "loaded";
       files: PageResult<File>;
       refreshing: boolean;
       sort: SortOption;
+      inputs: {
+        searchValue: string;
+      };
     }
-  | { tag: "error"; error: Problem | string };
+  | { tag: "error"; error: Problem };
 
 // The Action
 type Action =
@@ -50,8 +58,14 @@ type Action =
       type: "loading-success";
       files: PageResult<File>;
     }
-  | { type: "loading-error"; error: Problem | string }
-  | { type: "refreshing"; refreshing: boolean; sort: SortOption };
+  | {
+      type: "edit";
+      inputName: string | number;
+      inputValue: string | number;
+    }
+  | { type: "loading-error"; error: Problem }
+  | { type: "refreshing"; refreshing: boolean; sort: SortOption }
+  | { type: "search"; searchValue: string };
 
 function logUnexpectedAction(state: State, action: Action) {
   console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
@@ -62,7 +76,12 @@ function reducer(state: State, action: Action): State {
   switch (state.tag) {
     case "begin":
       if (action.type === "start-loading") {
-        return { tag: "loading", refreshing: false, sort: state.sort };
+        return {
+          tag: "loading",
+          refreshing: false,
+          sort: state.sort,
+          search: state.search,
+        };
       } else {
         logUnexpectedAction(state, action);
         return state;
@@ -74,6 +93,9 @@ function reducer(state: State, action: Action): State {
           files: action.files,
           refreshing: false,
           sort: state.sort,
+          inputs: {
+            searchValue: "",
+          },
         };
       } else if (action.type === "loading-error") {
         return { tag: "error", error: action.error };
@@ -84,14 +106,36 @@ function reducer(state: State, action: Action): State {
     case "error":
       return { tag: "error", error: state.error };
     case "loaded":
-      if (action.type === "refreshing") {
-        return {
-          tag: "begin",
-          refreshing: action.refreshing,
-          sort: action.sort,
-        };
+      switch (action.type) {
+        case "refreshing":
+          return {
+            tag: "begin",
+            refreshing: action.refreshing,
+            sort: action.sort,
+            search: "",
+          };
+        case "edit":
+          return {
+            tag: "loaded",
+            files: state.files,
+            refreshing: false,
+            sort: state.sort,
+            inputs: {
+              ...state.inputs,
+              [action.inputName]: action.inputValue,
+            },
+          };
+
+        case "search":
+          return {
+            tag: "begin",
+            refreshing: false,
+            sort: state.sort,
+            search: action.searchValue,
+          };
+        default:
+          return state;
       }
-      return state;
   }
 }
 
@@ -99,7 +143,10 @@ const firstState: State = {
   tag: "begin",
   refreshing: false,
   sort: sortOptions[0],
+  search: "",
 };
+
+const SIZE_MIN_FILE = 2;
 
 const FilesScreen = () => {
   const { token, setUsername, setIsLogged } = useAuthentication();
@@ -108,6 +155,10 @@ const FilesScreen = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   const sort = state.tag === "error" ? sortOptions[0] : state.sort;
+  const search =
+    state.tag === "loading" && state.search
+      ? state.search
+      : state?.search || "";
 
   const openSortSheet = () => {
     bottomSheetRef.current?.expand();
@@ -117,10 +168,21 @@ const FilesScreen = () => {
     bottomSheetRef.current?.close();
     dispatch({ type: "refreshing", refreshing: true, sort: sort });
   };
+
+  // Handle input changes
+  function handleChange(inputName: string, inputValue: string | boolean | any) {
+    dispatch({
+      type: "edit",
+      inputName,
+      inputValue,
+    });
+  }
+
   const loadData = async () => {
     try {
       dispatch({ type: "start-loading" });
-      const files = await getFiles(token, sort.sortBy);
+      console.log("VALUE ", search);
+      const files = await getFiles(token, sort.sortBy, search);
       dispatch({ type: "loading-success", files });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
@@ -128,6 +190,7 @@ const FilesScreen = () => {
   };
 
   useEffect(() => {
+    console.log("SATATE. ", state.tag);
     if (state.tag === "begin") {
       loadData();
     }
@@ -147,73 +210,114 @@ const FilesScreen = () => {
   }, [state]);
 
   const onRefresh = async () => {
-    dispatch({ type: "refreshing", refreshing: true, sort: sort });
+    setTimeout(() => {
+      dispatch({ type: "refreshing", refreshing: true, sort: sort });
+    }, 200);
   };
+  const searchValue =
+    state.tag === "loaded" && state.inputs.searchValue
+      ? state.inputs.searchValue
+      : state.inputs?.searchValue || "";
+
+  // Debounced search effect
+  useEffect(() => {
+    if (state.tag !== "loaded") return;
+    const value = searchValue.trim();
+    if (value.length <= SIZE_MIN_FILE) {
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      dispatch({ type: "search", searchValue: value });
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchValue]);
 
   const files =
-    state.tag === "loaded" && Array.isArray(state.files.content)
+    state.tag === "loaded" && Array.isArray(state.files?.content)
       ? state.files.content
       : [];
 
   const refreshing = state.tag === "loaded" && state.refreshing;
 
-  return (
-    <SafeAreaView className="bg-primary h-full">
-      {state.tag === "loaded" ? (
-        <FlatList
-          data={files}
-          keyExtractor={(item, index) => String(item.fileId || index)}
-          renderItem={({ item }) => <FileItemComponent item={item} />}
-          contentContainerStyle={{ paddingBottom: 80 }}
-          ListHeaderComponent={() => (
-            <View className="my-6 px-4 space-y-6">
-              <View className="justify-between items-start flex-row mb-6">
-                <View>
-                  <Text className="text-2xl font-psemibold text-white">
-                    Files
+  // Render UI
+  switch (state.tag) {
+    case "begin":
+      return (
+        <SafeAreaView className="bg-primary flex-1">
+          <ActivityIndicator />
+        </SafeAreaView>
+      );
+    case "loading":
+      return (
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
+        </SafeAreaView>
+      );
+    case "error":
+      return (
+        <SafeAreaView className="bg-primary flex-1">
+          <ActivityIndicator />
+          <Text className="text-[24px] font-semibold text-white text-center mb-16 mt-4">
+            {state.tag === "error" && state.error.detail}
+          </Text>
+        </SafeAreaView>
+      );
+    case "loaded":
+      return (
+        <SafeAreaView className="bg-primary flex-1">
+          <View className="px-6 py-12 flex-1">
+            <View className="justify-between items-start flex-row mb-6">
+              <View>
+                <Text className="text-2xl font-psemibold text-white">
+                  Files
+                </Text>
+              </View>
+
+              <View className="mt-1.5">
+                <TouchableOpacity
+                  onPress={openSortSheet}
+                  className="borderrounded-full p-2 ml-2"
+                  activeOpacity={0.85}
+                >
+                  <Image
+                    source={icons.filter_white}
+                    className="w-[18px] h-[20px]"
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+            <SearchInput
+              placeholder="Files"
+              value={searchValue}
+              onChangeText={(text) => handleChange("searchValue", text)}
+            />
+
+            <FlatList
+              className="mt-5"
+              data={files}
+              keyExtractor={(item, index) => String(item.fileId || index)}
+              renderItem={({ item }) => <FileItemComponent item={item} />}
+              contentContainerStyle={{ paddingBottom: 80 }}
+              ListEmptyComponent={() => (
+                <View className="flex-1 items-center justify-center py-10">
+                  <Text className="text-white text-lg font-semibold mb-2 text-center">
+                    No files match your search
                   </Text>
                 </View>
+              )}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+            />
+          </View>
 
-                <View className="mt-1.5">
-                  <TouchableOpacity
-                    onPress={openSortSheet}
-                    className="borderrounded-full p-2 ml-2"
-                    activeOpacity={0.85}
-                  >
-                    <Image
-                      source={icons.filter_white}
-                      className="w-[18px] h-[20px]"
-                      resizeMode="contain"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <SearchInput />
-            </View>
-          )}
-          ListEmptyComponent={() =>
-            state.tag === "loaded" ? (
-              <EmptyState
-                title="No Files Found"
-                subtitle="Be the first one to upload a file"
-                page="/(modals)/create-file"
-                titleButton="Upload File"
-              />
-            ) : null
-          }
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        />
-      ) : (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#FFFFFF" />
-          <Text className="mt-4 text-white text-base">Loading files...</Text>
-        </View>
-      )}
-      <SortSelector ref={bottomSheetRef} onSortChange={handleSelectSort} />
-    </SafeAreaView>
-  );
+          <SortSelector ref={bottomSheetRef} onSortChange={handleSelectSort} />
+        </SafeAreaView>
+      );
+  }
 };
 
 export default FilesScreen;
