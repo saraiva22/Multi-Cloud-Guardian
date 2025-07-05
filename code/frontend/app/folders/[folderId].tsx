@@ -177,6 +177,7 @@ type FolderInfoDetailsProps = {
   state: State;
   handleDelete: () => Promise<any>;
   handleLeave: () => Promise<any>;
+  handleUploadFile: () => Promise<any>;
 };
 
 const FolderInfoDetails = ({
@@ -186,6 +187,7 @@ const FolderInfoDetails = ({
   state,
   handleDelete,
   handleLeave,
+  handleUploadFile,
 }: FolderInfoDetailsProps) => (
   <>
     <View className="flex-row items-center justify-between px-4 mt-12 mb-10">
@@ -198,31 +200,39 @@ const FolderInfoDetails = ({
         />
       </TouchableOpacity>
 
-      <Text className="text-[24px] font-semibold text-white text-center">
+      <Text className="text-[24px] ml-14 font-semibold text-white text-center">
         Folder Details
       </Text>
+      <View className="flex-row gap-3">
+        <TouchableOpacity onPress={handleUploadFile} hitSlop={12}>
+          <Image
+            source={icons.upload}
+            className="w-8 h-8"
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+        {username &&
+          folderDetails.user.username !== username &&
+          folderDetails.type === FolderType.SHARED && (
+            <TouchableOpacity onPress={handleLeave} hitSlop={12}>
+              <Image
+                source={icons.leave}
+                className="w-8 h-8"
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          )}
 
-      {username &&
-        folderDetails.user.username !== username &&
-        folderDetails.type === FolderType.SHARED && (
-          <TouchableOpacity onPress={handleLeave} hitSlop={12}>
+        {username && folderDetails.user.username === username && (
+          <TouchableOpacity onPress={handleDelete} hitSlop={12}>
             <Image
-              source={icons.leave}
+              source={icons.delete_icon}
               className="w-8 h-8"
               resizeMode="contain"
             />
           </TouchableOpacity>
         )}
-
-      {username && folderDetails.user.username === username && (
-        <TouchableOpacity onPress={handleDelete} hitSlop={12}>
-          <Image
-            source={icons.delete_icon}
-            className="w-8 h-8"
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-      )}
+      </View>
     </View>
 
     <View className="items-center mb-17">
@@ -391,6 +401,10 @@ const FolderDetails = () => {
     }
   }
 
+  async function handleUploadFile() {
+    router.push("/(modals)/create-file");
+  }
+
   switch (state.tag) {
     case "begin":
       return (
@@ -429,6 +443,7 @@ const FolderDetails = () => {
                   state={state}
                   handleDelete={handleDelete}
                   handleLeave={handleLeave}
+                  handleUploadFile={handleUploadFile}
                 />
                 {state.folders != null ? (
                   <View className="w-full flex-1 pt-5 pb-8">

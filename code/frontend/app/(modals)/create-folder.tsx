@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  FlatList,
 } from "react-native";
 import React, { useEffect, useReducer } from "react";
 import {
@@ -69,6 +70,7 @@ type Action =
     }
   | { type: "submit" }
   | { type: "error"; error: Problem | string }
+  | { type: "search"; searchValue: string }
   | { type: "success" };
 
 // The Logger
@@ -82,7 +84,7 @@ function reducer(state: State, action: Action): State {
   switch (state.tag) {
     case "begin":
       if (action.type === "start-loading") {
-        return { tag: "loading" };
+        return { tag: "loading", search: state.search };
       } else {
         logUnexpectedAction(state, action);
         return state;
@@ -95,6 +97,7 @@ function reducer(state: State, action: Action): State {
             folderName: "",
             folderType: FolderType.PRIVATE,
             parentFolderId: null,
+            searchValue: "",
           },
           folders: action.folders,
         };
@@ -125,6 +128,11 @@ function reducer(state: State, action: Action): State {
           parentFolderId: state.inputs.parentFolderId,
           folders: state.folders,
         };
+      } else if (action.type === "search") {
+        return {
+          tag: "begin",
+          search: action.searchValue,
+        };
       } else {
         logUnexpectedAction(state, action);
         return state;
@@ -143,6 +151,7 @@ function reducer(state: State, action: Action): State {
             folderName: "",
             folderType: state.folderType,
             parentFolderId: null,
+            searchValue: "",
           },
           folders: state.folders,
         };
@@ -157,15 +166,21 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-const firstState: State = { tag: "begin" };
+const firstState: State = { tag: "begin", search: "" };
+
+const SIZE_MIN_FOLDER = 2;
 
 const CreateFolder = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
   const { token, setIsLogged, setUsername } = useAuthentication();
 
+  const search =
+    state.tag === "loading" && state.search
+      ? state.search
+      : state?.search || "";
+
   useEffect(() => {
     if (state.tag === "begin") {
-      dispatch({ type: "start-loading" });
       handleGetFolder();
     }
 
@@ -203,7 +218,8 @@ const CreateFolder = () => {
   // Handle FetchRecentFolders()
   async function handleGetFolder() {
     try {
-      const folders = await getFolders(token);
+      dispatch({ type: "start-loading" });
+      const folders = await getFolders(token, undefined, true, search);
       dispatch({ type: "loading-success", folders });
     } catch (error) {
       Alert.alert(
@@ -263,6 +279,26 @@ const CreateFolder = () => {
     }
   }
 
+  const searchValue =
+    state.tag === "editing" && state.inputs.searchValue
+      ? state.inputs.searchValue
+      : state.inputs?.searchValue || "";
+
+  // Debounced search effect
+  useEffect(() => {
+    if (state.tag !== "editing") return;
+    const value = searchValue.trim();
+    if (value.length <= SIZE_MIN_FOLDER) {
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      dispatch({ type: "search", searchValue: value });
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchValue]);
+
   const folderName =
     state.tag === "submitting" && state.folderName
       ? state.folderName
@@ -273,92 +309,146 @@ const CreateFolder = () => {
       ? state.folderType
       : state.inputs?.folderType || FolderType.PRIVATE;
 
-  return (
-    <SafeAreaView className="bg-primary h-full">
-      <ScrollView className="px-6 py-12">
-        <View className="flex-row items-center mb-8">
-          <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
-            <Image
-              source={icons.back}
-              className="w-6 h-6"
-              resizeMode="contain"
-              tintColor="white"
-            />
-          </TouchableOpacity>
-          <Text className="text-2xl text-white font-psemibold ml-28">
-            Create Folder
+  const folders =
+    state.tag === "editing" && Array.isArray(state.folders?.content)
+      ? state.folders.content
+      : [];
+
+  // Render UI
+  switch (state.tag) {
+    case "begin":
+      return (
+        <SafeAreaView className="bg-primary flex-1">
+          <ActivityIndicator />
+        </SafeAreaView>
+      );
+    case "loading":
+      return (
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
+        </SafeAreaView>
+      );
+    case "submitting":
+      return (
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
+        </SafeAreaView>
+      );
+    case "error":
+      return (
+        <SafeAreaView className="bg-primary flex-1">
+          <ActivityIndicator />
+          <Text className="text-[24px] font-semibold text-white text-center mb-16 mt-4">
+            {state.tag === "error" &&
+              (typeof state.error === "string"
+                ? state.error
+                : state.error?.detail)}
           </Text>
-        </View>
-
-        <SearchInput placeholder="Folders" />
-        <View
-          style={{ height: 1, backgroundColor: "#23232a", marginVertical: 18 }}
-        />
-        <FormField
-          title="Folder Name"
-          value={folderName}
-          placeholder="Enter a title for your folder..."
-          handleChangeText={(text) => handleChange("folderName", text)}
-          otherStyles="mt-5"
-        />
-
-        <View
-          style={{ height: 1, backgroundColor: "#23232a", marginVertical: 18 }}
-        />
-
-        <FolderTypeSelector
-          title="Folder Type"
-          value={folderType}
-          onChange={(type) => handleChange("folderType", type)}
-        />
-
-        <View
-          style={{ height: 1, backgroundColor: "#23232a", marginVertical: 18 }}
-        />
-
-        <View className="mt-2">
-          <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-xl text-white font-semibold">
-              Recent Folders
-            </Text>
-            <Image
-              source={icons.filter_black1}
-              className="w-10 h-7"
-              resizeMode="contain"
-              tintColor="#fff"
-            />
-          </View>
-
-          {state.tag === "loading" && (
-            <View className="flex-1 items-center justify-center">
-              <ActivityIndicator size="large" color="#FFFFFF" />
-              <Text className="mt-4 text-white text-base">
-                Loading files...
+        </SafeAreaView>
+      );
+    case "editing":
+      return (
+        <SafeAreaView className="bg-primary h-full">
+          <View className="px-6 py-12">
+            <View className="flex-row items-center mb-8">
+              <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
+                <Image
+                  source={icons.back}
+                  className="w-6 h-6"
+                  resizeMode="contain"
+                  tintColor="white"
+                />
+              </TouchableOpacity>
+              <Text className="text-2xl text-white font-psemibold ml-28">
+                Create Folder
               </Text>
             </View>
-          )}
 
-          {state.tag === "editing" &&
-            state.folders.content.map((folder) => (
-              <FolderItemComponent
-                key={folder.folderId}
-                item={folder}
-                onPress={(folderId) => handleChange("parentFolderId", folderId)}
+            <SearchInput
+              placeholder="Folders"
+              value={searchValue}
+              onChangeText={(text) => handleChange("searchValue", text)}
+            />
+            <View
+              style={{
+                height: 1,
+                backgroundColor: "#23232a",
+                marginVertical: 18,
+              }}
+            />
+            <FormField
+              title="Folder Name"
+              value={folderName}
+              placeholder="Enter a title for your folder..."
+              handleChangeText={(text) => handleChange("folderName", text)}
+              otherStyles="mt-5"
+            />
+
+            <View
+              style={{
+                height: 1,
+                backgroundColor: "#23232a",
+                marginVertical: 18,
+              }}
+            />
+
+            <FolderTypeSelector
+              title="Folder Type"
+              value={folderType}
+              onChange={(type) => handleChange("folderType", type)}
+            />
+
+            <View
+              style={{
+                height: 1,
+                backgroundColor: "#23232a",
+                marginVertical: 18,
+              }}
+            />
+
+            <View className="mt-2">
+              <View className="flex-row items-center justify-between mb-2">
+                <Text className="text-xl text-white font-semibold">
+                  Recent Folders
+                </Text>
+              </View>
+
+              <View style={{ flexGrow: 1 }}>
+                <FlatList
+                  style={{ maxHeight: 270 }}
+                  data={folders}
+                  keyExtractor={(item) => String(item.folderId)}
+                  renderItem={({ item }) => (
+                    <FolderItemComponent
+                      key={item.folderId}
+                      item={item}
+                      onPress={(folderId) =>
+                        handleChange("parentFolderId", folderId)
+                      }
+                    />
+                  )}
+                  ListEmptyComponent={() => (
+                    <View className="flex-1 items-center justify-center py-10">
+                      <Text className="text-white text-lg font-semibold mb-2 text-center">
+                        No files match your search
+                      </Text>
+                    </View>
+                  )}
+                />
+              </View>
+              <CustomButton
+                title="Create Folder"
+                handlePress={handleSubmit}
+                containerStyles="mt-10 rounded-lg"
+                isLoading={false}
+                textStyles="text-base font-semibold"
+                color="bg-secondary"
               />
-            ))}
-        </View>
-
-        <CustomButton
-          title="Create Folder"
-          handlePress={handleSubmit}
-          containerStyles="mt-10 rounded-lg"
-          isLoading={state.tag === "submitting"}
-          textStyles="text-base font-semibold"
-          color="bg-secondary"
-        />
-      </ScrollView>
-    </SafeAreaView>
-  );
+            </View>
+          </View>
+        </SafeAreaView>
+      );
+  }
 };
 
 export default CreateFolder;

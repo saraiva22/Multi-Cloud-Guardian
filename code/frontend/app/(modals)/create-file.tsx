@@ -358,12 +358,6 @@ const CreateFile = () => {
             <Text className="text-xl text-white font-semibold">
               Recent Folders
             </Text>
-            <Image
-              source={icons.filter_black1}
-              className="w-10 h-7"
-              resizeMode="contain"
-              tintColor="#fff"
-            />
           </View>
 
           {state.tag === "loading" && (

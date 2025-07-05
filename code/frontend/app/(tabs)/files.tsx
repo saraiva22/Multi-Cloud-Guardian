@@ -135,6 +135,7 @@ function reducer(state: State, action: Action): State {
             search: action.searchValue,
           };
         default:
+          logUnexpectedAction(state, action);
           return state;
       }
   }
