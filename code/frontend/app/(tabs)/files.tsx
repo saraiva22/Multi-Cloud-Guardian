@@ -67,6 +67,7 @@ type Action =
   | { type: "refreshing"; refreshing: boolean; sort: SortOption }
   | { type: "search"; searchValue: string };
 
+// The Logger
 function logUnexpectedAction(state: State, action: Action) {
   console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
 }
@@ -181,7 +182,6 @@ const FilesScreen = () => {
   const loadData = async () => {
     try {
       dispatch({ type: "start-loading" });
-      console.log("VALUE ", search);
       const files = await getFiles(token, sort.sortBy, search);
       dispatch({ type: "loading-success", files });
     } catch (error) {
@@ -190,7 +190,6 @@ const FilesScreen = () => {
   };
 
   useEffect(() => {
-    console.log("SATATE. ", state.tag);
     if (state.tag === "begin") {
       loadData();
     }
@@ -214,6 +213,7 @@ const FilesScreen = () => {
       dispatch({ type: "refreshing", refreshing: true, sort: sort });
     }, 200);
   };
+
   const searchValue =
     state.tag === "loaded" && state.inputs.searchValue
       ? state.inputs.searchValue

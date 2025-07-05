@@ -8,7 +8,7 @@ import {
   Image,
   ActivityIndicator,
 } from "react-native";
-import React, { act, useEffect, useReducer } from "react";
+import React, { useEffect, useReducer } from "react";
 import {
   getProblemMessage,
   isProblem,
