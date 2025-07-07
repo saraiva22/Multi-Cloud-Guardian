@@ -8,6 +8,7 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    google()
 }
 
 dependencies {
@@ -19,11 +20,11 @@ dependencies {
     implementation("jakarta.inject:jakarta.inject-api:2.0.1")
 
     // for JDBI
+    implementation("com.google.cloud.sql:postgres-socket-factory:1.16.0")
     implementation("org.jdbi:jdbi3-core:3.37.1")
     implementation("org.jdbi:jdbi3-kotlin:3.37.1")
     implementation("org.jdbi:jdbi3-postgres:3.37.1")
     implementation("org.postgresql:postgresql:42.7.2")
-    implementation("com.google.cloud.sql:postgres-socket-factory:1.16.1")
 
     // For Jackson
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.0")
