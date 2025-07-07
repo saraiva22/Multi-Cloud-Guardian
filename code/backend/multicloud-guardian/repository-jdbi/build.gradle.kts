@@ -23,6 +23,7 @@ dependencies {
     implementation("org.jdbi:jdbi3-kotlin:3.37.1")
     implementation("org.jdbi:jdbi3-postgres:3.37.1")
     implementation("org.postgresql:postgresql:42.7.2")
+    implementation("com.google.cloud.sql:postgres-socket-factory:1.16.1")
 
     // For Jackson
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.0")

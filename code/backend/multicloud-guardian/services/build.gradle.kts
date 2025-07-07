@@ -27,6 +27,7 @@ dependencies {
     testImplementation(project(":multicloud-guardian:repository-jdbi"))
     testImplementation("org.jdbi:jdbi3-core:3.37.1")
     testImplementation("org.postgresql:postgresql:42.7.2")
+    implementation("com.google.cloud.sql:postgres-socket-factory:1.16.1")
 
     // Dependency for jclouds
     implementation("org.apache.jclouds:jclouds-all:2.7.0")

@@ -28,6 +28,7 @@ dependencies {
     // for JDBI and Postgres
     implementation("org.jdbi:jdbi3-core:3.37.1")
     implementation("org.postgresql:postgresql:42.7.2")
+    implementation("com.google.cloud.sql:postgres-socket-factory:1.16.1")
 
     // To use Kotlin specific date and time functions
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
