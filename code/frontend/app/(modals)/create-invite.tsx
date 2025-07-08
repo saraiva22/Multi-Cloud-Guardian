@@ -293,8 +293,6 @@ const CreateInvite = () => {
       try {
         dispatch({ type: "user-search" });
         const users = await getUsers(value, token);
-        console.log("SER ", users);
-        console.log("SER ", users.content);
         dispatch({ type: "search-success", users: users.content });
       } catch (error) {
         dispatch({ type: "search-error", error: error });

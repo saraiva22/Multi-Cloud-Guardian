@@ -8,7 +8,7 @@ import {
   Image,
   FlatList,
 } from "react-native";
-import React, { useEffect, useReducer } from "react";
+import React, { act, useEffect, useReducer } from "react";
 import { PageResult } from "@/domain/utils/PageResult";
 import { Invite } from "@/domain/storage/Invite";
 import {
@@ -23,6 +23,8 @@ import { getSentInvites } from "@/services/storage/StorageService";
 import { icons } from "@/constants";
 import InviteItemComponent from "@/components/InviteItemComponent";
 import EmptyState from "@/components/EmptyState";
+import { getSSE } from "@/services/notifications/SSEManager";
+import { EventSourceListener } from "react-native-sse";
 
 // The State
 type State =
@@ -35,7 +37,8 @@ type State =
 type Action =
   | { type: "start-loading" }
   | { type: "loading-success"; invites: PageResult<Invite> }
-  | { type: "loading-error"; error: Problem | string };
+  | { type: "loading-error"; error: Problem | string }
+  | { type: "responded-invite"; invite: Invite };
 
 // The Logger
 function logUnexpectedAction(state: State, action: Action) {
@@ -61,14 +64,31 @@ function reducer(state: State, action: Action): State {
         return logUnexpectedAction(state, action);
       }
       return { tag: "error", error: action.error };
+    case "responded-invite":
+      if (state.tag !== "loaded") {
+        return logUnexpectedAction(state, action);
+      }
+      return {
+        tag: "loaded",
+        invites: {
+          ...state.invites,
+          content: state.invites.content.map((invite) =>
+            invite.inviteId === action.invite.inviteId
+              ? { ...invite, status: action.invite.status }
+              : invite
+          ),
+        },
+      };
   }
 }
 
 const firstState: State = { tag: "begin" };
+type CustomEvents = "respondInvite";
 
 const SentInvites = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
   const { token, setIsLogged, setUsername } = useAuthentication();
+  const listener = getSSE();
 
   useEffect(() => {
     if (state.tag === "begin") {
@@ -92,10 +112,32 @@ const SentInvites = () => {
       removeValueFor(KEY_NAME);
       router.replace("/sign-in");
     }
+  }, [state]);
+
+  useEffect(() => {
+    if (listener) {
+      listener.addEventListener("respondInvite", handleInvite);
+    }
   }, []);
 
-  // Handle FetchInvites
+  // Handle EventListener - New Invite
+  const handleInvite: EventSourceListener<CustomEvents> = (event) => {
+    console.log("EVENTO ", event)
+    if (event.type === "respondInvite") {
+      const eventData = JSON.parse(event.data);
+      const newInvite = {
+        inviteId: eventData.inviteId,
+        folderId: eventData.folderId,
+        folderName: eventData.folderName,
+        user: eventData.user,
+        status: eventData.status,
+      };
+      
+      dispatch({ type: "responded-invite", invite: newInvite });
+    }
+  };
 
+  // Handle FetchInvites
   async function handleGetInvites() {
     try {
       const invites = await getSentInvites(token);

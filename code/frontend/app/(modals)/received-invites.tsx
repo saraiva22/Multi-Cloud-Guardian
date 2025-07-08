@@ -153,6 +153,7 @@ const ReceivedInvites = () => {
 
   // Handle EventListener - New Invite
   const handleInvite: EventSourceListener<CustomEvents> = (event) => {
+    console.log("EVENTO ", event);
     if (event.type === "invite") {
       const eventData = JSON.parse(event.data);
       const newInvite = {

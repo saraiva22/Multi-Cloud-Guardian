@@ -170,7 +170,10 @@ class SSEService : NeedsShutdown {
     ) = lock.withLock {
         logger.info("respondInvite")
         val id = currentRespondInvite++
-        sendEventToAll(listOf(ownerId), Event.Invite(id, inviteId, status, UserInfoOutput.fromDomain(invitedInfo), folderId, folderName))
+        sendEventToAll(
+            listOf(ownerId),
+            Event.RespondInvite(id, inviteId, status, UserInfoOutput.fromDomain(invitedInfo), folderId, folderName),
+        )
     }
 
     fun sendNewMember(

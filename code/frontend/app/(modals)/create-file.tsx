@@ -263,6 +263,7 @@ const CreateFile = () => {
         await uploadFile(file, fileName, encryption, keyMaster, token);
       }
 
+      Alert.alert("Success", "Your file has been uploaded successfully.");
       dispatch({ type: "success" });
     } catch (error) {
       Alert.alert(
