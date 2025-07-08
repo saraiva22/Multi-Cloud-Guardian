@@ -1,7 +1,7 @@
 package pt.isel.leic.multicloudguardian.service.storage
 
-import jakarta.inject.Named
 import kotlinx.datetime.Clock
+import org.springframework.stereotype.Service
 import pt.isel.leic.multicloudguardian.domain.file.File
 import pt.isel.leic.multicloudguardian.domain.file.FileCreate
 import pt.isel.leic.multicloudguardian.domain.file.FileDownload
@@ -30,7 +30,7 @@ import pt.isel.leic.multicloudguardian.service.storage.jclouds.MoveBlobError
 import pt.isel.leic.multicloudguardian.service.storage.jclouds.StorageFileJclouds
 import java.util.UUID.randomUUID
 
-@Named
+@Service
 class StorageService(
     private val transactionManager: TransactionManager,
     private val jcloudsStorage: StorageFileJclouds,
@@ -658,14 +658,14 @@ class StorageService(
         limit: Int,
         page: Int,
         sort: String,
-        shared: Boolean = false,
+        type: FolderType? = null,
         search: String? = null,
     ): PageResult<File> =
         transactionManager.run {
             val storageRep = it.storageRepository
             val offset = page * limit
-            val files = storageRep.getFiles(user.id, limit, offset, sort, shared, search)
-            val totalElements = storageRep.countFiles(user.id, shared, search)
+            val files = storageRep.getFiles(user.id, limit, offset, sort, type, search)
+            val totalElements = storageRep.countFiles(user.id, type, search)
             PageResult.fromPartialResult(files, totalElements, limit, offset)
         }
 
@@ -674,14 +674,14 @@ class StorageService(
         limit: Int,
         page: Int,
         sort: String,
-        shared: Boolean = false,
+        type: FolderType? = null,
         search: String? = null,
     ): PageResult<Folder> =
         transactionManager.run {
             val storageRep = it.storageRepository
-            val totalElements = storageRep.countFolder(user.id, shared, search)
+            val totalElements = storageRep.countFolder(user.id, type, search)
             val offset = page * limit
-            val folders = storageRep.getFolders(user.id, limit, offset, sort, shared, search)
+            val folders = storageRep.getFolders(user.id, limit, offset, sort, type, search)
 
             PageResult.fromPartialResult(folders, totalElements, limit, offset)
         }

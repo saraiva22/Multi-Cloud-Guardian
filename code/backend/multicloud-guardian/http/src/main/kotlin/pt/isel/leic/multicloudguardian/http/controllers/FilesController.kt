@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
+import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.user.AuthenticatedUser
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Id
@@ -102,13 +103,13 @@ class FilesController(
         @RequestParam(required = false) search: String?,
         @RequestParam(required = false) size: Int?,
         @RequestParam(required = false) page: Int?,
-        @RequestParam(required = false) shared: Boolean = false,
+        @RequestParam(required = false) type: FolderType?,
         @RequestParam(required = false) sort: String?,
     ): ResponseEntity<*> {
         val setLimit = size ?: DEFAULT_LIMIT
         val setPage = page ?: DEFAULT_PAGE
         val setSort = sort ?: DEFAULT_SORT
-        val res = storageService.getFiles(authenticatedUser.user, setLimit, setPage, setSort, shared, search)
+        val res = storageService.getFiles(authenticatedUser.user, setLimit, setPage, setSort, type, search)
 
         return ResponseEntity.status(HttpStatus.OK).body(
             PageResult(

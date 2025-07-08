@@ -192,6 +192,23 @@ execute function update_folder_stats();
 
 
 
+CREATE OR REPLACE FUNCTION delete_user_files_on_leave_shared_folder()
+RETURNS trigger AS $$
+BEGIN
+    DELETE FROM dbo.Files
+    WHERE user_id = OLD.user_id
+      AND folder_id = OLD.folder_id;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_delete_user_files_on_leave_shared_folder
+AFTER DELETE ON dbo.Join_Folders
+FOR EACH ROW
+EXECUTE FUNCTION delete_user_files_on_leave_shared_folder();
+
+
+
 -- This view summarizes the total storage used by each user, grouping their files into categories:
 -- 'Images', 'Video', 'Documents', or 'Others', and calculates the total size per category.
 CREATE OR REPLACE VIEW user_file_storage_summary AS

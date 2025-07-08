@@ -240,37 +240,65 @@ class JdbiStorageRepository(
         limit: Int,
         offset: Int,
         sort: String,
-        shared: Boolean,
+        type: FolderType?,
         search: String?,
     ): List<File> {
         val order = orderBy(sort, "file_name")
+
         val baseQuery =
-            if (shared) {
-                """
-                select file.*, users.username, users.email, folder.folder_id as folder_id, folder.folder_name as folder_name,
-                folder.type as type
-                from dbo.Files file
-                inner join dbo.Users on file.user_id = users.id
-                left join dbo.Folders folder on file.folder_id = folder.folder_id
-                where (file.user_id = :userId or file.folder_id in (
-                    select folder_id from dbo.Join_Folders where user_id = :userId
-                ))
-                ${if (search != null) "and file.file_name like :search" else ""}
-                order by $order
-                LIMIT :limit OFFSET :offset
-                """.trimIndent()
-            } else {
-                """
-                select file.*, users.username, users.email, folder.folder_id as folder_id, folder.folder_name as folder_name,
-                folder.type as type
-                from dbo.Files file
-                inner join dbo.Users on file.user_id = users.id
-                left join dbo.Folders folder on file.folder_id = folder.folder_id
-                where file.user_id = :userId
-                ${if (search != null) "and file.file_name like :search" else ""}
-                order by $order
-                LIMIT :limit OFFSET :offset
-                """.trimIndent()
+            when (type) {
+                FolderType.PRIVATE ->
+                    """
+                    select file.*, users.username, users.email,
+                           folder.folder_id as folder_id, folder.folder_name as folder_name, folder.type as type
+                    from dbo.Files file
+                    inner join dbo.Users on file.user_id = users.id
+                    left join dbo.Folders folder on file.folder_id = folder.folder_id
+                    where file.user_id = :userId and folder.type = :type
+                    ${if (search != null) "and file.file_name like :search" else ""}
+                    order by $order
+                    limit :limit offset :offset
+                    """.trimIndent()
+
+                FolderType.SHARED ->
+                    """
+                    select file.*, users.username, users.email,
+                           folder.folder_id as folder_id, folder.folder_name as folder_name, folder.type as type
+                    from dbo.Files file
+                    inner join dbo.Users on file.user_id = users.id
+                    left join dbo.Folders folder on file.folder_id = folder.folder_id
+                    where folder.folder_id in (
+                        select f.folder_id
+                        from dbo.Join_Folders jf
+                        inner join dbo.Folders f on jf.folder_id = f.folder_id
+                        where jf.user_id = :userId and f.type = :type
+                    )
+                    ${if (search != null) "and file.file_name like :search" else ""}
+                    order by $order
+                    limit :limit offset :offset
+                    """.trimIndent()
+
+                null ->
+                    """
+                     select file.*, users.username, users.email,
+                       folder.folder_id as folder_id, folder.folder_name as folder_name, folder.type as type
+                    from dbo.Files file
+                    inner join dbo.Users on file.user_id = users.id
+                    left join dbo.Folders folder on file.folder_id = folder.folder_id
+                    where (
+                        folder.folder_id in (
+                            select folder_id from dbo.Folders where user_id = :userId
+                            union
+                            select f.folder_id from dbo.Join_Folders jf
+                            inner join dbo.Folders f on jf.folder_id = f.folder_id
+                            where jf.user_id = :userId
+                        )
+                        or (folder.folder_id is null and file.user_id = :userId)
+                    )
+                        ${if (search != null) "and file.file_name like :search" else ""}
+                        order by $order
+                        limit :limit offset :offset
+                    """.trimIndent()
             }
 
         val query =
@@ -279,6 +307,10 @@ class JdbiStorageRepository(
                 .bind("userId", userId.value)
                 .bind("limit", limit)
                 .bind("offset", offset)
+
+        if (type != null) {
+            query.bind("type", type.ordinal)
+        }
 
         if (search != null) {
             query.bind("search", "%$search%")
@@ -289,30 +321,58 @@ class JdbiStorageRepository(
 
     override fun countFiles(
         userId: Id,
-        shared: Boolean,
+        type: FolderType?,
         search: String?,
     ): Long {
         val baseQuery =
-            if (shared) {
-                """
-                select count(*) from dbo.Files
-                where (
-                    user_id = :userId
-                    or folder_id in (select folder_id from dbo.Join_Folders where user_id = :userId)
-                )
-                ${if (search != null) "and file_name like :search" else ""}
-                """.trimIndent()
-            } else {
-                """
-                select count(*) from dbo.Files where user_id = :userId
-                ${if (search != null) "and file_name like :search" else ""}
-                """.trimIndent()
+            when (type) {
+                FolderType.PRIVATE ->
+                    """
+                    select count(*) from dbo.Files file
+                    inner join dbo.Folders folder on file.folder_id = folder.folder_id
+                    where file.user_id = :userId and folder.type = :type
+                    ${if (search != null) "and file.file_name like :search" else ""}
+                    """.trimIndent()
+
+                FolderType.SHARED ->
+                    """
+                    select count(*) from dbo.Files file
+                    inner join dbo.Folders folder on file.folder_id = folder.folder_id
+                    where folder.folder_id in (
+                        select f.folder_id
+                        from dbo.Join_Folders jf
+                        inner join dbo.Folders f on jf.folder_id = f.folder_id
+                        where jf.user_id = :userId and f.type = :type
+                    )
+                    ${if (search != null) "and file.file_name like :search" else ""}
+                    """.trimIndent()
+
+                null ->
+                    """
+                    select count(*) from dbo.Files file
+                    left join dbo.Folders folder on file.folder_id = folder.folder_id
+                    where (
+                        folder.folder_id in (
+                            select folder_id from dbo.Folders where user_id = :userId
+                            union
+                            select f.folder_id from dbo.Join_Folders jf
+                            inner join dbo.Folders f on jf.folder_id = f.folder_id
+                            where jf.user_id = :userId
+                        )
+                        or (folder.folder_id is null and file.user_id = :userId)
+                    )
+                    ${if (search != null) "and file.file_name like :search" else ""}
+                    """.trimIndent()
             }
 
         val query =
             handle
                 .createQuery(baseQuery)
                 .bind("userId", userId.value)
+
+        if (type != null) {
+            query.bind("type", type.ordinal)
+        }
 
         if (search != null) {
             query.bind("search", "%$search%")
@@ -323,33 +383,48 @@ class JdbiStorageRepository(
 
     override fun countFolder(
         userId: Id,
-        shared: Boolean,
+        type: FolderType?,
         search: String?,
     ): Long {
         val baseQuery =
-            if (shared) {
-                """
-                select count(*) from (
-                    select folder_id as fold_id from dbo.Folders where user_id = :userId
-                    ${if (search != null) "and folder_name like :search" else ""}
-                    union
-                    select f.folder_id as fold_id from dbo.Join_Folders jf
-                    inner join dbo.Folders f on jf.folder_id = f.folder_id
-                    where jf.user_id = :userId
+            when (type) {
+                FolderType.PRIVATE ->
+                    """
+                    select count(*) from dbo.Folders
+                    where user_id= :userId and type = :type
+                     ${if (search != null) "and folder_name like :search" else ""}
+                    """.trimIndent()
+
+                FolderType.SHARED ->
+                    """
+                    select count(*) from dbo.Folders f
+                    inner join dbo.Join_Folders jf on f.folder_id = jf.folder_id
+                    where jf.user_id = :userId and f.type = :type
                     ${if (search != null) "and f.folder_name like :search" else ""}
-                ) as all_folders
-                """.trimIndent()
-            } else {
-                """
-                select count(*) from dbo.Folders where user_id = :userId
-                ${if (search != null) "and folder_name like :search" else ""}
-                """.trimIndent()
+                    """.trimIndent()
+
+                null ->
+                    """
+                    select count(*) from (
+                         select folder_id as fold_id from dbo.Folders where user_id = :userId
+                         ${if (search != null) "and folder_name like :search" else ""}
+                         union
+                         select f.folder_id as fold_id from dbo.Folders f
+                         inner join dbo.Join_Folders jf on f.folder_id = jf.folder_id
+                         where jf.user_id = :userId
+                         ${if (search != null) "and f.folder_name like :search" else ""}
+                     ) as all_folders
+                    """.trimIndent()
             }
 
         val query =
             handle
                 .createQuery(baseQuery)
                 .bind("userId", userId.value)
+
+        if (type != null) {
+            query.bind("type", type.ordinal)
+        }
 
         if (search != null) {
             query.bind("search", "%$search%")
@@ -363,39 +438,62 @@ class JdbiStorageRepository(
         limit: Int,
         offset: Int,
         sort: String,
-        shared: Boolean,
+        type: FolderType?,
         search: String?,
     ): List<Folder> {
         val order = orderBy(sort, "folder_name")
+
         val baseQuery =
-            if (shared) {
-                """
-                select folder.*, users.username, users.email,
-                       parent.folder_id as parent_id, parent.folder_name as parent_folder_name, parent.type as parent_folder_type
-                from dbo.Folders folder
-                inner join dbo.Users on folder.user_id = users.id
-                left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
-                where folder.folder_id in (
-                    select folder_id from dbo.Folders where user_id = :userId
-                    union
-                    select folder_id from dbo.Join_Folders where user_id = :userId
-                )
-                ${if (search != null) "and folder.folder_name like :search" else ""}
-                order by $order
-                LIMIT :limit OFFSET :offset
-                """.trimIndent()
-            } else {
-                """
-                select folder.*, users.username, users.email,
-                       parent.folder_id as parent_id, parent.folder_name as parent_folder_name, parent.type as parent_folder_type
-                from dbo.Folders folder
-                inner join dbo.Users on folder.user_id = users.id
-                left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
-                where folder.user_id = :userId
-                ${if (search != null) "and folder.folder_name like :search" else ""}
-                order by $order
-                LIMIT :limit OFFSET :offset
-                """.trimIndent()
+            when (type) {
+                FolderType.PRIVATE ->
+                    """
+                    select folder.*, users.username, users.email,
+                           parent.folder_id as parent_id, parent.folder_name as parent_folder_name, parent.type as parent_folder_type
+                    from dbo.Folders folder
+                    inner join dbo.Users on folder.user_id = users.id
+                    left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
+                    where folder.user_id = :userId and folder.type = :type
+                    ${if (search != null) "and folder.folder_name like :search" else ""}
+                    order by $order
+                    limit :limit offset :offset
+                    """.trimIndent()
+
+                FolderType.SHARED ->
+                    """
+                    select folder.*, users.username, users.email,
+                           parent.folder_id as parent_id, parent.folder_name as parent_folder_name, parent.type as parent_folder_type
+                    from dbo.Folders folder
+                    inner join dbo.Users on folder.user_id = users.id
+                    left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
+                    where folder.folder_id in (
+                        select f.folder_id
+                        from dbo.Join_Folders jf
+                        inner join dbo.Folders f on jf.folder_id = f.folder_id
+                        where jf.user_id = :userId and f.type = :type
+                    )
+                    ${if (search != null) "and folder.folder_name like :search" else ""}
+                    order by $order
+                    limit :limit offset :offset
+                    """.trimIndent()
+
+                null ->
+                    """
+                    select folder.*, users.username, users.email,
+                           parent.folder_id as parent_id, parent.folder_name as parent_folder_name, parent.type as parent_folder_type
+                    from dbo.Folders folder
+                    inner join dbo.Users on folder.user_id = users.id
+                    left join dbo.Folders parent on folder.parent_folder_id = parent.folder_id
+                    where folder.folder_id in (
+                        select folder_id from dbo.Folders where user_id = :userId
+                        union
+                        select f.folder_id from dbo.Join_Folders jf
+                        inner join dbo.Folders f on jf.folder_id = f.folder_id
+                        where jf.user_id = :userId
+                    )
+                    ${if (search != null) "and folder.folder_name like :search" else ""}
+                    order by $order
+                    limit :limit offset :offset
+                    """.trimIndent()
             }
 
         val query =
@@ -404,6 +502,10 @@ class JdbiStorageRepository(
                 .bind("userId", userId.value)
                 .bind("limit", limit)
                 .bind("offset", offset)
+
+        if (type != null) {
+            query.bind("type", type.ordinal)
+        }
 
         if (search != null) {
             query.bind("search", "%$search%")

@@ -20,6 +20,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
 class StorageServiceTests : ServiceTests() {
@@ -210,14 +211,13 @@ class StorageServiceTests : ServiceTests() {
     @Test
     fun `get file and getFiles`() {
         // Arrange: initialize the storage service
-        val storageService = createStorageService()
         val clock = TestClock()
+        val storageService = createStorageService(clock)
 
         // Act: create and upload a single file
         val fileCreation = fileCreation()
-        clock.advance(1.minutes)
         val file = createFile(testUser, fileCreation)
-
+        clock.advance(20.minutes)
         val getFileResult = storageService.getFileById(testUser, file.fileId)
 
         // Assert: verify the uploaded file can be retrieved and matches expected properties
@@ -240,10 +240,11 @@ class StorageServiceTests : ServiceTests() {
         // Act: create and upload two more files
 
         val fileContent1 = fileCreation()
-        clock.advance(1.minutes)
         val fileContent2 = fileCreation()
         val file1 = createFile(testUser, fileContent1)
+        clock.advance(1.hours)
         val file2 = createFile(testUser, fileContent2)
+        clock.advance(1.hours)
         val setLimit = DEFAULT_LIMIT
         val setPage = DEFAULT_PAGE
         val setSort = DEFAULT_SORT
@@ -676,7 +677,7 @@ class StorageServiceTests : ServiceTests() {
             }
 
         // Act: get all folders for the user
-        val getFolders = storageService.getFolders(user, DEFAULT_LIMIT, DEFAULT_PAGE, DEFAULT_SORT)
+        val getFolders = storageService.getFolders(user, DEFAULT_LIMIT, DEFAULT_PAGE, DEFAULT_SORT, FolderType.PRIVATE)
 
         // Assert: should have 3 folders
         assertEquals(3, getFolders.content.size)
@@ -1135,7 +1136,7 @@ class StorageServiceTests : ServiceTests() {
         assertTrue(allFiles.content.any { it.fileId == file2Id })
 
         // Act: get all folders for the user
-        val allFolders = storageService.getFolders(user, DEFAULT_LIMIT, DEFAULT_PAGE, DEFAULT_SORT)
+        val allFolders = storageService.getFolders(user, DEFAULT_LIMIT, DEFAULT_PAGE, DEFAULT_SORT, FolderType.PRIVATE)
 
         // Assert: getFolders returns both parent and subfolder
         assertTrue(allFolders.content.any { it.folderId == folderId })
@@ -1453,12 +1454,12 @@ class StorageServiceTests : ServiceTests() {
             }
 
         // Assert: Invited user can see both private and shared folders
-        val folders = storageService.getFolders(invitedUser, 10, 0, "created_asc", true)
+        val folders = storageService.getFolders(invitedUser, 10, 0, "created_asc", null)
         assertTrue(folders.content.any { it.folderName == sharedFolderName })
         assertTrue(folders.content.any { it.folderName == invitedPrivateFolderName })
 
         // Act: Invited user searches for folders with "Priva" keyword
-        val searchFolders = storageService.getFolders(invitedUser, 10, 0, "created_asc", true, "Priva")
+        val searchFolders = storageService.getFolders(invitedUser, 10, 0, "created_asc", null, "Priva")
 
         // Assert: Should only find the invited private folder
         assertEquals(1, searchFolders.totalElements)
@@ -1593,7 +1594,7 @@ class StorageServiceTests : ServiceTests() {
         }
 
         // User1 searches for files with "Fil" and should see both PrivateFile and FileTest
-        val searchFiles = storageService.getFiles(user1, 10, 0, "created_asc", true, "Fil")
+        val searchFiles = storageService.getFiles(user1, 10, 0, "created_asc", null, "Fil")
         assertTrue(searchFiles.content.any { it.fileName == privateFileName })
         assertTrue(searchFiles.content.any { it.fileName == fileTestName })
 
