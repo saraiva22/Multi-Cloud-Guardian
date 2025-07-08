@@ -421,7 +421,21 @@ class StorageService(
 
                         is Success -> {
                             contextStorage.value.close()
-                            fileRepository.deleteFile(user.id, file, if (file.folderInfo != null) clock.now() else null)
+                            val clock = clock.now()
+                            val userInfo = UserInfo(user.id, user.username, user.email)
+                            file.folderInfo?.let { folderValue ->
+                                val members = fileRepository.membersInFolder(folderValue.id)
+                                fileRepository.deleteFile(user.id, file, clock)
+                                sseService.deleteFile(
+                                    file.fileId.value,
+                                    userInfo,
+                                    file.folderInfo,
+                                    file.fileName,
+                                    clock.epochSeconds,
+                                    members,
+                                )
+                            } ?: fileRepository.deleteFile(user.id, file, null)
+
                             success(true)
                         }
                     }
@@ -595,14 +609,19 @@ class StorageService(
 
             storageRepository.folderInviteUpdated(guest.id, inviteId, inviteStatus)
 
+            val invitedInfo = UserInfo(guest.id, guest.username, guest.email)
+            val folder = folderMembers.folder
+            val ownerId = folder.user.id.value
             return@run when (inviteStatus) {
                 InviteStatus.ACCEPT -> {
-                    val newMember = UserInfo(guest.id, guest.username, guest.email)
-                    val folder = folderMembers.folder
-                    sseService.sendNewMember(folder.user.id.value, newMember, folderId.value, folder.folderName)
+                    sseService.sendNewMember(ownerId, invitedInfo, folderId.value, folder.folderName)
+                    sseService.respondInvite(inviteId.value, inviteStatus, invitedInfo, ownerId, folderId.value, folder.folderName)
                     success(InviteStatusResult.InviteAccepted(folderMembers))
                 }
-                InviteStatus.REJECT -> success(InviteStatusResult.InviteRejected)
+                InviteStatus.REJECT -> {
+                    sseService.respondInvite(inviteId.value, inviteStatus, invitedInfo, ownerId, folderId.value, folder.folderName)
+                    success(InviteStatusResult.InviteRejected)
+                }
                 InviteStatus.PENDING -> failure(ValidateFolderInviteError.InvalidInvite)
             }
         }
@@ -650,6 +669,9 @@ class StorageService(
             if (storageRepository.isOwnerOfFolder(user.id, folderId)) return@run failure(LeaveFolderError.UserIsOwner)
 
             if (!storageRepository.leaveFolder(user.id, folderId)) return@run failure(LeaveFolderError.ErrorLeavingFolder)
+            val userInfo = UserInfo(user.id, user.username, user.email)
+            val folderInfo = FolderInfo(folderMembers.folder.folderId, folderMembers.folder.folderName, folderMembers.folder.type)
+            sseService.leaveFolder(userInfo, folderInfo, folderMembers.members)
             success(Unit)
         }
 

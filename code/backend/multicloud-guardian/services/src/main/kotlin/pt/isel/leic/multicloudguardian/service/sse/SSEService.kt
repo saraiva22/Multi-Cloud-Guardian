@@ -25,6 +25,9 @@ class SSEService : NeedsShutdown {
     private var currentId = 0L
     private var currentInviteId = 0L
     private var currentNewMemberId = 0L
+    private var currentDeleteFile = 0L
+    private var currentLeaveFolder = 0L
+    private var currentRespondInvite = 0L
     private val lock = ReentrantLock()
 
     // A scheduler to send the periodic keep-alive events
@@ -102,6 +105,48 @@ class SSEService : NeedsShutdown {
         )
     }
 
+    fun deleteFile(
+        fileId: Int,
+        user: UserInfo,
+        folderInfo: FolderInfo?,
+        fileName: String,
+        createdAt: Long,
+        members: List<UserInfo>,
+    ) = lock.withLock {
+        logger.info("deleteFile")
+        val id = currentDeleteFile++
+        val membersFolder = members.map { it.id.value }
+        sendEventToAll(
+            membersFolder,
+            Event.DeleteFile(
+                id,
+                fileId,
+                UserInfoOutput.fromDomain(user),
+                FolderInfoOutput.fromDomain(folderInfo),
+                fileName,
+                createdAt,
+            ),
+        )
+    }
+
+    fun leaveFolder(
+        user: UserInfo,
+        folderInfo: FolderInfo,
+        members: List<UserInfo>,
+    ) = lock.withLock {
+        logger.info("leaveFolder")
+        val id = currentLeaveFolder++
+        val membersFolder = members.map { it.id.value }
+        sendEventToAll(
+            membersFolder,
+            Event.LeaveFolder(
+                id,
+                UserInfoOutput.fromDomain(user),
+                FolderInfoOutput.fromDomain(folderInfo),
+            ),
+        )
+    }
+
     fun sendInvite(
         inviteId: Int,
         status: InviteStatus,
@@ -113,6 +158,19 @@ class SSEService : NeedsShutdown {
         logger.info("sendInvite")
         val id = currentInviteId++
         sendEventToAll(listOf(guestId), Event.Invite(id, inviteId, status, UserInfoOutput.fromDomain(inviterInfo), folderId, folderName))
+    }
+
+    fun respondInvite(
+        inviteId: Int,
+        status: InviteStatus,
+        invitedInfo: UserInfo,
+        ownerId: Int,
+        folderId: Int,
+        folderName: String,
+    ) = lock.withLock {
+        logger.info("respondInvite")
+        val id = currentRespondInvite++
+        sendEventToAll(listOf(ownerId), Event.Invite(id, inviteId, status, UserInfoOutput.fromDomain(invitedInfo), folderId, folderName))
     }
 
     fun sendNewMember(

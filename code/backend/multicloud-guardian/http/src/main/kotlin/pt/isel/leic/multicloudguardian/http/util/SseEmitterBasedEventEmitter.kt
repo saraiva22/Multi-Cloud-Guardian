@@ -21,11 +21,32 @@ class SseEmitterBasedEventEmitter(
                         .name("file")
                         .data(event)
 
+                is Event.DeleteFile ->
+                    SseEmitter
+                        .event()
+                        .id(event.id.toString())
+                        .name("deleteFile")
+                        .data(event)
+
+                is Event.LeaveFolder ->
+                    SseEmitter
+                        .event()
+                        .id(event.id.toString())
+                        .name("leaveFolder")
+                        .data(event)
+
                 is Event.Invite ->
                     SseEmitter
                         .event()
                         .id(event.id.toString())
                         .name("invite")
+                        .data(event)
+
+                is Event.RespondInvite ->
+                    SseEmitter
+                        .event()
+                        .id(event.id.toString())
+                        .name("respondInvite")
                         .data(event)
 
                 is Event.NewMember ->
