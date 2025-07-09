@@ -479,6 +479,7 @@ const FolderDetails = () => {
     router.push("/(modals)/create-file");
   }
 
+  // Render UI
   switch (state.tag) {
     case "begin":
       return (

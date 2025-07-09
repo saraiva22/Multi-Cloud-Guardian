@@ -220,6 +220,7 @@ const ReceivedInvites = () => {
     }
   }
 
+  // Render UI
   switch (state.tag) {
     case "begin":
       return (

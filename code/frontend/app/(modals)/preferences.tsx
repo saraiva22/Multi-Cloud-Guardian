@@ -140,19 +140,23 @@ const Preferences = () => {
       router.replace("/sign-in");
     }
   }, [state]);
+
+  // Rendder UI
   switch (state.tag) {
     case "begin":
       return (
-        <SafeAreaView className="bg-primary flex-1">
-          <ActivityIndicator />
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
         </SafeAreaView>
       );
+
     case "loading":
       return (
-        <SafeAreaView className="bg-primary flex-1">
-          <ActivityIndicator />
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
         </SafeAreaView>
       );
+
     case "loaded": {
       return (
         <SafeAreaView className="flex-1 bg-primary h-full px-6 py-12">

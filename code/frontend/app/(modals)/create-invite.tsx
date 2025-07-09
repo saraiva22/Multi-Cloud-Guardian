@@ -301,8 +301,6 @@ const CreateInvite = () => {
     return () => clearTimeout(timeoutId);
   }, [username]);
 
-  console.log("STATE ", state.tag);
-
   // Render UI
   switch (state.tag) {
     case "begin":
@@ -315,6 +313,9 @@ const CreateInvite = () => {
       return (
         <SafeAreaView className="bg-primary flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#fff" />
+          <Text className="mt-4 text-white text-lg font-semibold">
+            Loading...
+          </Text>
         </SafeAreaView>
       );
     case "editing":

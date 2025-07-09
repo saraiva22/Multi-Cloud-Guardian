@@ -102,17 +102,18 @@ const StorageDetails = () => {
     }
   }, [state]);
 
+  // Render UI
   switch (state.tag) {
     case "begin":
       return (
-        <SafeAreaView className="bg-primary flex-1">
-          <ActivityIndicator />
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
         </SafeAreaView>
       );
     case "loading":
       return (
-        <SafeAreaView className="bg-primary flex-1">
-          <ActivityIndicator />
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
         </SafeAreaView>
       );
 
@@ -186,8 +187,8 @@ const StorageDetails = () => {
     }
     case "error":
       return (
-        <SafeAreaView className="bg-primary flex-1">
-          <ActivityIndicator />
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
           <Text className="text-[24px] font-semibold text-white text-center mb-16 mt-4">
             {state.tag === "error" && "Go to Sign In"}
           </Text>

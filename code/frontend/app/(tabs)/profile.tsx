@@ -46,6 +46,7 @@ const ProfileScreen = () => {
   const handleReceivedInvites = () => goIfLogged("/(modals)/received-invites");
   const handleSentInvites = () => goIfLogged("/(modals)/sent-invites");
 
+  // Render UI
   return (
     <SafeAreaView className="bg-primary h-full">
       <View className="items-center mt-16">

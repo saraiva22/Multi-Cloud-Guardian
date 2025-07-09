@@ -290,7 +290,6 @@ const CreateFile = () => {
       : state.inputs?.file || null;
 
   // Render UI
-
   switch (state.tag) {
     case "begin":
       return (

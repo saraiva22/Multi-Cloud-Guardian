@@ -2,7 +2,11 @@ import { View, Text, TouchableOpacity, Image } from "react-native";
 import React from "react";
 import { Link, useRouter } from "expo-router";
 import { icons } from "@/constants";
-import { formatDate, formatFolderType, formatSize } from "@/services/utils/Function";
+import {
+  formatDate,
+  formatFolderType,
+  formatSize,
+} from "@/services/utils/Function";
 import { Folder } from "@/domain/storage/Folder";
 import { MaterialIcons } from "@expo/vector-icons";
 

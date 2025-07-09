@@ -13,6 +13,7 @@ export default function App() {
 
   if (!loading && isLogged) return <Redirect href="/home" />;
 
+  // Render UI
   return (
     <SafeAreaView className="bg-primary flex-1">
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}>
