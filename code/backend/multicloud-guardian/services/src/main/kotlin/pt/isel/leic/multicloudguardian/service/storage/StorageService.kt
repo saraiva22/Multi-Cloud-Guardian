@@ -710,7 +710,7 @@ class StorageService(
 
             val userInfo = UserInfo(user.id, user.username, user.email)
             val folderInfo = FolderInfo(folderMembers.folder.folderId, folderMembers.folder.folderName, folderMembers.folder.type)
-            sseService.leaveFolder(userInfo, folderInfo, folderMembers.members)
+            sseService.leaveFolder(userInfo, folderInfo, folderMembers.members.filter { member -> member.id != user.id })
             success(Unit)
         }
 

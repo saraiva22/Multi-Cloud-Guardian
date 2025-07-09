@@ -67,8 +67,6 @@ type Action =
       folders: PageResult<Folder> | null;
     }
   | { type: "loading-error"; error: Problem | string }
-  | { type: "download-loading"; details: FolderOutputModel }
-  | { type: "url-loading"; details: FolderOutputModel }
   | { type: "delete-loading" }
   | { type: "leave-loading" }
   | { type: "success-delete" }
@@ -118,14 +116,12 @@ function reducer(state: State, action: Action): State {
       }
 
     case "loaded":
-      if (action.type === "download-loading") {
-        return { tag: "loading" };
-      } else if (action.type === "url-loading") {
-        return { tag: "loading" };
-      } else if (action.type === "delete-loading") {
+      if (action.type === "delete-loading") {
         return { tag: "loading" };
       } else if (action.type === "leave-loading") {
-        return { tag: "loading" };
+        return {
+          tag: "loading",
+        };
       } else if (action.type === "new-file") {
         return {
           tag: "loaded",
@@ -175,6 +171,7 @@ function reducer(state: State, action: Action): State {
         ).length;
         return {
           ...state,
+          tag: "loaded",
           details: {
             ...state.details,
             numberFile: state.details.numberFile - numberFile,
@@ -466,10 +463,10 @@ const FolderDetails = () => {
 
   async function handleLeave() {
     if (state.tag !== "loaded") return;
-    dispatch({ type: "delete-loading" });
+    dispatch({ type: "leave-loading" });
     try {
       await leaveFolder(folderId.toString(), token);
-      dispatch({ type: "success-delete" });
+      dispatch({ type: "success-leave" });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
     }
