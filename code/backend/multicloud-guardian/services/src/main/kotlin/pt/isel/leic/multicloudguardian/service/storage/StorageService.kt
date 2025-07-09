@@ -522,7 +522,7 @@ class StorageService(
                 return@run failure(DeleteFileError.PermissionDenied)
             }
 
-            val provider = usersRepository.getProvider(user.id)
+            val provider = usersRepository.getProvider(folderMembers.folder.user.id)
             val bucketName = providerDomain.getBucketName(provider)
 
             when (val contextStorage = createContextStorage(provider, bucketName)) {
@@ -681,7 +681,33 @@ class StorageService(
 
             if (storageRepository.isOwnerOfFolder(user.id, folderId)) return@run failure(LeaveFolderError.UserIsOwner)
 
+            val userFiles = storageRepository.getFilesInFolderByUser(user.id, folderId)
+
+            val provider = it.usersRepository.getProvider(folderMembers.folder.user.id)
+            val bucketName = providerDomain.getBucketName(provider)
+
+            when (val contextStorage = createContextStorage(provider, bucketName)) {
+                is Failure ->
+                    when (contextStorage.value) {
+                        CreateContextJCloudError.ErrorCreatingContext -> return@run failure(LeaveFolderError.ErrorCreatingContext)
+                        CreateContextJCloudError.ErrorCreatingGlobalBucket -> return@run failure(
+                            LeaveFolderError.ErrorCreatingGlobalBucket,
+                        )
+
+                        CreateContextJCloudError.InvalidCredential -> return@run failure(LeaveFolderError.InvalidCredential)
+                    }
+
+                is Success -> {
+                    userFiles.forEach { file ->
+                        val result = jcloudsStorage.deleteBlob(contextStorage.value, bucketName, file.path)
+                        if (result is Failure) return@run failure(LeaveFolderError.FailedToDeleteUserFiles)
+                    }
+                    contextStorage.value.close()
+                }
+            }
+
             if (!storageRepository.leaveFolder(user.id, folderId)) return@run failure(LeaveFolderError.ErrorLeavingFolder)
+
             val userInfo = UserInfo(user.id, user.username, user.email)
             val folderInfo = FolderInfo(folderMembers.folder.folderId, folderMembers.folder.folderName, folderMembers.folder.type)
             sseService.leaveFolder(userInfo, folderInfo, folderMembers.members)
@@ -779,7 +805,7 @@ class StorageService(
             }
 
             val offset = page * limit
-            val files = it.storageRepository.getFilesInFolder(user.id, folderId, limit, offset, sort)
+            val files = it.storageRepository.getFilesInFolder(folderId, limit, offset, sort)
 
             success(PageResult.fromPartialResult(files, folderMembers.folder.numberFiles.toLong(), limit, offset))
         }

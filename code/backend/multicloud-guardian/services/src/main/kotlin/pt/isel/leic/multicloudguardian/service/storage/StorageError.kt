@@ -225,6 +225,14 @@ sealed class LeaveFolderError {
     data object ErrorLeavingFolder : LeaveFolderError()
 
     data object UserIsOwner : LeaveFolderError()
+
+    data object ErrorCreatingGlobalBucket : LeaveFolderError()
+
+    data object ErrorCreatingContext : LeaveFolderError()
+
+    data object InvalidCredential : LeaveFolderError()
+
+    data object FailedToDeleteUserFiles : LeaveFolderError()
 }
 
 typealias LeaveFolderResult = Either<LeaveFolderError, Unit>

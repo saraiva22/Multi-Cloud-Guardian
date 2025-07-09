@@ -181,7 +181,7 @@ const SentInvites = () => {
           </TouchableOpacity>
 
           <Text className="text-[24px] font-semibold text-white text-center mb-16 mt-4">
-            Received Invites
+            Sent Invites
           </Text>
           <FlatList
             data={state.invites.content}

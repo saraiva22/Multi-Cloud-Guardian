@@ -563,6 +563,10 @@ class FoldersController(
                         )
                     LeaveFolderError.ErrorLeavingFolder -> Problem.errorLeavingFolder(folderId, instance)
                     LeaveFolderError.UserIsOwner -> Problem.userIsFolderOwner(authenticatedUser.user.username.value, instance)
+                    LeaveFolderError.InvalidCredential -> Problem.invalidCredential(instance)
+                    LeaveFolderError.ErrorCreatingContext -> Problem.invalidCreateContext(instance)
+                    LeaveFolderError.ErrorCreatingGlobalBucket -> Problem.invalidCreationGlobalBucket(instance)
+                    LeaveFolderError.FailedToDeleteUserFiles -> Problem.failedToDeleteUserFiles(instance)
                 }
         }
     }

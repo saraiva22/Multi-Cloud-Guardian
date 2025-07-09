@@ -251,7 +251,7 @@ class JdbiStorageRepositoryTests {
             val repo = JdbiStorageRepository(handle)
             val userId = Id(1)
             val folderId = Id(99999)
-            val files = repo.getFilesInFolder(userId, folderId, 10, 0, "created_asc")
+            val files = repo.getFilesInFolder(folderId, 10, 0, "created_asc")
             assertEquals(emptyList(), files)
         }
     }

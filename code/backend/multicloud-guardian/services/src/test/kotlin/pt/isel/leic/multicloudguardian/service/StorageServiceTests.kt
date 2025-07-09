@@ -217,7 +217,7 @@ class StorageServiceTests : ServiceTests() {
         // Act: create and upload a single file
         val fileCreation = fileCreation()
         val file = createFile(testUser, fileCreation)
-        clock.advance(20.minutes)
+        clock.advance(1.minutes)
         val getFileResult = storageService.getFileById(testUser, file.fileId)
 
         // Assert: verify the uploaded file can be retrieved and matches expected properties

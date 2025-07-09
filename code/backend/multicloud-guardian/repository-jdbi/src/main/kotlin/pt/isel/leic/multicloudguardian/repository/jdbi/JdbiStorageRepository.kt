@@ -558,7 +558,6 @@ class JdbiStorageRepository(
     }
 
     override fun getFilesInFolder(
-        userId: Id,
         folderId: Id,
         limit: Int,
         offset: Int,
@@ -584,6 +583,25 @@ class JdbiStorageRepository(
             .mapTo<File>()
             .toList()
     }
+
+    override fun getFilesInFolderByUser(
+        userId: Id,
+        folderId: Id,
+    ): List<File> =
+        handle
+            .createQuery(
+                """
+                select files.*, users.username, users.email, folders.folder_id as folder_id, folders.folder_name as folder_name,
+                   folders.type as type
+                   from dbo.Files 
+                   inner join dbo.folders on files.folder_id = folders.folder_id 
+                   inner join dbo.users on folders.user_id = users.id 
+                   where folders.folder_id = :folderId and files.user_id = :userId
+                """.trimIndent(),
+            ).bind("folderId", folderId.value)
+            .bind("userId", userId.value)
+            .mapTo<File>()
+            .toList()
 
     override fun getPathById(
         userId: Id,

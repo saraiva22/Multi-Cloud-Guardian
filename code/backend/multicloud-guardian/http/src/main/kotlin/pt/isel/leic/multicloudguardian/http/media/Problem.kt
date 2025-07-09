@@ -108,6 +108,7 @@ class Problem(
         private val userPermissionsDeniedType = URI("${FOLDER}user-permissions-denied-type")
         private val encryptionNotSupportedInSharedFolder = URI("${FOLDER}encryption-not-supported-in-shared-folder")
         private val hasPendingInvite = URI("${FOLDER}invite-pending")
+        private val failedToDeleteUserFiles = URI("${FOLDER}failed-to-delete-user-files")
 
         fun internalServerError(instance: URI?): ResponseEntity<*> =
             Problem(
@@ -602,6 +603,15 @@ class Problem(
                 title = "Invite already pending",
                 status = HttpStatus.BAD_REQUEST.value(),
                 detail = "There is already a pending invite for user $username.",
+                instance = instance,
+            ).toResponse()
+
+        fun failedToDeleteUserFiles(instance: URI?): ResponseEntity<*> =
+            Problem(
+                type = failedToDeleteUserFiles,
+                title = "Failed to delete user files",
+                status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                detail = "An error occurred while deleting the user's files in the folder.",
                 instance = instance,
             ).toResponse()
     }
