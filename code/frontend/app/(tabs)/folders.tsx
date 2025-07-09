@@ -178,7 +178,7 @@ const FoldersScreen = () => {
   const loadData = async () => {
     try {
       dispatch({ type: "start-loading" });
-      const folders = await getFolders(token, sort.sortBy, true, search);
+      const folders = await getFolders(token, sort.sortBy, undefined, search);
       dispatch({ type: "loading-success", folders });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });

@@ -36,6 +36,7 @@ type State =
   | { tag: "begin" }
   | { tag: "loading" }
   | { tag: "loaded"; invites: PageResult<Invite> }
+  | { tag: "validating"; inviteId: number; invites: PageResult<Invite> }
   | { tag: "error"; error: Problem | string }
   | { tag: "redirect"; folderId: number };
 
@@ -44,6 +45,7 @@ type Action =
   | { type: "start-loading" }
   | { type: "loading-success"; invites: PageResult<Invite> }
   | { type: "loading-error"; error: Problem | string }
+  | { type: "start-validating"; inviteId: number }
   | { type: "new-invite"; invite: Invite }
   | { type: "accepted-invite"; folderId: number }
   | { type: "reject-invite"; inviteId: number };
@@ -87,17 +89,17 @@ function reducer(state: State, action: Action): State {
       };
 
     case "accepted-invite":
-      if (state.tag !== "loaded") {
+      if (state.tag !== "validating") {
         return logUnexpectedAction(state, action);
       }
       return { tag: "redirect", folderId: action.folderId };
 
     case "reject-invite":
-      if (state.tag !== "loaded") {
+      if (state.tag !== "validating") {
         return logUnexpectedAction(state, action);
       }
       return {
-        ...state,
+        tag: "loaded",
         invites: {
           ...state.invites,
           content: state.invites.content.map((invite) =>
@@ -106,6 +108,15 @@ function reducer(state: State, action: Action): State {
               : invite
           ),
         },
+      };
+    case "start-validating":
+      if (state.tag !== "loaded") {
+        return logUnexpectedAction(state, action);
+      }
+      return {
+        tag: "validating",
+        inviteId: action.inviteId,
+        invites: state.invites,
       };
   }
 }
@@ -181,13 +192,14 @@ const ReceivedInvites = () => {
   }
 
   // Handle Validate Invite()
-
   async function handleValidationInvite(
     folderId: number,
     inviteId: number,
     status: InviteStatusType
   ) {
     try {
+      dispatch({ type: "start-validating", inviteId });
+
       await validateFolderInvite(
         folderId.toString(),
         inviteId.toString(),
@@ -211,14 +223,34 @@ const ReceivedInvites = () => {
   switch (state.tag) {
     case "begin":
       return (
-        <SafeAreaView className="bg-primary flex-1">
-          <ActivityIndicator />
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
         </SafeAreaView>
       );
     case "loading":
       return (
-        <SafeAreaView className="bg-primary flex-1">
-          <ActivityIndicator />
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
+        </SafeAreaView>
+      );
+
+    case "validating":
+      return (
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
+          <Text className="mt-4 text-white text-lg font-semibold">
+            Accepting invite...
+          </Text>
+        </SafeAreaView>
+      );
+
+    case "redirect":
+      return (
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
+          <Text className="mt-4 text-white text-lg font-semibold">
+            Redirect...
+          </Text>
         </SafeAreaView>
       );
     case "loaded": {

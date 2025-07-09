@@ -254,7 +254,7 @@ class JdbiStorageRepository(
                     from dbo.Files file
                     inner join dbo.Users on file.user_id = users.id
                     left join dbo.Folders folder on file.folder_id = folder.folder_id
-                    where file.user_id = :userId and folder.type = :type
+                    where file.user_id = :userId 
                     ${if (search != null) "and file.file_name like :search" else ""}
                     order by $order
                     limit :limit offset :offset
@@ -308,7 +308,7 @@ class JdbiStorageRepository(
                 .bind("limit", limit)
                 .bind("offset", offset)
 
-        if (type != null) {
+        if (type == FolderType.SHARED) {
             query.bind("type", type.ordinal)
         }
 
@@ -330,7 +330,7 @@ class JdbiStorageRepository(
                     """
                     select count(*) from dbo.Files file
                     inner join dbo.Folders folder on file.folder_id = folder.folder_id
-                    where file.user_id = :userId and folder.type = :type
+                    where file.user_id = :userId
                     ${if (search != null) "and file.file_name like :search" else ""}
                     """.trimIndent()
 
@@ -370,7 +370,7 @@ class JdbiStorageRepository(
                 .createQuery(baseQuery)
                 .bind("userId", userId.value)
 
-        if (type != null) {
+        if (type == FolderType.SHARED) {
             query.bind("type", type.ordinal)
         }
 

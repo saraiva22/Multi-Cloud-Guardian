@@ -8,18 +8,12 @@ import {
   SafeAreaView,
   FlatList,
 } from "react-native";
-import React, { act, useEffect, useReducer } from "react";
+import React, { useEffect, useReducer } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import {
-  deleteFile,
   deleteFolder,
-  downloadFile,
-  generateTemporaryUrl,
-  getFile,
-  getFiles,
   getFilesInFolder,
   getFolder,
-  getFolders,
   getFoldersInFolder,
   leaveFolder,
 } from "@/services/storage/StorageService";
@@ -406,7 +400,6 @@ const FolderDetails = () => {
         email: eventData.user.email,
       };
 
-      console.log("MEMBER ", member);
       dispatch({ type: "leave-user", member: member });
     }
   };
@@ -489,21 +482,29 @@ const FolderDetails = () => {
   switch (state.tag) {
     case "begin":
       return (
-        <SafeAreaView className="bg-primary flex-1">
-          <ActivityIndicator />
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
         </SafeAreaView>
       );
     case "loading":
       return (
-        <SafeAreaView className="bg-primary flex-1">
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#FFFFFF" />
-          <Text className="mt-4 text-white text-base">Loading File...</Text>
+          <Text className="mt-4 text-white text-base">Loading...</Text>
+        </SafeAreaView>
+      );
+
+    case "redirect":
+      return (
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
+          <Text className="mt-4 text-white text-lg font-semibold">
+            Leaving folder...
+          </Text>
         </SafeAreaView>
       );
 
     case "loaded": {
-      console.log("members:", state.details.members);
-      console.log("file", state.files.content);
       return (
         <SafeAreaView className="flex-1 bg-primary h-full px-6 py-12">
           <FlatList

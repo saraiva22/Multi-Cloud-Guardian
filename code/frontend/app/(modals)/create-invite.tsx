@@ -30,6 +30,7 @@ import CustomButton from "@/components/CustomButton";
 import { getUserByUsername, getUsers } from "@/services/users/UserService";
 import { UserHomeOutputModel } from "@/services/users/models/UserHomeOutputModel";
 import EmptyState from "@/components/EmptyState";
+import { FolderType } from "@/domain/storage/FolderType";
 
 // The State
 type State =
@@ -234,7 +235,7 @@ const CreateInvite = () => {
   // Handle FetchRecentFolders()
   async function handleGetFolders() {
     try {
-      const folders = await getFolders(token);
+      const folders = await getFolders(token, undefined, FolderType.SHARED);
       dispatch({ type: "loading-success", folders });
     } catch (error) {
       Alert.alert(

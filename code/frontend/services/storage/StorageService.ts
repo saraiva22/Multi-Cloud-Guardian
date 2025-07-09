@@ -27,7 +27,6 @@ import { RegisterOutput } from "../users/models/RegisterOutputModel";
 import { Invite } from "@/domain/storage/Invite";
 import { InviteStatusType } from "@/domain/storage/InviteStatusType";
 
-
 const httpService = httpServiceInit();
 
 export async function uploadFile(
@@ -230,6 +229,7 @@ export async function getFiles(
   token: string,
   sortBy: string = "created_at",
   search: string = "",
+  type?: FolderType,
   page: number = 0,
   size: number = 10
 ): Promise<PageResult<File>> {
@@ -242,6 +242,10 @@ export async function getFiles(
   if (search.length > 0) {
     params.search = search;
   }
+  if (type) {
+    params.type = type;
+  }
+
   return await httpService.get<PageResult<File>>(path, token, params);
 }
 
@@ -272,7 +276,7 @@ export async function getFolder(
 export async function getFolders(
   token: string,
   sortBy: string = "created_at",
-  shared: boolean = false,
+  type?: FolderType,
   search: string = "",
   page: number = 0,
   size: number = 10
@@ -280,12 +284,14 @@ export async function getFolders(
   const path = PREFIX_API + apiRoutes.GET_FOLDERS;
   const params: Record<string, string> = {
     sort: sortBy,
-    shared: String(shared),
     page: String(page),
     size: String(size),
   };
   if (search.length > 0) {
     params.search = search;
+  }
+  if (type) {
+    params.type = type;
   }
   return await httpService.get<PageResult<Folder>>(path, token, params);
 }

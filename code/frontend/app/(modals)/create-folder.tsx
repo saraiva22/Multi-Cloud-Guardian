@@ -219,7 +219,7 @@ const CreateFolder = () => {
   async function handleGetFolder() {
     try {
       dispatch({ type: "start-loading" });
-      const folders = await getFolders(token, undefined, true, search);
+      const folders = await getFolders(token, undefined, undefined, search);
       dispatch({ type: "loading-success", folders });
     } catch (error) {
       Alert.alert(

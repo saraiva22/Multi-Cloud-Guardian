@@ -154,14 +154,14 @@ const SentInvites = () => {
   switch (state.tag) {
     case "begin":
       return (
-        <SafeAreaView className="bg-primary flex-1">
-          <ActivityIndicator />
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
         </SafeAreaView>
       );
     case "loading":
       return (
-        <SafeAreaView className="bg-primary flex-1">
-          <ActivityIndicator />
+       <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
         </SafeAreaView>
       );
     case "loaded": {

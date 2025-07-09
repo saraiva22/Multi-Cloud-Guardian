@@ -34,6 +34,7 @@ import SortSelector, {
   sortOptions,
 } from "@/components/SortSelector";
 import SearchInput from "@/components/SearchBar";
+import { FolderType } from "@/domain/storage/FolderType";
 
 // The State
 type State =
@@ -197,8 +198,13 @@ const HomeScreen = () => {
   const loadData = async () => {
     try {
       dispatch({ type: "start-loading" });
-      const files = await getFiles(token, sort.sortBy, search);
-      const folders = await getFolders(token);
+      const files = await getFiles(
+        token,
+        sort.sortBy,
+        search,
+        FolderType.PRIVATE
+      );
+      const folders = await getFolders(token, undefined, FolderType.PRIVATE);
       dispatch({
         type: "loading-success",
         files,
