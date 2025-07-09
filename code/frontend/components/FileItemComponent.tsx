@@ -5,7 +5,6 @@ import { icons } from "@/constants";
 import { formatDate, formatSize } from "@/services/utils/Function";
 import { File } from "@/domain/storage/File";
 import { MaterialIcons } from "@expo/vector-icons";
-import { UserInfo } from "@/domain/user/UserInfo";
 
 type Props = {
   item: File;

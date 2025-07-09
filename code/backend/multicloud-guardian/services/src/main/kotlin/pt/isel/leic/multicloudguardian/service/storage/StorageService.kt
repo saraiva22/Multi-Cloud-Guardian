@@ -542,7 +542,20 @@ class StorageService(
 
                         is Success -> {
                             contextStorage.value.close()
-                            fileRepository.deleteFile(user.id, file, if (file.folderInfo != null) clock.now() else null)
+                            val clock = clock.now()
+                            val userInfo = UserInfo(user.id, user.username, user.email)
+                            file.folderInfo?.let { folderValue ->
+                                val members = fileRepository.membersInFolder(folderValue.id)
+                                fileRepository.deleteFile(user.id, file, clock)
+                                sseService.deleteFile(
+                                    file.fileId.value,
+                                    userInfo,
+                                    file.folderInfo,
+                                    file.fileName,
+                                    clock.epochSeconds,
+                                    members,
+                                )
+                            } ?: fileRepository.deleteFile(user.id, file, null)
                             success(true)
                         }
                     }
@@ -615,11 +628,11 @@ class StorageService(
             return@run when (inviteStatus) {
                 InviteStatus.ACCEPT -> {
                     sseService.sendNewMember(ownerId, invitedInfo, folderId.value, folder.folderName)
-                    sseService.respondInvite(inviteId.value, inviteStatus, invitedInfo, ownerId, folderId.value, folder.folderName)
+                    sseService.inviteResponse(inviteId.value, inviteStatus, invitedInfo, ownerId, folderId.value, folder.folderName)
                     success(InviteStatusResult.InviteAccepted(folderMembers))
                 }
                 InviteStatus.REJECT -> {
-                    sseService.respondInvite(inviteId.value, inviteStatus, invitedInfo, ownerId, folderId.value, folder.folderName)
+                    sseService.inviteResponse(inviteId.value, inviteStatus, invitedInfo, ownerId, folderId.value, folder.folderName)
                     success(InviteStatusResult.InviteRejected)
                 }
                 InviteStatus.PENDING -> failure(ValidateFolderInviteError.InvalidInvite)

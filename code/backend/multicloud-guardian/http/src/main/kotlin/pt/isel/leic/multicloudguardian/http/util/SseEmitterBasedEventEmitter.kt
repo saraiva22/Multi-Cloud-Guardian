@@ -42,11 +42,11 @@ class SseEmitterBasedEventEmitter(
                         .name("invite")
                         .data(event)
 
-                is Event.RespondInvite ->
+                is Event.InviteResponse ->
                     SseEmitter
                         .event()
                         .id(event.id.toString())
-                        .name("respondInvite")
+                        .name("inviteResponse")
                         .data(event)
 
                 is Event.NewMember ->

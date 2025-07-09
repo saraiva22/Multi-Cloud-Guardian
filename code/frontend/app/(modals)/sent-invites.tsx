@@ -38,7 +38,7 @@ type Action =
   | { type: "start-loading" }
   | { type: "loading-success"; invites: PageResult<Invite> }
   | { type: "loading-error"; error: Problem | string }
-  | { type: "responded-invite"; invite: Invite };
+  | { type: "invite-response"; invite: Invite };
 
 // The Logger
 function logUnexpectedAction(state: State, action: Action) {
@@ -64,7 +64,7 @@ function reducer(state: State, action: Action): State {
         return logUnexpectedAction(state, action);
       }
       return { tag: "error", error: action.error };
-    case "responded-invite":
+    case "invite-response":
       if (state.tag !== "loaded") {
         return logUnexpectedAction(state, action);
       }
@@ -83,7 +83,7 @@ function reducer(state: State, action: Action): State {
 }
 
 const firstState: State = { tag: "begin" };
-type CustomEvents = "respondInvite";
+type CustomEvents = "inviteResponse";
 
 const SentInvites = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
@@ -116,14 +116,14 @@ const SentInvites = () => {
 
   useEffect(() => {
     if (listener) {
-      listener.addEventListener("respondInvite", handleInvite);
+      listener.addEventListener("inviteResponse", handleInvite);
     }
   }, []);
 
   // Handle EventListener - New Invite
   const handleInvite: EventSourceListener<CustomEvents> = (event) => {
-    console.log("EVENTO ", event)
-    if (event.type === "respondInvite") {
+    console.log("EVENTO ", event);
+    if (event.type === "inviteResponse") {
       const eventData = JSON.parse(event.data);
       const newInvite = {
         inviteId: eventData.inviteId,
@@ -132,8 +132,8 @@ const SentInvites = () => {
         user: eventData.user,
         status: eventData.status,
       };
-      
-      dispatch({ type: "responded-invite", invite: newInvite });
+
+      dispatch({ type: "invite-response", invite: newInvite });
     }
   };
 

@@ -160,7 +160,7 @@ class SSEService : NeedsShutdown {
         sendEventToAll(listOf(guestId), Event.Invite(id, inviteId, status, UserInfoOutput.fromDomain(inviterInfo), folderId, folderName))
     }
 
-    fun respondInvite(
+    fun inviteResponse(
         inviteId: Int,
         status: InviteStatus,
         invitedInfo: UserInfo,
@@ -168,11 +168,11 @@ class SSEService : NeedsShutdown {
         folderId: Int,
         folderName: String,
     ) = lock.withLock {
-        logger.info("respondInvite")
+        logger.info("inviteResponse")
         val id = currentRespondInvite++
         sendEventToAll(
             listOf(ownerId),
-            Event.RespondInvite(id, inviteId, status, UserInfoOutput.fromDomain(invitedInfo), folderId, folderName),
+            Event.InviteResponse(id, inviteId, status, UserInfoOutput.fromDomain(invitedInfo), folderId, folderName),
         )
     }
 

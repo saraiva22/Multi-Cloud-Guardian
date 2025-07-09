@@ -11,7 +11,7 @@ const MemberCard = ({ members }: { members: Array<UserInfo> }) => {
       </Text>
       <FlatList
         data={members}
-        keyExtractor={(item) => item.username}
+        keyExtractor={(item) => String(item.id)}
         horizontal
         renderItem={({ item }) => (
           <View style={styles.card}>

@@ -15,7 +15,6 @@ import {
   Problem,
 } from "@/services/media/Problem";
 import { PageResult } from "@/domain/utils/PageResult";
-import { UserInfo } from "@/domain/user/UserInfo";
 import { KEY_NAME, useAuthentication } from "@/context/AuthProvider";
 import { removeValueFor } from "@/services/storage/SecureStorage";
 import { router } from "expo-router";
@@ -26,7 +25,6 @@ import {
 } from "@/services/storage/StorageService";
 import { icons } from "@/constants";
 import SearchInput from "@/components/SearchBar";
-import FormField from "@/components/FormField";
 import FolderItemComponent from "@/components/FolderItemComponent";
 import CustomButton from "@/components/CustomButton";
 import { getUserByUsername, getUsers } from "@/services/users/UserService";

@@ -10,7 +10,6 @@ import { useLocalSearchParams } from "expo-router";
 const FileDetailsInFolder = () => {
   const { folderId, fileId, owner } = useLocalSearchParams();
   const { token } = useAuthentication();
-  console.log("OWNER", owner);
 
   return (
     <FileDetailsScreen

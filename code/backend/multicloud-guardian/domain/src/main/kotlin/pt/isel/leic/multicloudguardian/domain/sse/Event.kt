@@ -41,7 +41,7 @@ sealed interface Event {
         val folderName: String,
     ) : Event
 
-    data class RespondInvite(
+    data class InviteResponse(
         val id: Long,
         val inviteId: Int,
         val status: InviteStatus,

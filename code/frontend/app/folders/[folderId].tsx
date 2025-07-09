@@ -80,7 +80,15 @@ type Action =
   | { type: "success-delete" }
   | { type: "success-leave" }
   | { type: "new-file"; file: File }
-  | { type: "new-member"; member: UserInfo };
+  | { type: "new-member"; member: UserInfo }
+  | { type: "leave-user"; member: UserInfo }
+  | {
+      type: "delete-file";
+      fileId: number;
+      user: UserInfo;
+      folderId: number;
+      updatedAt: number;
+    };
 
 function logUnexpectedAction(state: State, action: Action) {
   console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
@@ -150,6 +158,43 @@ function reducer(state: State, action: Action): State {
           files: state.files,
           folders: state.folders,
         };
+      } else if (action.type === "delete-file") {
+        return {
+          tag: "loaded",
+          details: {
+            ...state.details,
+            numberFile: state.details.numberFile - 1,
+            createdAt: action.updatedAt,
+          },
+          files: {
+            ...state.files,
+            content: state.files.content.filter(
+              (file) => file.fileId !== action.fileId
+            ),
+            totalElements: state.files.totalElements - 1,
+          },
+          folders: state.folders,
+        };
+      } else if (action.type === "leave-user") {
+        const numberFile = state.files.content.filter(
+          (file) => file.user.id === action.member.id
+        ).length;
+        return {
+          ...state,
+          details: {
+            ...state.details,
+            numberFile: state.details.numberFile - numberFile,
+            members: state.details.members.filter(
+              (value) => value.id !== action.member.id
+            ),
+          },
+          files: {
+            ...state.files,
+            content: state.files.content.filter(
+              (file) => file.user.id !== action.member.id
+            ),
+          },
+        };
       } else {
         logUnexpectedAction(state, action);
         return state;
@@ -168,12 +213,13 @@ const firstState: State = {
 };
 type CustomEventsFile = "file";
 type CustomEventsMember = "newMember";
+type CustomEventLeaveFolder = "leaveFolder";
+type CustomEventDeleteFile = "deleteFile";
 
 type FolderInfoDetailsProps = {
   folderDetails: FolderOutputModel;
   members: Array<UserInfo>;
   username: string | undefined;
-  state: State;
   handleDelete: () => Promise<any>;
   handleLeave: () => Promise<any>;
   handleUploadFile: () => Promise<any>;
@@ -183,7 +229,6 @@ const FolderInfoDetails = ({
   folderDetails: folderDetails,
   members: members,
   username,
-  state,
   handleDelete,
   handleLeave,
   handleUploadFile,
@@ -303,10 +348,14 @@ const FolderDetails = () => {
     if (!listener) return;
     listener.addEventListener("file", handleNewFile);
     listener.addEventListener("newMember", handleNewMember);
+    listener.addEventListener("leaveFolder", handleLeaveFolder);
+    listener.addEventListener("deleteFile", handleDeleteFile);
 
     return () => {
       listener.removeEventListener("file", handleNewFile);
       listener.removeEventListener("newMember", handleNewMember);
+      listener.removeEventListener("leaveFolder", handleLeaveFolder);
+      listener.removeEventListener("deleteFile", handleDeleteFile);
     };
   }, []);
 
@@ -316,7 +365,7 @@ const FolderDetails = () => {
       const eventData = JSON.parse(event.data);
       const newFile = {
         fileId: eventData.fileId,
-        userInfo: eventData.user,
+        user: eventData.user,
         folderInfo: eventData.folderInfo,
         name: eventData.fileName,
         path: eventData.path,
@@ -336,12 +385,45 @@ const FolderDetails = () => {
     if (event.type === "newMember") {
       const eventData = JSON.parse(event.data);
       const member = {
-        userId: eventData.newMember.id,
+        id: eventData.newMember.id,
         username: eventData.newMember.username,
         email: eventData.newMember.email,
       };
 
-      dispatch({ type: "new-member", member });
+      dispatch({ type: "new-member", member: member });
+    }
+  };
+
+  // Handle EventListener - Leave Folder
+  const handleLeaveFolder: EventSourceListener<CustomEventLeaveFolder> = (
+    event
+  ) => {
+    if (event.type === "leaveFolder") {
+      const eventData = JSON.parse(event.data);
+      const member = {
+        id: eventData.user.id,
+        username: eventData.user.username,
+        email: eventData.user.email,
+      };
+
+      console.log("MEMBER ", member);
+      dispatch({ type: "leave-user", member: member });
+    }
+  };
+
+  // Handle EventListener - Delete File
+  const handleDeleteFile: EventSourceListener<CustomEventDeleteFile> = (
+    event
+  ) => {
+    if (event.type === "deleteFile") {
+      const eventData = JSON.parse(event.data);
+      dispatch({
+        type: "delete-file",
+        fileId: eventData.fileId,
+        user: eventData.user,
+        folderId: eventData.folderInfo.folderId,
+        updatedAt: eventData.createdAt,
+      });
     }
   };
 
@@ -420,6 +502,8 @@ const FolderDetails = () => {
       );
 
     case "loaded": {
+      console.log("members:", state.details.members);
+      console.log("file", state.files.content);
       return (
         <SafeAreaView className="flex-1 bg-primary h-full px-6 py-12">
           <FlatList
@@ -439,7 +523,6 @@ const FolderDetails = () => {
                   folderDetails={state.details}
                   members={state.details.members}
                   username={username}
-                  state={state}
                   handleDelete={handleDelete}
                   handleLeave={handleLeave}
                   handleUploadFile={handleUploadFile}
