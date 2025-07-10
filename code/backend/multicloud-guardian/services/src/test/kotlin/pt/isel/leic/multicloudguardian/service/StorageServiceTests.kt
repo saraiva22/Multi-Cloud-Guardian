@@ -2,6 +2,7 @@ package pt.isel.leic.multicloudguardian.service
 
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
+import pt.isel.leic.multicloudguardian.domain.folder.OwnershipFilter
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Success
 import pt.isel.leic.multicloudguardian.service.storage.CreateTempUrlFileError
@@ -677,7 +678,15 @@ class StorageServiceTests : ServiceTests() {
             }
 
         // Act: get all folders for the user
-        val getFolders = storageService.getFolders(user, DEFAULT_LIMIT, DEFAULT_PAGE, DEFAULT_SORT, FolderType.PRIVATE)
+        val getFolders =
+            storageService.getFolders(
+                user,
+                DEFAULT_LIMIT,
+                DEFAULT_PAGE,
+                DEFAULT_SORT,
+                FolderType.PRIVATE,
+                OwnershipFilter.MEMBER,
+            )
 
         // Assert: should have 3 folders
         assertEquals(3, getFolders.content.size)
@@ -1459,7 +1468,7 @@ class StorageServiceTests : ServiceTests() {
         assertTrue(folders.content.any { it.folderName == invitedPrivateFolderName })
 
         // Act: Invited user searches for folders with "Priva" keyword
-        val searchFolders = storageService.getFolders(invitedUser, 10, 0, "created_asc", null, "Priva")
+        val searchFolders = storageService.getFolders(invitedUser, 10, 0, "created_asc", null, OwnershipFilter.MEMBER, "Priva")
 
         // Assert: Should only find the invited private folder
         assertEquals(1, searchFolders.totalElements)

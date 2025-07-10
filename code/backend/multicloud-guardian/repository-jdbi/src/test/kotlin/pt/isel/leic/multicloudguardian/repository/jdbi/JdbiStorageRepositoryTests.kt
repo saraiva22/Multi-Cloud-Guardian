@@ -14,6 +14,7 @@ import pt.isel.leic.multicloudguardian.Environment
 import pt.isel.leic.multicloudguardian.TestClock
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
+import pt.isel.leic.multicloudguardian.domain.folder.OwnershipFilter
 import pt.isel.leic.multicloudguardian.domain.user.PasswordValidationInfo
 import pt.isel.leic.multicloudguardian.domain.user.User
 import pt.isel.leic.multicloudguardian.domain.user.components.Email
@@ -219,7 +220,7 @@ class JdbiStorageRepositoryTests {
             val repo = JdbiStorageRepository(handle)
             val userId = Id(1)
             assertEquals(0, repo.countFiles(userId))
-            assertEquals(0, repo.countFolder(userId))
+            assertEquals(0, repo.countFolder(userId, null, OwnershipFilter.MEMBER))
         }
     }
 
@@ -228,7 +229,7 @@ class JdbiStorageRepositoryTests {
         runWithHandle { handle ->
             val repo = JdbiStorageRepository(handle)
             val userId = Id(1)
-            val folders = repo.getFolders(userId, 10, 0, "created_asc")
+            val folders = repo.getFolders(userId, 10, 0, "created_asc", null, OwnershipFilter.MEMBER)
             assertEquals(emptyList(), folders)
         }
     }

@@ -11,6 +11,7 @@ import pt.isel.leic.multicloudguardian.domain.folder.FolderMembers
 import pt.isel.leic.multicloudguardian.domain.folder.FolderPrivateInvite
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
+import pt.isel.leic.multicloudguardian.domain.folder.OwnershipFilter
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderDomainConfig
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.user.User
@@ -736,13 +737,14 @@ class StorageService(
         page: Int,
         sort: String,
         type: FolderType? = null,
+        ownership: OwnershipFilter = OwnershipFilter.MEMBER,
         search: String? = null,
     ): PageResult<Folder> =
         transactionManager.run {
             val storageRep = it.storageRepository
-            val totalElements = storageRep.countFolder(user.id, type, search)
+            val totalElements = storageRep.countFolder(user.id, type, ownership, search)
             val offset = page * limit
-            val folders = storageRep.getFolders(user.id, limit, offset, sort, type, search)
+            val folders = storageRep.getFolders(user.id, limit, offset, sort, type, ownership, search)
 
             PageResult.fromPartialResult(folders, totalElements, limit, offset)
         }

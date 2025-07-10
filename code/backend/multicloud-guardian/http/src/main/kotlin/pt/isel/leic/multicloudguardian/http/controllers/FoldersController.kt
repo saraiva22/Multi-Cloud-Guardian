@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
+import pt.isel.leic.multicloudguardian.domain.folder.OwnershipFilter
 import pt.isel.leic.multicloudguardian.domain.user.AuthenticatedUser
 import pt.isel.leic.multicloudguardian.domain.user.components.Username
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
@@ -91,11 +92,12 @@ class FoldersController(
         @RequestParam(required = false) page: Int?,
         @RequestParam(required = false) sort: String?,
         @RequestParam(required = false) type: FolderType?,
+        @RequestParam(required = false, defaultValue = "MEMBER") ownership: OwnershipFilter,
     ): ResponseEntity<*> {
         val setLimit = size ?: DEFAULT_LIMIT
         val setPage = page ?: DEFAULT_PAGE
         val setSort = sort ?: DEFAULT_SORT
-        val res = storageService.getFolders(authenticatedUser.user, setLimit, setPage, setSort, type, search)
+        val res = storageService.getFolders(authenticatedUser.user, setLimit, setPage, setSort, type, ownership, search)
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(

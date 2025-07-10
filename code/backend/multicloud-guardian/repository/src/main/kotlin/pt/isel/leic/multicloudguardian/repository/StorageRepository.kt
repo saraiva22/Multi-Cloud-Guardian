@@ -8,6 +8,7 @@ import pt.isel.leic.multicloudguardian.domain.folder.FolderMembers
 import pt.isel.leic.multicloudguardian.domain.folder.FolderPrivateInvite
 import pt.isel.leic.multicloudguardian.domain.folder.FolderType
 import pt.isel.leic.multicloudguardian.domain.folder.InviteStatus
+import pt.isel.leic.multicloudguardian.domain.folder.OwnershipFilter
 import pt.isel.leic.multicloudguardian.domain.user.UserInfo
 import pt.isel.leic.multicloudguardian.domain.utils.Id
 
@@ -84,6 +85,7 @@ interface StorageRepository {
     fun countFolder(
         userId: Id,
         type: FolderType? = null,
+        ownership: OwnershipFilter,
         search: String? = null,
     ): Long
 
@@ -93,6 +95,7 @@ interface StorageRepository {
         offset: Int,
         sort: String,
         type: FolderType? = null,
+        ownership: OwnershipFilter,
         search: String? = null,
     ): List<Folder>
 
