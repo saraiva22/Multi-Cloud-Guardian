@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import EmptyState from "@/components/EmptyState";
 import SearchInput from "@/components/SearchBar";
 import { icons } from "@/constants";
 import { KEY_NAME, useAuthentication } from "@/context/AuthProvider";
@@ -30,14 +29,27 @@ import SortSelector, {
   sortOptions,
 } from "@/components/SortSelector";
 import BottomSheet from "@gorhom/bottom-sheet";
+import MoveBottomSheet from "@/components/MoveBottomSheet";
+import { FolderType } from "@/domain/storage/FolderType";
+import FilterSelector, {
+  FilterOption,
+  filterOptions,
+} from "@/components/FilterFolderSelector";
 
 // The State
 type State =
-  | { tag: "begin"; refreshing: boolean; sort: SortOption; search: string }
+  | {
+      tag: "begin";
+      refreshing: boolean;
+      sort: SortOption;
+      filter: FilterOption;
+      search: string;
+    }
   | {
       tag: "loading";
       refreshing: boolean;
       sort: SortOption;
+      filter: FilterOption;
       search: string;
     }
   | {
@@ -45,6 +57,7 @@ type State =
       files: PageResult<File>;
       refreshing: boolean;
       sort: SortOption;
+      filter: FilterOption;
       inputs: {
         searchValue: string;
       };
@@ -64,7 +77,12 @@ type Action =
       inputValue: string | number;
     }
   | { type: "loading-error"; error: Problem }
-  | { type: "refreshing"; refreshing: boolean; sort: SortOption }
+  | {
+      type: "refreshing";
+      refreshing: boolean;
+      sort: SortOption;
+      filter: FilterOption;
+    }
   | { type: "search"; searchValue: string };
 
 // The Logger
@@ -82,6 +100,7 @@ function reducer(state: State, action: Action): State {
           refreshing: false,
           sort: state.sort,
           search: state.search,
+          filter: state.filter,
         };
       } else {
         logUnexpectedAction(state, action);
@@ -94,6 +113,7 @@ function reducer(state: State, action: Action): State {
           files: action.files,
           refreshing: false,
           sort: state.sort,
+          filter: state.filter,
           inputs: {
             searchValue: "",
           },
@@ -113,6 +133,7 @@ function reducer(state: State, action: Action): State {
             tag: "begin",
             refreshing: action.refreshing,
             sort: action.sort,
+            filter: action.filter,
             search: "",
           };
         case "edit":
@@ -121,6 +142,7 @@ function reducer(state: State, action: Action): State {
             files: state.files,
             refreshing: false,
             sort: state.sort,
+            filter: state.filter,
             inputs: {
               ...state.inputs,
               [action.inputName]: action.inputValue,
@@ -132,6 +154,7 @@ function reducer(state: State, action: Action): State {
             tag: "begin",
             refreshing: false,
             sort: state.sort,
+            filter: state.filter,
             search: action.searchValue,
           };
         default:
@@ -146,6 +169,7 @@ const firstState: State = {
   refreshing: false,
   sort: sortOptions[0],
   search: "",
+  filter: filterOptions[0],
 };
 
 const SIZE_MIN_FILE = 2;
@@ -155,8 +179,14 @@ const FilesScreen = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
   const router = useRouter();
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const moveSheetRef = useRef<BottomSheet>(null);
+  const filterSheetRef = useRef<BottomSheet>(null);
+  const [selectFile, setSelectFile] = useState<File | null>(null);
 
   const sort = state.tag === "error" ? sortOptions[0] : state.sort;
+
+  const filter = state.tag === "error" ? filterOptions[0] : state.filter;
+
   const search =
     state.tag === "loading" && state.search
       ? state.search
@@ -166,9 +196,33 @@ const FilesScreen = () => {
     bottomSheetRef.current?.expand();
   };
 
+  const openFilterSheet = () => {
+    filterSheetRef.current?.expand();
+  };
+
+  const openMoveSheet = (file: File) => {
+    setSelectFile(file);
+    moveSheetRef.current?.expand();
+  };
+
   const handleSelectSort = (sort: SortOption) => {
     bottomSheetRef.current?.close();
-    dispatch({ type: "refreshing", refreshing: true, sort: sort });
+    dispatch({
+      type: "refreshing",
+      refreshing: true,
+      sort: sort,
+      filter: filter,
+    });
+  };
+
+  const handleSelectFilter = (filter: FilterOption) => {
+    filterSheetRef.current?.close();
+    dispatch({
+      type: "refreshing",
+      refreshing: true,
+      sort: sort,
+      filter: filter,
+    });
   };
 
   // Handle input changes
@@ -183,7 +237,8 @@ const FilesScreen = () => {
   const loadData = async () => {
     try {
       dispatch({ type: "start-loading" });
-      const files = await getFiles(token, sort.sortBy, search);
+      const filterValue = filter.value ? filter.value : undefined;
+      const files = await getFiles(token, sort.sortBy, search, filterValue);
       dispatch({ type: "loading-success", files });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
@@ -211,7 +266,12 @@ const FilesScreen = () => {
 
   const onRefresh = async () => {
     setTimeout(() => {
-      dispatch({ type: "refreshing", refreshing: true, sort: sort });
+      dispatch({
+        type: "refreshing",
+        refreshing: true,
+        sort: sort,
+        filter: filter,
+      });
     }, 200);
   };
 
@@ -280,11 +340,22 @@ const FilesScreen = () => {
 
                 <View className="mt-1.5 flex-row gap-2">
                   <TouchableOpacity
+                    onPress={openFilterSheet}
+                    activeOpacity={0.85}
+                  >
+                    <Image
+                      source={icons.filter}
+                      className="w-[18px] h-[20px]"
+                      style={{ tintColor: "#fff" }}
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
                     onPress={openSortSheet}
                     activeOpacity={0.85}
                   >
                     <Image
-                      source={icons.filter_white}
+                      source={icons.sort_white}
                       className="w-[18px] h-[20px]"
                       resizeMode="contain"
                     />
@@ -302,7 +373,12 @@ const FilesScreen = () => {
               className="mt-5"
               data={files}
               keyExtractor={(item, index) => String(item.fileId || index)}
-              renderItem={({ item }) => <FileItemComponent item={item} />}
+              renderItem={({ item }) => (
+                <FileItemComponent
+                  item={item}
+                  onMovePress={() => openMoveSheet(item)}
+                />
+              )}
               contentContainerStyle={{ paddingBottom: 80 }}
               ListEmptyComponent={() => (
                 <View className="flex-1 items-center justify-center py-10">
@@ -318,6 +394,11 @@ const FilesScreen = () => {
           </View>
 
           <SortSelector ref={bottomSheetRef} onSortChange={handleSelectSort} />
+          <FilterSelector
+            ref={filterSheetRef}
+            onFilterChange={handleSelectFilter}
+          />
+          <MoveBottomSheet ref={moveSheetRef} file={selectFile} />
         </SafeAreaView>
       );
   }

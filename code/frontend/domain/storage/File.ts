@@ -1,4 +1,5 @@
 import { UserInfo } from "../user/UserInfo";
+import { FolderInfo } from "./FolderInfo";
 
 /**
  * File
@@ -15,7 +16,7 @@ import { UserInfo } from "../user/UserInfo";
 export interface File {
   fileId: number;
   user: UserInfo;
-  folderInfo: number | null;
+  folderInfo: FolderInfo | null;
   name: string;
   path: string;
   size: number;

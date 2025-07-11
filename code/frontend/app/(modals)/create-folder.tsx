@@ -32,6 +32,7 @@ import { FolderType } from "@/domain/storage/FolderType";
 import FolderTypeSelector from "@/components/ FolderTypeSelector";
 import { KEY_NAME, useAuthentication } from "@/context/AuthProvider";
 import { removeValueFor } from "@/services/storage/SecureStorage";
+import { OwnershipFilter } from "@/domain/storage/OwnershipFilter";
 
 // The State
 type State =
@@ -181,7 +182,7 @@ const CreateFolder = () => {
 
   useEffect(() => {
     if (state.tag === "begin") {
-      handleGetFolder();
+      handleGetFolders();
     }
 
     if (state.tag === "error") {
@@ -216,10 +217,16 @@ const CreateFolder = () => {
   }
 
   // Handle FetchRecentFolders()
-  async function handleGetFolder() {
+  async function handleGetFolders() {
     try {
       dispatch({ type: "start-loading" });
-      const folders = await getFolders(token, undefined, undefined, search);
+      const folders = await getFolders(
+        token,
+        undefined,
+        FolderType.PRIVATE,
+        OwnershipFilter.OWNER,
+        search
+      );
       dispatch({ type: "loading-success", folders });
     } catch (error) {
       Alert.alert(

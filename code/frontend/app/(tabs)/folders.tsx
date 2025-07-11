@@ -31,15 +31,34 @@ import SortSelector, {
 } from "@/components/SortSelector";
 import BottomSheet from "@gorhom/bottom-sheet";
 import FolderItemGrid from "@/components/FolderItemGrid";
+import { OwnershipFilter } from "@/domain/storage/OwnershipFilter";
+import OwnershipSelector, {
+  OwnershipOption,
+  ownershipOptions,
+} from "@/components/OwnershipSelector";
+
 // The State
 type State =
-  | { tag: "begin"; refreshing: boolean; sort: SortOption; search: string }
-  | { tag: "loading"; refreshing: boolean; sort: SortOption; search: string }
+  | {
+      tag: "begin";
+      refreshing: boolean;
+      sort: SortOption;
+      filter: OwnershipOption;
+      search: string;
+    }
+  | {
+      tag: "loading";
+      refreshing: boolean;
+      sort: SortOption;
+      filter: OwnershipOption;
+      search: string;
+    }
   | {
       tag: "loaded";
       folders: PageResult<Folder>;
       refreshing: boolean;
       sort: SortOption;
+      filter: OwnershipOption;
       inputs: {
         searchValue: string;
       };
@@ -59,7 +78,12 @@ type Action =
       inputValue: string | number;
     }
   | { type: "loading-error"; error: Problem }
-  | { type: "refreshing"; refreshing: boolean; sort: SortOption }
+  | {
+      type: "refreshing";
+      refreshing: boolean;
+      sort: SortOption;
+      filter: OwnershipOption;
+    }
   | { type: "search"; searchValue: string };
 
 // The Logger
@@ -77,6 +101,7 @@ function reducer(state: State, action: Action): State {
           refreshing: false,
           sort: state.sort,
           search: state.search,
+          filter: state.filter,
         };
       } else {
         logUnexpectedAction(state, action);
@@ -89,6 +114,7 @@ function reducer(state: State, action: Action): State {
           folders: action.folders,
           refreshing: false,
           sort: state.sort,
+          filter: state.filter,
           inputs: {
             searchValue: "",
           },
@@ -108,6 +134,7 @@ function reducer(state: State, action: Action): State {
             tag: "begin",
             refreshing: action.refreshing,
             sort: action.sort,
+            filter: action.filter,
             search: "",
           };
         case "edit":
@@ -116,6 +143,7 @@ function reducer(state: State, action: Action): State {
             folders: state.folders,
             refreshing: false,
             sort: state.sort,
+            filter: state.filter,
             inputs: {
               ...state.inputs,
               [action.inputName]: action.inputValue,
@@ -126,6 +154,7 @@ function reducer(state: State, action: Action): State {
             tag: "begin",
             refreshing: false,
             sort: state.sort,
+            filter: state.filter,
             search: action.searchValue,
           };
         default:
@@ -140,6 +169,7 @@ const firstState: State = {
   refreshing: false,
   sort: sortOptions[0],
   search: "",
+  filter: ownershipOptions[0],
 };
 
 const SIZE_MIN_FOLDER = 2;
@@ -149,9 +179,13 @@ const FoldersScreen = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
   const router = useRouter();
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const filterSheetRef = useRef<BottomSheet>(null);
   const [isVerticalLayout, setIsVerticalLayout] = useState(false);
 
   const sort = state.tag === "error" ? sortOptions[0] : state.sort;
+
+  const filter = state.tag === "error" ? ownershipOptions[0] : state.filter;
+
   const search =
     state.tag === "loading" && state.search
       ? state.search
@@ -161,9 +195,28 @@ const FoldersScreen = () => {
     bottomSheetRef.current?.expand();
   };
 
+  const openFilterSheet = () => {
+    filterSheetRef.current?.expand();
+  };
+
   const handleSelectSort = (sort: SortOption) => {
     bottomSheetRef.current?.close();
-    dispatch({ type: "refreshing", refreshing: true, sort: sort });
+    dispatch({
+      type: "refreshing",
+      refreshing: true,
+      sort: sort,
+      filter: filter,
+    });
+  };
+
+  const handleSelectFilter = (filter: OwnershipOption) => {
+    filterSheetRef.current?.close();
+    dispatch({
+      type: "refreshing",
+      refreshing: true,
+      sort: sort,
+      filter: filter,
+    });
   };
 
   // Handle input changes
@@ -178,7 +231,13 @@ const FoldersScreen = () => {
   const loadData = async () => {
     try {
       dispatch({ type: "start-loading" });
-      const folders = await getFolders(token, sort.sortBy, undefined, search);
+      const folders = await getFolders(
+        token,
+        sort.sortBy,
+        undefined,
+        filter.value,
+        search
+      );
       dispatch({ type: "loading-success", folders });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
@@ -206,7 +265,12 @@ const FoldersScreen = () => {
 
   const onRefresh = async () => {
     setTimeout(() => {
-      dispatch({ type: "refreshing", refreshing: true, sort: sort });
+      dispatch({
+        type: "refreshing",
+        refreshing: true,
+        sort: sort,
+        filter: filter,
+      });
     }, 200);
   };
 
@@ -275,11 +339,22 @@ const FoldersScreen = () => {
                 </Text>
                 <View className="mt-1.5 flex-row gap-2">
                   <TouchableOpacity
+                    onPress={openFilterSheet}
+                    activeOpacity={0.85}
+                  >
+                    <Image
+                      source={icons.filter}
+                      className="w-[18px] h-[20px]"
+                      style={{ tintColor: "#fff" }}
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
                     onPress={openSortSheet}
                     activeOpacity={0.85}
                   >
                     <Image
-                      source={icons.filter_white}
+                      source={icons.sort_white}
                       className="w-[18px] h-[20px]"
                       resizeMode="contain"
                     />
@@ -340,6 +415,10 @@ const FoldersScreen = () => {
             />
           </View>
 
+          <OwnershipSelector
+            ref={filterSheetRef}
+            onOwnershipChange={handleSelectFilter}
+          />
           <SortSelector ref={bottomSheetRef} onSortChange={handleSelectSort} />
         </SafeAreaView>
       );

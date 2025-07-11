@@ -193,7 +193,7 @@ const Preferences = () => {
           </View>
 
           <View
-            className="flex-row items-center justify-between bg-white rounded-3xl px-7 py-6 mb-12 shadow-lg"
+            className="flex-row items-center justify-between bg-white rounded-3xl px-7 py-6 mb-12 shadow-lg m-4"
             style={{
               shadowColor: "#000",
               shadowOffset: { width: 0, height: 6 },
@@ -218,7 +218,7 @@ const Preferences = () => {
           </View>
 
           <View
-            className="flex-row items-center justify-between bg-white rounded-3xl px-7 py-6 shadow-lg"
+            className="flex-row items-center justify-between bg-white rounded-3xl px-7 py-6 shadow-lg m-4"
             style={{
               shadowColor: "#000",
               shadowOffset: { width: 0, height: 6 },

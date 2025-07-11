@@ -424,7 +424,7 @@ class Problem(
                 type = folderNotFound,
                 title = "Folder not found",
                 status = HttpStatus.NOT_FOUND.value(),
-                detail = "Folder $id not found",
+                detail = "Folder not found. It may have been deleted or never existed.",
                 instance = instance,
             ).toResponse()
 

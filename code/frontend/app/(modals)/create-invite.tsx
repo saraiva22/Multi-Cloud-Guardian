@@ -31,6 +31,7 @@ import { getUserByUsername, getUsers } from "@/services/users/UserService";
 import { UserHomeOutputModel } from "@/services/users/models/UserHomeOutputModel";
 import EmptyState from "@/components/EmptyState";
 import { FolderType } from "@/domain/storage/FolderType";
+import { OwnershipFilter } from "@/domain/storage/OwnershipFilter";
 
 // The State
 type State =
@@ -235,7 +236,7 @@ const CreateInvite = () => {
   // Handle FetchRecentFolders()
   async function handleGetFolders() {
     try {
-      const folders = await getFolders(token, undefined, FolderType.SHARED);
+      const folders = await getFolders(token, undefined, FolderType.SHARED,OwnershipFilter.OWNER);
       dispatch({ type: "loading-success", folders });
     } catch (error) {
       Alert.alert(

@@ -31,7 +31,9 @@ const FolderGridItemComponent = ({ item }: Props) => {
           className="w-10 h-10"
           resizeMode="contain"
         />
-        <MaterialIcons name="more-vert" size={24} color="white" />
+        <Text className="text-white text-xs font-semibold ">
+          {formatFolderType(item.type)}
+        </Text>
       </View>
 
       <View className="flex-row justify-between items-center mt-2">
@@ -40,9 +42,6 @@ const FolderGridItemComponent = ({ item }: Props) => {
           className="text-white text-base font-semibold flex-1"
         >
           {item.folderName}
-        </Text>
-        <Text className="text-white text-xs font-semibold ">
-          {formatFolderType(item.type)}
         </Text>
       </View>
       <View>

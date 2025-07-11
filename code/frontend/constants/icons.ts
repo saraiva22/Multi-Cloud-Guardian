@@ -18,10 +18,10 @@ import settings from "../assets/icons/settings.png";
 import uploadFile from "../assets/icons/upload-file.png";
 import upload from "../assets/icons/upload.png";
 import logout from "../assets/icons/logout.png";
-import filter_white from "../assets/icons/filter_white.png";
-import filter_black from "../assets/icons/filter_black.png";
-import filter_white1 from "../assets/icons/filter_white1.png";
-import filter_black1 from "../assets/icons/filter_black1.png";
+import sort_white from "../assets/icons/sort_white.png";
+import sort_black from "../assets/icons/sort_black.png";
+import sort_white1 from "../assets/icons/sort_white1.png";
+import sort_black1 from "../assets/icons/sort_black1.png";
 import org_white from "../assets/icons/org_white.png";
 import org_black from "../assets/icons/org_black.png";
 import notificiation_black from "../assets/icons/notificiation_black.png";
@@ -47,6 +47,8 @@ import accept from "../assets/icons/accept.png";
 import reject from "../assets/icons/reject.png";
 import leave from "../assets/icons/leave.png";
 import delete_icon from "../assets/icons/delete.png";
+import reset from "../assets/icons/reset.png";
+import filter from "../assets/icons/filter.png";
 
 export default {
   europe,
@@ -69,8 +71,8 @@ export default {
   uploadFile,
   upload,
   logout,
-  filter_white,
-  filter_black,
+  sort_white,
+  sort_black,
   org_white,
   org_black,
   notificiation_black,
@@ -88,8 +90,8 @@ export default {
   plus_folder_black,
   image_icon,
   dots_vertical,
-  filter_white1,
-  filter_black1,
+  sort_white1,
+  sort_black1,
   folder,
   document,
   invite_in,
@@ -98,4 +100,6 @@ export default {
   reject,
   leave,
   delete_icon,
+  reset,
+  filter,
 };

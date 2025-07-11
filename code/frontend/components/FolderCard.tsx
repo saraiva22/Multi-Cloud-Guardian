@@ -10,7 +10,7 @@ import React, { useState } from "react";
 import { icons, images } from "../constants";
 import { useRouter } from "expo-router";
 import EmptyState from "./EmptyState";
-import { formatSize } from "@/services/utils/Function";
+import { formatFolderType, formatSize } from "@/services/utils/Function";
 import { MaterialIcons } from "@expo/vector-icons";
 
 const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
@@ -36,7 +36,9 @@ const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
           className="w-8 h-8"
           resizeMode="contain"
         />
-        <MaterialIcons name="more-vert" size={22} color="white" />
+        <Text className="text-white text-xs font-semibold ">
+          {formatFolderType(item.type)}
+        </Text>
       </View>
 
       <View>

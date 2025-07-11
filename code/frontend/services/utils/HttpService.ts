@@ -1,7 +1,7 @@
 import { useAuthentication } from "@/context/AuthProvider";
 import { MEDIA_TYPE_PROBLEM, Problem } from "../media/Problem";
 
-const LOCAL_IP = "192.168.1.71";
+const LOCAL_IP = "192.168.1.7";
 const PORT = "8088";
 
 export const PREFIX_API = `http://${LOCAL_IP}:${PORT}/api`; // Dev Mode
@@ -27,6 +27,7 @@ export const apiRoutes = {
   CREATE_TEMP_URL: "/files/:id/temp-url",
   DOWNLOAD_FILE: "/files/:id/download",
   DELETE_FILE: "/files/:id",
+  MOVE_FILE: "/files/:id/move",
 
   // Folders
   CREATE_FOLDER: "/folders",

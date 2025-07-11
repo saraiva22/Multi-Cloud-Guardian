@@ -35,6 +35,8 @@ import SortSelector, {
 } from "@/components/SortSelector";
 import SearchInput from "@/components/SearchBar";
 import { FolderType } from "@/domain/storage/FolderType";
+import { OwnershipFilter } from "@/domain/storage/OwnershipFilter";
+import MoveBottomSheet from "@/components/MoveBottomSheet";
 
 // The State
 type State =
@@ -150,6 +152,8 @@ const HomeScreen = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
   const router = useRouter();
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const moveSheetRef = useRef<BottomSheet>(null);
+  const [selectFile, setSelectFile] = useState<File | null>(null);
 
   const sort = state.tag === "error" ? sortOptions[0] : state.sort;
 
@@ -160,6 +164,11 @@ const HomeScreen = () => {
 
   const openSortSheet = () => {
     bottomSheetRef.current?.expand();
+  };
+
+  const openMoveSheet = (file: File) => {
+    setSelectFile(file);
+    moveSheetRef.current?.expand();
   };
 
   useEffect(() => {
@@ -204,7 +213,12 @@ const HomeScreen = () => {
         search,
         FolderType.PRIVATE
       );
-      const folders = await getFolders(token, undefined, FolderType.PRIVATE);
+      const folders = await getFolders(
+        token,
+        undefined,
+        undefined,
+        OwnershipFilter.OWNER
+      );
       dispatch({
         type: "loading-success",
         files,
@@ -314,8 +328,13 @@ const HomeScreen = () => {
             <FlatList
               data={files}
               keyExtractor={(item) => String(item.fileId)}
-              renderItem={({ item }) => <FileItemComponent item={item} />}
-              contentContainerStyle={{ paddingBottom: 80 }}
+              renderItem={({ item }) => (
+                <FileItemComponent
+                  item={item}
+                  onMovePress={() => openMoveSheet(item)}
+                />
+              )}
+              contentContainerStyle={{ paddingBottom: 150 }}
               ListHeaderComponent={() => (
                 <>
                   <View className="w-full flex-1 pt-5 pb-8">
@@ -357,7 +376,7 @@ const HomeScreen = () => {
                       >
                         <Image
                           className="w-[44px] h-[32px]"
-                          source={icons.filter_black1}
+                          source={icons.sort_black1}
                           resizeMode="contain"
                         />
                       </TouchableOpacity>
@@ -378,6 +397,7 @@ const HomeScreen = () => {
             />
           </View>
           <SortSelector ref={bottomSheetRef} onSortChange={handleSelectSort} />
+          <MoveBottomSheet ref={moveSheetRef} file={selectFile} />
         </SafeAreaView>
       );
   }

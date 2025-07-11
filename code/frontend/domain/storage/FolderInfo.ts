@@ -1,7 +1,7 @@
 import { FolderType } from "./FolderType";
 
 export interface FolderInfo {
-  id: number;
+  folderId: number;
   folderName: String;
   folderType: FolderType;
 }

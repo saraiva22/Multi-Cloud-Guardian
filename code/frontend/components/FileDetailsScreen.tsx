@@ -187,7 +187,7 @@ const FileInfo = ({
       {fileInfo.encryption === false &&
         fileInfo.folderInfo?.folderType !== FolderType.SHARED && (
           <CustomButton
-            title="Generate Temporary URL "
+            title="Generate Temporary URL"
             handlePress={handleGenerateTemporaryUrl}
             containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
             textStyles="text-black text-center font-bold"

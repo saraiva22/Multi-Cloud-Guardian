@@ -53,7 +53,6 @@ const FolderItemComponent = ({ item, onPress }: Props) => {
           Modified {formatDate(item.createdAt)} ({formatFolderType(item.type)})
         </Text>
       </View>
-      <MaterialIcons name="more-vert" size={22} color="white" />
     </TouchableOpacity>
   );
 };

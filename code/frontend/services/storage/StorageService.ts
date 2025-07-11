@@ -26,6 +26,7 @@ import { FolderType } from "@/domain/storage/FolderType";
 import { RegisterOutput } from "../users/models/RegisterOutputModel";
 import { Invite } from "@/domain/storage/Invite";
 import { InviteStatusType } from "@/domain/storage/InviteStatusType";
+import { OwnershipFilter } from "@/domain/storage/OwnershipFilter";
 
 const httpService = httpServiceInit();
 
@@ -277,6 +278,7 @@ export async function getFolders(
   token: string,
   sortBy: string = "created_at",
   type?: FolderType,
+  ownership: OwnershipFilter = OwnershipFilter.MEMBER,
   search: string = "",
   page: number = 0,
   size: number = 10
@@ -284,6 +286,7 @@ export async function getFolders(
   const path = PREFIX_API + apiRoutes.GET_FOLDERS;
   const params: Record<string, string> = {
     sort: sortBy,
+    ownership: ownership,
     page: String(page),
     size: String(size),
   };
@@ -422,6 +425,19 @@ export async function createInviteFolder(
   return await httpService.post<RegisterOutput>(
     path,
     JSON.stringify({ username: username }),
+    token
+  );
+}
+
+export async function moveFile(
+  fileId: string,
+  folderId: number,
+  token: string
+): Promise<void> {
+  const path = PREFIX_API + apiRoutes.MOVE_FILE.replace(":id", fileId);
+  return await httpService.patch<void>(
+    path,
+    JSON.stringify({ folderId: folderId }),
     token
   );
 }
