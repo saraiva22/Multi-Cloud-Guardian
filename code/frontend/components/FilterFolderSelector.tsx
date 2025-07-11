@@ -9,9 +9,9 @@ export type FilterOption = {
 };
 
 export const filterOptions: FilterOption[] = [
-  { label: "Not Folder", value: null },
-  { label: "Private", value: FolderType.PRIVATE },
-  { label: "Shared", value: FolderType.SHARED },
+  { label: "All Files", value: null },
+  { label: "Private Folders", value: FolderType.PRIVATE },
+  { label: "Shared Folders", value: FolderType.SHARED },
 ];
 
 interface Props {
@@ -43,7 +43,7 @@ const FilterSelector = forwardRef<BottomSheet, Props>(
         handleIndicatorStyle={styles.handleIndicator}
       >
         <BottomSheetView style={styles.contentContainer}>
-          <Text style={styles.title}>Filter Folders</Text>
+          <Text style={styles.title}>Filter Files</Text>
           {filterOptions.map((option, idx) => {
             const isSelected = selectedFilter.value === option.value;
             return (

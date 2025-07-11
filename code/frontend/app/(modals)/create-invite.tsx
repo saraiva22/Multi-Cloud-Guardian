@@ -194,7 +194,7 @@ const SIZE_MIN_USERNAME = 2;
 
 const CreateInvite = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
-  const { token, setIsLogged, setUsername } = useAuthentication();
+  const { username, token, setIsLogged, setUsername } = useAuthentication();
 
   useEffect(() => {
     if (state.tag === "begin") {
@@ -236,7 +236,12 @@ const CreateInvite = () => {
   // Handle FetchRecentFolders()
   async function handleGetFolders() {
     try {
-      const folders = await getFolders(token, undefined, FolderType.SHARED,OwnershipFilter.OWNER);
+      const folders = await getFolders(
+        token,
+        undefined,
+        FolderType.SHARED,
+        OwnershipFilter.OWNER
+      );
       dispatch({ type: "loading-success", folders });
     } catch (error) {
       Alert.alert(
@@ -275,7 +280,7 @@ const CreateInvite = () => {
     }
   }
 
-  const username =
+  const selectUsername =
     state.tag === "editing" && state.inputs.username
       ? state.inputs.username
       : state.inputs?.username || "";
@@ -283,7 +288,7 @@ const CreateInvite = () => {
   // Debounced search effect
   useEffect(() => {
     if (state.tag !== "editing") return;
-    const value = username.trim();
+    const value = selectUsername.trim();
     if (value.length <= SIZE_MIN_USERNAME) {
       dispatch({ type: "reset" });
       return;
@@ -300,7 +305,7 @@ const CreateInvite = () => {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [username]);
+  }, [selectUsername]);
 
   // Render UI
   switch (state.tag) {
@@ -339,7 +344,7 @@ const CreateInvite = () => {
 
             <SearchInput
               placeholder="Username"
-              value={username}
+              value={selectUsername}
               onChangeText={(text) => handleChange("username", text)}
             />
 
@@ -353,7 +358,7 @@ const CreateInvite = () => {
             )}
 
             <FlatList
-              data={state.users}
+              data={state.users.filter((user) => user.username !== username)}
               keyExtractor={(item) => item.username}
               renderItem={({ item }) => (
                 <TouchableOpacity
@@ -403,10 +408,21 @@ const CreateInvite = () => {
             )}
 
             <View className="mt-2 flex-1">
-              <View className="flex-row items-center justify-between mb-2">
+              <View className="flex-row items-center mb-2">
                 <Text className="text-xl text-white font-semibold">
                   Recent Folders
                 </Text>
+                <TouchableOpacity
+                  onPress={() => handleChange("folderId", undefined)}
+                  className="m-4"
+                >
+                  <Image
+                    source={icons.reset}
+                    className="w-6 h-6"
+                    resizeMode="contain"
+                    tintColor="white"
+                  />
+                </TouchableOpacity>
               </View>
 
               <FlatList
@@ -416,6 +432,7 @@ const CreateInvite = () => {
                   <FolderItemComponent
                     item={item}
                     onPress={(folderId) => handleChange("folderId", folderId)}
+                    selectedFolderId={state.inputs.folderId}
                   />
                 )}
                 showsVerticalScrollIndicator={false}

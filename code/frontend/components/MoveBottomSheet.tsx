@@ -28,6 +28,7 @@ import {
   generateTemporaryUrl,
   getFolders,
   moveFile,
+  processAndSaveDownloadedFile,
 } from "@/services/storage/StorageService";
 import * as Clipboard from "expo-clipboard";
 import { FolderType } from "@/domain/storage/FolderType";
@@ -166,7 +167,7 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
     const selectFile = file;
     const [state, dispatch] = useReducer(reducer, firstState);
 
-    const { token } = useAuthentication();
+    const { token, keyMaster } = useAuthentication();
 
     const search =
       state.tag === "loading" && state.search
@@ -233,11 +234,8 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
       if (state.tag !== "begin") return;
       dispatch({ type: "start-loading" });
       try {
-        await downloadFile(file.fileId.toString(), token);
-        Alert.alert(
-          "Download Complete",
-          "The file has been downloaded successfully."
-        );
+        const result = await downloadFile(file.fileId.toString(), token);
+        await processAndSaveDownloadedFile(result, keyMaster);
         dispatch({ type: "loading-success" });
       } catch (error) {
         Alert.alert(
@@ -330,18 +328,19 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
                 case "begin":
                   return (
                     <View style={{ gap: 12 }}>
-                      {(file?.folderInfo === null ||
-                        file?.folderInfo?.folderType ===
-                          FolderType.PRIVATE) && (
-                        <CustomButton
-                          title="Generate Temporary URL"
-                          handlePress={() => dispatch({ type: "url-start" })}
-                          containerStyles="mt-10 rounded-lg"
-                          isLoading={false}
-                          textStyles="text-base font-semibold"
-                          color="bg-secondary"
-                        />
-                      )}
+                      {file?.encryption === false &&
+                        (file?.folderInfo === null ||
+                          file?.folderInfo?.folderType ===
+                            FolderType.PRIVATE) && (
+                          <CustomButton
+                            title="Generate Temporary URL"
+                            handlePress={() => dispatch({ type: "url-start" })}
+                            containerStyles="mt-10 rounded-lg"
+                            isLoading={false}
+                            textStyles="text-base font-semibold"
+                            color="bg-secondary"
+                          />
+                        )}
 
                       <CustomButton
                         title="Download File"
@@ -378,7 +377,7 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
 
                 case "loading":
                   return (
-                    <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+                    <SafeAreaView className="flex-1 justify-center items-center">
                       <ActivityIndicator size="small" color="#fff" />
                       <Text className="mt-4 text-white text-lg font-semibold">
                         Loading...
@@ -405,7 +404,10 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
                           URL Expiration (minutes):
                         </Text>
                         <View
-                          style={{ backgroundColor: "#fff", borderRadius: 2 }}
+                          style={{
+                            backgroundColor: "#FAF9F6",
+                            borderRadius: 8,
+                          }}
                         >
                           <Picker
                             selectedValue={state.inputs.minutes}
@@ -413,7 +415,7 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
                               dispatch({ type: "edit-url", minutes: value })
                             }
                             dropdownIconColor="#FFA001"
-                            style={{ color: "#fff" }}
+                            style={{ color: "#222" }}
                           >
                             {Array.from({ length: 60 }, (_, i) => i + 1).map(
                               (minute) => (
@@ -423,11 +425,16 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
                                     minute > 1 ? "s" : ""
                                   }`}
                                   value={minute}
+                                  style={{
+                                    color: "#222",
+                                    backgroundColor: "#FAF9F6",
+                                  }}
                                 />
                               )
                             )}
                           </Picker>
                         </View>
+
                         <CustomButton
                           title="Generate Temporary URL"
                           handlePress={handleGenerateTemporaryUrl}
@@ -436,9 +443,6 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
                           textStyles={""}
                           color="bg-secondary"
                         />
-                        <Text className="mt-4 text-white text-lg font-semibold">
-                          {file.name}
-                        </Text>
                       </View>
                     </>
                   );
@@ -546,35 +550,47 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
                           }}
                         />
 
-                        {state.inputs.selectFolderId == null && (
-                          <View className="mt-4 px-4 py-3 bg-yellow-100 rounded-lg flex-row items-center">
-                            <Text className="flex-1 text-yellow-800">
-                              No folder selected. The file will be moved to the
-                              root if you proceed
-                            </Text>
-                            <TouchableOpacity
-                              className="ml-3 px-4 py-2 bg-secondary rounded"
-                              onPress={() => {
-                                Alert.alert(
-                                  "No Folder Selected",
-                                  "You have not selected any folder. If you continue, the file will be moved to the root of your storage. Do you want to proceed?",
-                                  [
-                                    { text: "Cancel", style: "cancel" },
-                                    {
-                                      text: "Proceed",
-                                      style: "destructive",
-                                      onPress: handleMoveFile,
-                                    },
-                                  ]
-                                );
-                              }}
-                            >
-                              <Text className="text-white font-semibold">
-                                Move File
+                        {file.folderInfo !== null &&
+                          state.inputs.selectFolderId == null && (
+                            <View className="mt-4 px-4 py-3 bg-yellow-100 rounded-lg flex-row items-center">
+                              <Text className="flex-1 text-yellow-800">
+                                No folder selected. The file will be moved to
+                                the root if you proceed
                               </Text>
-                            </TouchableOpacity>
-                          </View>
-                        )}
+                              <TouchableOpacity
+                                className="ml-3 px-4 py-2 bg-secondary rounded"
+                                onPress={() => {
+                                  Alert.alert(
+                                    "No Folder Selected",
+                                    "You have not selected any folder. If you continue, the file will be moved to the root of your storage. Do you want to proceed?",
+                                    [
+                                      { text: "Cancel", style: "cancel" },
+                                      {
+                                        text: "Proceed",
+                                        style: "destructive",
+                                        onPress: handleMoveFile,
+                                      },
+                                    ]
+                                  );
+                                }}
+                              >
+                                <Text className="text-white font-semibold">
+                                  Move File
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
+                          )}
+
+                        {file.folderInfo === null &&
+                          state.inputs.selectFolderId == null && (
+                            <View className="mt-4 px-4 py-3 bg-yellow-100 rounded-lg flex-row items-center">
+                              <Text className="flex-1 text-yellow-800">
+                                The file is already located in the root
+                                directory. To move it, please choose a target
+                                folder.
+                              </Text>
+                            </View>
+                          )}
 
                         {state.inputs.selectFolderId !== null && (
                           <CustomButton
@@ -586,20 +602,13 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
                             color="bg-secondary"
                           />
                         )}
-                        <Text className="mt-4 text-white text-lg font-semibold">
-                          {file.name}
-                        </Text>
-
-                        <Text className="mt-4 text-white text-lg font-semibold">
-                          {folderId}
-                        </Text>
                       </View>
                     </>
                   );
 
                 case "error":
                   return (
-                    <SafeAreaView className="bg-primary flex-1">
+                    <SafeAreaView className="flex-1">
                       <ActivityIndicator />
                       <Text className="text-[24px] font-semibold text-white text-center mb-16 mt-4">
                         {state.tag === "error" &&
@@ -611,7 +620,7 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
                   );
 
                 case "redirect":
-                  <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+                  <SafeAreaView className="flex-1 justify-center items-center">
                     <ActivityIndicator size="small" color="#fff" />
                     <Text className="mt-4 text-white text-lg font-semibold">
                       Redirect...

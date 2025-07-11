@@ -251,11 +251,15 @@ class JdbiStorageRepository(
                 FolderType.PRIVATE ->
                     """
                     select file.*, users.username, users.email,
-                           folder.folder_id as folder_id, folder.folder_name as folder_name, folder.type as type
+                       folder.folder_id as folder_id, folder.folder_name as folder_name, folder.type as type
                     from dbo.Files file
                     inner join dbo.Users on file.user_id = users.id
                     left join dbo.Folders folder on file.folder_id = folder.folder_id
-                    where file.user_id = :userId 
+                    where file.user_id = :userId
+                      and (
+                        (folder.type = :type and file.folder_id is not null)
+                        or file.folder_id is null
+                      )
                     ${if (search != null) "and file.file_name like :search" else ""}
                     order by $order
                     limit :limit offset :offset
@@ -309,7 +313,7 @@ class JdbiStorageRepository(
                 .bind("limit", limit)
                 .bind("offset", offset)
 
-        if (type == FolderType.SHARED) {
+        if (type != null) {
             query.bind("type", type.ordinal)
         }
 
@@ -330,8 +334,12 @@ class JdbiStorageRepository(
                 FolderType.PRIVATE ->
                     """
                     select count(*) from dbo.Files file
-                    inner join dbo.Folders folder on file.folder_id = folder.folder_id
+                    left join dbo.Folders folder on file.folder_id = folder.folder_id
                     where file.user_id = :userId
+                      and (
+                        (folder.type = :type and file.folder_id is not null)
+                        or file.folder_id is null
+                      )
                     ${if (search != null) "and file.file_name like :search" else ""}
                     """.trimIndent()
 
@@ -371,7 +379,7 @@ class JdbiStorageRepository(
                 .createQuery(baseQuery)
                 .bind("userId", userId.value)
 
-        if (type == FolderType.SHARED) {
+        if (type != null) {
             query.bind("type", type.ordinal)
         }
 

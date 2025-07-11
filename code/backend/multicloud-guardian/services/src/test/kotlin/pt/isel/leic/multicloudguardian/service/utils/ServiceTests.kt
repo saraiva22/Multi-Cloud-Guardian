@@ -120,10 +120,11 @@ open class ServiceTests : ApplicationTests() {
         fun createFile(
             user: User,
             fileCreate: FileCreate,
+            clock: TestClock,
         ): File {
             val file = fileCreate
 
-            val createFie = createStorageService().uploadFile(file, file.encryption, user)
+            val createFie = createStorageService(clock).uploadFile(file, file.encryption, user)
 
             val fileId =
                 when (createFie) {

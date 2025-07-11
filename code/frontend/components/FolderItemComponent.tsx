@@ -8,15 +8,17 @@ import {
   formatSize,
 } from "@/services/utils/Function";
 import { Folder } from "@/domain/storage/Folder";
-import { MaterialIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 
 type Props = {
   item: Folder;
   onPress?: (folderId: number) => void;
+  selectedFolderId?: number | null;
 };
 
-const FolderItemComponent = ({ item, onPress }: Props) => {
+const FolderItemComponent = ({ item, onPress, selectedFolderId }: Props) => {
   const router = useRouter();
+  const isSelected = selectedFolderId === item.folderId;
 
   const handlePress = () => {
     if (onPress) {
@@ -29,30 +31,34 @@ const FolderItemComponent = ({ item, onPress }: Props) => {
   return (
     <TouchableOpacity
       onPress={handlePress}
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: "#eee",
-      }}
+      className={`flex-row items-center px-4 py-3 border-b border-b-gray-200 rounded-lg ${
+        isSelected ? "bg-gray-700" : ""
+      } space-x-4`}
     >
       <Image
         source={icons.folder}
-        className="w-7 h-7 mr-5"
+        className="w-8 h-8 mr-5"
         resizeMode="contain"
       />
 
       <View style={{ flex: 1 }}>
-        <Text className="text-white text-xl" numberOfLines={1}>
+        <Text style={{ color: "white", fontSize: 18 }} numberOfLines={1}>
           {item.folderName}
         </Text>
-        <Text className="text-gray-400 text-base">
+        <Text style={{ color: "#9CA3AF", fontSize: 14 }}>
           {item.size ? `${formatSize(item.size)}, ` : ""}
           Modified {formatDate(item.createdAt)} ({formatFolderType(item.type)})
         </Text>
       </View>
+      {selectedFolderId !== null && (
+        <MaterialCommunityIcons
+          className="mt-2"
+          name={isSelected ? "check-circle" : "checkbox-blank-circle-outline"}
+          size={24}
+          color={isSelected ? "#FFA001" : "#888"}
+          style={{ marginRight: 15 }}
+        />
+      )}
     </TouchableOpacity>
   );
 };

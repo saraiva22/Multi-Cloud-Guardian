@@ -37,7 +37,7 @@ type State =
         fileName: string;
         encryption: boolean;
         file: any;
-        parentFolderId: number | null;
+        parentFolderId: number | undefined;
       };
       folders: PageResult<Folder>;
     }
@@ -47,7 +47,7 @@ type State =
       fileName: string;
       encryption: boolean;
       file: any;
-      parentFolderId: number | null;
+      parentFolderId: number | undefined;
       folders: PageResult<Folder>;
     }
   | { tag: "redirect" };
@@ -86,7 +86,7 @@ function reducer(state: State, action: Action): State {
             fileName: "",
             encryption: false,
             file: null,
-            parentFolderId: null,
+            parentFolderId: undefined,
           },
           folders: action.folders,
         };
@@ -134,7 +134,7 @@ function reducer(state: State, action: Action): State {
             fileName: "",
             encryption: false,
             file: null,
-            parentFolderId: null,
+            parentFolderId: undefined,
           },
           folders: state.folders,
         };
@@ -153,7 +153,7 @@ const firstState: State = {
   tag: "begin",
 };
 
-const sortBy = "created_desc  ";
+const sortBy = "created_desc";
 
 const CreateFile = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
@@ -250,7 +250,7 @@ const CreateFile = () => {
     }
 
     try {
-      if (parentFolderId !== null) {
+      if (parentFolderId) {
         await uploadFile(
           file,
           fileName,
@@ -395,10 +395,21 @@ const CreateFile = () => {
             </View>
 
             <View className="mt-2">
-              <View className="flex-row items-center justify-between mb-2">
+              <View className="flex-row items-center mb-2">
                 <Text className="text-xl text-white font-semibold">
                   Recent Folders
                 </Text>
+                <TouchableOpacity
+                  onPress={() => handleChange("parentFolderId", undefined)}
+                  className="m-4"
+                >
+                  <Image
+                    source={icons.reset}
+                    className="w-6 h-6"
+                    resizeMode="contain"
+                    tintColor="white"
+                  />
+                </TouchableOpacity>
               </View>
 
               {state.tag === "editing" &&
@@ -409,6 +420,7 @@ const CreateFile = () => {
                     onPress={(folderId) =>
                       handleChange("parentFolderId", folderId)
                     }
+                    selectedFolderId={state.inputs.parentFolderId}
                   />
                 ))}
             </View>

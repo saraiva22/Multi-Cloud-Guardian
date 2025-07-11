@@ -44,7 +44,7 @@ type State =
       inputs: {
         folderName: string;
         folderType: FolderType;
-        parentFolderId: number | null;
+        parentFolderId: number | undefined;
         searchValue: string;
       };
       folders: PageResult<Folder>;
@@ -54,7 +54,7 @@ type State =
       tag: "submitting";
       folderName: string;
       folderType: FolderType;
-      parentFolderId: number | null;
+      parentFolderId: number | undefined;
       folders: PageResult<Folder>;
     }
   | { tag: "redirect" };
@@ -97,7 +97,7 @@ function reducer(state: State, action: Action): State {
           inputs: {
             folderName: "",
             folderType: FolderType.PRIVATE,
-            parentFolderId: null,
+            parentFolderId: undefined,
             searchValue: "",
           },
           folders: action.folders,
@@ -151,7 +151,7 @@ function reducer(state: State, action: Action): State {
           inputs: {
             folderName: "",
             folderType: state.folderType,
-            parentFolderId: null,
+            parentFolderId: undefined,
             searchValue: "",
           },
           folders: state.folders,
@@ -254,7 +254,7 @@ const CreateFolder = () => {
     }
 
     try {
-      if (parentFolderId !== null) {
+      if (parentFolderId) {
         if (folderType == FolderType.SHARED) {
           Alert.alert(
             "Error",
@@ -377,18 +377,24 @@ const CreateFolder = () => {
               </Text>
             </View>
 
-            <SearchInput
-              placeholder="Folders"
-              value={searchValue}
-              onChangeText={(text) => handleChange("searchValue", text)}
-            />
-            <View
-              style={{
-                height: 1,
-                backgroundColor: "#23232a",
-                marginVertical: 18,
-              }}
-            />
+            {state.inputs.folderType === FolderType.PRIVATE && (
+              <>
+                <SearchInput
+                  placeholder="Folders"
+                  value={searchValue}
+                  onChangeText={(text) => handleChange("searchValue", text)}
+                />
+
+                <View
+                  style={{
+                    height: 1,
+                    backgroundColor: "#23232a",
+                    marginVertical: 18,
+                  }}
+                />
+              </>
+            )}
+
             <FormField
               title="Folder Name"
               value={folderName}
@@ -420,35 +426,52 @@ const CreateFolder = () => {
             />
 
             <View className="mt-2">
-              <View className="flex-row items-center justify-between mb-2">
-                <Text className="text-xl text-white font-semibold">
-                  Recent Folders
-                </Text>
-              </View>
+              {state.inputs.folderType === FolderType.PRIVATE && (
+                <>
+                  <View className="flex-row items-center mb-2">
+                    <Text className="text-xl text-white font-semibold">
+                      Recent Folders
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => handleChange("parentFolderId", undefined)}
+                      className="m-4"
+                    >
+                      <Image
+                        source={icons.reset}
+                        className="w-6 h-6"
+                        resizeMode="contain"
+                        tintColor="white"
+                      />
+                    </TouchableOpacity>
+                  </View>
 
-              <View style={{ flexGrow: 1 }}>
-                <FlatList
-                  style={{ maxHeight: 270 }}
-                  data={folders}
-                  keyExtractor={(item) => String(item.folderId)}
-                  renderItem={({ item }) => (
-                    <FolderItemComponent
-                      key={item.folderId}
-                      item={item}
-                      onPress={(folderId) =>
-                        handleChange("parentFolderId", folderId)
-                      }
+                  <View style={{ flexGrow: 1 }}>
+                    <FlatList
+                      style={{ maxHeight: 270 }}
+                      data={folders}
+                      keyExtractor={(item) => String(item.folderId)}
+                      renderItem={({ item }) => (
+                        <FolderItemComponent
+                          key={item.folderId}
+                          item={item}
+                          onPress={(folderId) =>
+                            handleChange("parentFolderId", folderId)
+                          }
+                          selectedFolderId={state.inputs.parentFolderId}
+                        />
+                      )}
+                      ListEmptyComponent={() => (
+                        <View className="flex-1 items-center justify-center py-10">
+                          <Text className="text-white text-lg font-semibold mb-2 text-center">
+                            No files match your search
+                          </Text>
+                        </View>
+                      )}
                     />
-                  )}
-                  ListEmptyComponent={() => (
-                    <View className="flex-1 items-center justify-center py-10">
-                      <Text className="text-white text-lg font-semibold mb-2 text-center">
-                        No files match your search
-                      </Text>
-                    </View>
-                  )}
-                />
-              </View>
+                  </View>
+                </>
+              )}
+
               <CustomButton
                 title="Create Folder"
                 handlePress={handleSubmit}

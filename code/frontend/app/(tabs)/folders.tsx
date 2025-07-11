@@ -31,11 +31,11 @@ import SortSelector, {
 } from "@/components/SortSelector";
 import BottomSheet from "@gorhom/bottom-sheet";
 import FolderItemGrid from "@/components/FolderItemGrid";
-import { OwnershipFilter } from "@/domain/storage/OwnershipFilter";
 import OwnershipSelector, {
-  OwnershipOption,
+  OwnershipCombination,
   ownershipOptions,
 } from "@/components/OwnershipSelector";
+import { FolderType } from "@/domain/storage/FolderType";
 
 // The State
 type State =
@@ -43,14 +43,14 @@ type State =
       tag: "begin";
       refreshing: boolean;
       sort: SortOption;
-      filter: OwnershipOption;
+      filter: OwnershipCombination;
       search: string;
     }
   | {
       tag: "loading";
       refreshing: boolean;
       sort: SortOption;
-      filter: OwnershipOption;
+      filter: OwnershipCombination;
       search: string;
     }
   | {
@@ -58,7 +58,7 @@ type State =
       folders: PageResult<Folder>;
       refreshing: boolean;
       sort: SortOption;
-      filter: OwnershipOption;
+      filter: OwnershipCombination;
       inputs: {
         searchValue: string;
       };
@@ -82,7 +82,7 @@ type Action =
       type: "refreshing";
       refreshing: boolean;
       sort: SortOption;
-      filter: OwnershipOption;
+      filter: OwnershipCombination;
     }
   | { type: "search"; searchValue: string };
 
@@ -209,7 +209,7 @@ const FoldersScreen = () => {
     });
   };
 
-  const handleSelectFilter = (filter: OwnershipOption) => {
+  const handleSelectFilter = (filter: OwnershipCombination) => {
     filterSheetRef.current?.close();
     dispatch({
       type: "refreshing",
@@ -231,11 +231,12 @@ const FoldersScreen = () => {
   const loadData = async () => {
     try {
       dispatch({ type: "start-loading" });
+      const folderType = filter.folderType || undefined;
       const folders = await getFolders(
         token,
         sort.sortBy,
-        undefined,
-        filter.value,
+        folderType,
+        filter.ownership,
         search
       );
       dispatch({ type: "loading-success", folders });
@@ -393,7 +394,7 @@ const FoldersScreen = () => {
               }
               renderItem={({ item }) =>
                 isVerticalLayout ? (
-                  <FolderItemComponent item={item} />
+                  <FolderItemComponent item={item} selectedFolderId={null} />
                 ) : (
                   <FolderItemGrid item={item} />
                 )

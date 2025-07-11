@@ -2,28 +2,53 @@ import React, { forwardRef, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { OwnershipFilter } from "@/domain/storage/OwnershipFilter";
+import { FolderType } from "@/domain/storage/FolderType";
 
-export type OwnershipOption = {
+export type OwnershipCombination = {
   label: string;
-  value: OwnershipFilter;
+  ownership: OwnershipFilter;
+  folderType: FolderType | null;
 };
 
-export const ownershipOptions: OwnershipOption[] = [
-  { label: "Member", value: OwnershipFilter.MEMBER },
-  { label: "Owner", value: OwnershipFilter.OWNER },
+export const ownershipOptions: OwnershipCombination[] = [
+  {
+    label: "Member",
+    ownership: OwnershipFilter.MEMBER,
+    folderType: null,
+  },
+  {
+    label: "Owner",
+    ownership: OwnershipFilter.OWNER,
+    folderType: null,
+  },
+  {
+    label: "Member | Shared",
+    ownership: OwnershipFilter.MEMBER,
+    folderType: FolderType.SHARED,
+  },
+  {
+    label: "Owner | Private",
+    ownership: OwnershipFilter.OWNER,
+    folderType: FolderType.PRIVATE,
+  },
+  {
+    label: "Owner | Shared",
+    ownership: OwnershipFilter.OWNER,
+    folderType: FolderType.SHARED,
+  },
 ];
 
 interface Props {
-  onOwnershipChange: (option: OwnershipOption) => void;
+  onOwnershipChange: (option: OwnershipCombination) => void;
 }
 
 const OwnershipSelector = forwardRef<BottomSheet, Props>(
   ({ onOwnershipChange }, ref) => {
-    const [selectedOption, setSelectedOption] = useState<OwnershipOption>(
+    const [selectedOption, setSelectedOption] = useState<OwnershipCombination>(
       ownershipOptions[0]
     );
 
-    const handleAction = (option: OwnershipOption) => {
+    const handleAction = (option: OwnershipCombination) => {
       setSelectedOption(option);
       if (ref && typeof ref !== "function" && ref.current) {
         ref.current.close();
@@ -38,14 +63,16 @@ const OwnershipSelector = forwardRef<BottomSheet, Props>(
         ref={ref}
         index={-1}
         enablePanDownToClose={true}
-        snapPoints={["40%"]}
+        snapPoints={["50%"]}
         backgroundStyle={styles.sheetBackground}
         handleIndicatorStyle={styles.handleIndicator}
       >
         <BottomSheetView style={styles.contentContainer}>
-          <Text style={styles.title}>Filter Ownership</Text>
+          <Text style={styles.title}>Filter by Ownership and Folder Type</Text>
           {ownershipOptions.map((option, idx) => {
-            const isSelected = selectedOption.value === option.value;
+            const isSelected =
+              selectedOption.ownership === option.ownership &&
+              selectedOption.folderType === option.folderType;
             return (
               <TouchableOpacity
                 key={idx}

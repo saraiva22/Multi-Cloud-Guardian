@@ -8,7 +8,7 @@ import {
   SafeAreaView,
   FlatList,
 } from "react-native";
-import React, { useEffect, useReducer } from "react";
+import React, { useEffect, useReducer, useRef, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import {
   deleteFolder,
@@ -43,6 +43,9 @@ import { getSSE } from "@/services/notifications/SSEManager";
 import { EventSourceListener } from "react-native-sse";
 import { UserInfo } from "@/domain/user/UserInfo";
 import MemberCard from "@/components/MemberCard";
+import BottomSheet from "@gorhom/bottom-sheet";
+import MoveBottomSheet from "@/components/MoveBottomSheet";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 // The State
 type State =
@@ -310,6 +313,9 @@ const FolderDetails = () => {
   const { folderId } = useLocalSearchParams();
   const [state, dispatch] = useReducer(reducer, firstState);
   const { token, username, setIsLogged, setUsername } = useAuthentication();
+  const moveSheetRef = useRef<BottomSheet>(null);
+  const [selectFile, setSelectFile] = useState<File | null>(null);
+
   const listener = getSSE();
 
   useEffect(() => {
@@ -334,6 +340,11 @@ const FolderDetails = () => {
       router.replace(`/folders`);
     }
   }, [state.tag]);
+
+  const openMoveSheet = (file: File) => {
+    setSelectFile(file);
+    moveSheetRef.current?.expand();
+  };
 
   useEffect(() => {
     if (!listener) return;
@@ -504,58 +515,62 @@ const FolderDetails = () => {
 
     case "loaded": {
       return (
-        <SafeAreaView className="flex-1 bg-primary h-full px-6 py-12">
-          <FlatList
-            data={state.files.content}
-            keyExtractor={(item) => String(item.fileId)}
-            renderItem={({ item }) => (
-              <FileItemComponent
-                item={item}
-                owner={state.details.user.username}
-              />
-            )}
-            contentContainerStyle={{ paddingBottom: 80 }}
-            showsVerticalScrollIndicator={false}
-            ListHeaderComponent={() => (
-              <View className="my-6 px-4 space-y-6">
-                <FolderInfoDetails
-                  folderDetails={state.details}
-                  members={state.details.members}
-                  username={username}
-                  handleDelete={handleDelete}
-                  handleLeave={handleLeave}
-                  handleUploadFile={handleUploadFile}
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <SafeAreaView className="flex-1 bg-primary h-full px-6 py-12">
+            <FlatList
+              data={state.files.content}
+              keyExtractor={(item) => String(item.fileId)}
+              renderItem={({ item }) => (
+                <FileItemComponent
+                  item={item}
+                  onMovePress={() => openMoveSheet(item)}
+                  owner={state.details.user.username}
                 />
-                {state.folders != null ? (
-                  <View className="w-full flex-1 pt-5 pb-8">
-                    <View className="flex-row items-center justify-between mb-3">
-                      <Text className="text-2xl font-bold text-gray-100 mb-3">
-                        Folders in {`${state.details.folderName}`}
-                      </Text>
-                    </View>
+              )}
+              contentContainerStyle={{ paddingBottom: 80 }}
+              showsVerticalScrollIndicator={false}
+              ListHeaderComponent={() => (
+                <View className="my-6 px-4 space-y-6">
+                  <FolderInfoDetails
+                    folderDetails={state.details}
+                    members={state.details.members}
+                    username={username}
+                    handleDelete={handleDelete}
+                    handleLeave={handleLeave}
+                    handleUploadFile={handleUploadFile}
+                  />
+                  {state.folders != null ? (
+                    <View className="w-full flex-1 pt-5 pb-8">
+                      <View className="flex-row items-center justify-between mb-3">
+                        <Text className="text-2xl font-bold text-gray-100 mb-3">
+                          Folders in {`${state.details.folderName}`}
+                        </Text>
+                      </View>
 
-                    <FolderCard folders={state.folders.content} />
+                      <FolderCard folders={state.folders.content} />
+                    </View>
+                  ) : null}
+                  <View className="w-full flex-1 pt-2">
+                    <Text className="text-2xl font-bold text-gray-100">
+                      Files in {`${state.details.folderName}`}
+                    </Text>
                   </View>
-                ) : null}
-                <View className="w-full flex-1 pt-2">
-                  <Text className="text-2xl font-bold text-gray-100">
-                    Files in {`${state.details.folderName}`}
-                  </Text>
                 </View>
-              </View>
-            )}
-            ListEmptyComponent={() =>
-              state.tag === "loaded" ? (
-                <EmptyState
-                  title="No Files Found"
-                  subtitle="Be the first one to upload a file"
-                  page="/(modals)/create-file"
-                  titleButton="Upload File"
-                />
-              ) : null
-            }
-          />
-        </SafeAreaView>
+              )}
+              ListEmptyComponent={() =>
+                state.tag === "loaded" ? (
+                  <EmptyState
+                    title="No Files Found"
+                    subtitle="Be the first one to upload a file"
+                    page="/(modals)/create-file"
+                    titleButton="Upload File"
+                  />
+                ) : null
+              }
+            />
+            <MoveBottomSheet ref={moveSheetRef} file={selectFile} />
+          </SafeAreaView>
+        </GestureHandlerRootView>
       );
     }
   }

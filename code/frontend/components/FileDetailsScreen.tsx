@@ -297,6 +297,7 @@ const FileDetailsScreen = ({
     dispatch({ type: "delete-loading" });
     try {
       await deleteFunc(fileId, token);
+      Alert.alert("File Deleted", "The file was deleted successfully.");
       dispatch({ type: "success-delete" });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });

@@ -212,12 +212,12 @@ class StorageServiceTests : ServiceTests() {
     @Test
     fun `get file and getFiles`() {
         // Arrange: initialize the storage service
-        val clock = TestClock()
+        val clock = testClock
         val storageService = createStorageService(clock)
 
         // Act: create and upload a single file
         val fileCreation = fileCreation()
-        val file = createFile(testUser, fileCreation)
+        val file = createFile(testUser, fileCreation, clock)
         clock.advance(1.minutes)
         val getFileResult = storageService.getFileById(testUser, file.fileId)
 
@@ -242,9 +242,9 @@ class StorageServiceTests : ServiceTests() {
 
         val fileContent1 = fileCreation()
         val fileContent2 = fileCreation()
-        val file1 = createFile(testUser, fileContent1)
+        val file1 = createFile(testUser, fileContent1, clock)
         clock.advance(1.hours)
-        val file2 = createFile(testUser, fileContent2)
+        val file2 = createFile(testUser, fileContent2, clock)
         clock.advance(1.hours)
         val setLimit = DEFAULT_LIMIT
         val setPage = DEFAULT_PAGE
@@ -431,7 +431,8 @@ class StorageServiceTests : ServiceTests() {
         // Arrange: initialize storage service and create a file for the test user
         val storageService = createStorageService()
         val fileContent = fileCreation()
-        val file = createFile(testUser, fileContent)
+        val clock = testClock
+        val file = createFile(testUser, fileContent, clock)
         val minute = 1L
 
         // / Act: generate a temporary URL for the uploaded file

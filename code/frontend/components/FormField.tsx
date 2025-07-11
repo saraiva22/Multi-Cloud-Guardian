@@ -37,6 +37,10 @@ const FormField = ({
           placeholderTextColor="#7B7B8B"
           onChangeText={handleChangeText}
           secureTextEntry={title === "Password" && !showPassword}
+          textContentType="oneTimeCode"
+          autoComplete="off"
+          autoCorrect={false}
+          spellCheck={false}
         ></TextInput>
         {title === "Password" && (
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
