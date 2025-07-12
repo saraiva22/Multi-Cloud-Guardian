@@ -1,4 +1,4 @@
-import { View, TextInput, Image } from "react-native";
+import { View, TextInput, Image, TouchableOpacity } from "react-native";
 
 import { icons } from "../constants";
 
@@ -27,6 +27,17 @@ const SearchInput = ({
         placeholderTextColor="#CDCDE0"
         onChangeText={onChangeText}
       ></TextInput>
+
+      {value.length > 0 && (
+        <TouchableOpacity onPress={() => onChangeText("")} className="ml-2">
+          <Image
+            source={icons.close}
+            className="w-4 h-4"
+            resizeMode="contain"
+            tintColor="white"
+          />
+        </TouchableOpacity>
+      )}
     </View>
   );
 };

@@ -343,7 +343,7 @@ const CreateFile = () => {
       return (
         <SafeAreaView className="bg-primary h-full">
           <ScrollView className="px-4 my-6 mt-12">
-            <View className="flex-row items-center mb-8">
+            <View className="flex-row py-5 items-center mb-8">
               <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
                 <Image
                   source={icons.back}

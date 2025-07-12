@@ -44,6 +44,9 @@ type State =
       sort: SortOption;
       filter: FilterOption;
       search: string;
+      inputs: {
+        searchValue: string;
+      };
     }
   | {
       tag: "loading";
@@ -51,16 +54,21 @@ type State =
       sort: SortOption;
       filter: FilterOption;
       search: string;
+      inputs: {
+        searchValue: string;
+      };
     }
   | {
       tag: "loaded";
       files: PageResult<File>;
       refreshing: boolean;
       sort: SortOption;
+      search: string;
       filter: FilterOption;
       inputs: {
         searchValue: string;
       };
+      isFetchingMore: boolean;
     }
   | { tag: "error"; error: Problem };
 
@@ -77,14 +85,18 @@ type Action =
       inputValue: string | number;
     }
   | { type: "loading-error"; error: Problem }
+  | { type: "fetch-more-start" }
+  | { type: "fetch-more-success"; files: PageResult<File> }
   | {
       type: "refreshing";
       refreshing: boolean;
       sort: SortOption;
       filter: FilterOption;
     }
-  | { type: "search"; searchValue: string }
-  | { type: "delete-select-file"; file: File };
+  | { type: "search"; search: string }
+  | {
+      type: "reset";
+    };
 
 // The Logger
 function logUnexpectedAction(state: State, action: Action) {
@@ -102,6 +114,9 @@ function reducer(state: State, action: Action): State {
           sort: state.sort,
           search: state.search,
           filter: state.filter,
+          inputs: {
+            searchValue: state.inputs.searchValue,
+          },
         };
       } else {
         logUnexpectedAction(state, action);
@@ -116,8 +131,10 @@ function reducer(state: State, action: Action): State {
           sort: state.sort,
           filter: state.filter,
           inputs: {
-            searchValue: "",
+            searchValue: state.inputs.searchValue,
           },
+          search: state.search,
+          isFetchingMore: false,
         };
       } else if (action.type === "loading-error") {
         return { tag: "error", error: action.error };
@@ -136,6 +153,9 @@ function reducer(state: State, action: Action): State {
             sort: action.sort,
             filter: action.filter,
             search: "",
+            inputs: {
+              searchValue: "",
+            },
           };
         case "edit":
           return {
@@ -148,6 +168,8 @@ function reducer(state: State, action: Action): State {
               ...state.inputs,
               [action.inputName]: action.inputValue,
             },
+            search: state.search,
+            isFetchingMore: state.isFetchingMore,
           };
 
         case "search":
@@ -156,19 +178,34 @@ function reducer(state: State, action: Action): State {
             refreshing: false,
             sort: state.sort,
             filter: state.filter,
-            search: action.searchValue,
+            search: action.search,
+            inputs: {
+              searchValue: state.inputs.searchValue,
+            },
           };
-
-        case "delete-select-file":
+        case "fetch-more-start":
           return {
             ...state,
-            tag: "loaded",
+            isFetchingMore: true,
+          };
+        case "fetch-more-success":
+          return {
+            ...state,
             files: {
-              ...state.files,
-              content: state.files.content.filter(
-                (file) => file.fileId !== action.file.fileId
-              ),
-              totalElements: state.files.totalElements - 1,
+              ...action.files,
+              content: [...state.files.content, ...action.files.content],
+            },
+            isFetchingMore: false,
+          };
+        case "reset":
+          return {
+            tag: "begin",
+            refreshing: false,
+            sort: sortOptions[0],
+            search: "",
+            filter: filterOptions[0],
+            inputs: {
+              searchValue: "",
             },
           };
         default:
@@ -184,6 +221,9 @@ const firstState: State = {
   sort: sortOptions[0],
   search: "",
   filter: filterOptions[0],
+  inputs: {
+    searchValue: "",
+  },
 };
 
 const SIZE_MIN_FILE = 2;
@@ -201,10 +241,7 @@ const FilesScreen = () => {
 
   const filter = state.tag === "error" ? filterOptions[0] : state.filter;
 
-  const search =
-    state.tag === "loading" && state.search
-      ? state.search
-      : state?.search || "";
+  const search = state.tag === "error" ? "" : state.search;
 
   const openSortSheet = () => {
     filterSheetRef.current?.close();
@@ -250,13 +287,44 @@ const FilesScreen = () => {
     });
   }
 
+  // Handle Fetch More Files
+  const fetchMoreFiles = async () => {
+    if (state.tag !== "loaded" || state.isFetchingMore || state.files.last) {
+      return;
+    }
+
+    try {
+      dispatch({ type: "fetch-more-start" });
+
+      const nextPage = state.files.number + 1;
+      const filterValue = filter.value || undefined;
+
+      const moreFiles = await getFiles(
+        token,
+        sort.sortBy,
+        search,
+        filterValue,
+        nextPage
+      );
+
+      dispatch({ type: "fetch-more-success", files: moreFiles });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
+  };
+
   const loadData = async () => {
     try {
       dispatch({ type: "start-loading" });
-      const filterValue = filter.value ? filter.value : undefined;
+      const filterValue = filter.value || undefined;
       const files = await getFiles(token, sort.sortBy, search, filterValue);
+
       dispatch({ type: "loading-success", files });
     } catch (error) {
+      Alert.alert(
+        "Error",
+        `${isProblem(error) ? getProblemMessage(error) : error}`
+      );
       dispatch({ type: "loading-error", error: error });
     }
   };
@@ -269,8 +337,6 @@ const FilesScreen = () => {
     if (state.tag === "error") {
       const message = isProblem(state.error)
         ? getProblemMessage(state.error)
-        : isProblem(state.error.body)
-        ? getProblemMessage(state.error.body)
         : state.error;
       Alert.alert("Error", `${message}`);
       setUsername(null);
@@ -291,21 +357,18 @@ const FilesScreen = () => {
     }, 200);
   };
 
-  const searchValue =
-    state.tag === "loaded" && state.inputs.searchValue
-      ? state.inputs.searchValue
-      : state.inputs?.searchValue || "";
+  const searchValue = state.tag === "loaded" ? state.inputs.searchValue : "";
 
   // Debounced search effect
   useEffect(() => {
     if (state.tag !== "loaded") return;
     const value = searchValue.trim();
-    if (value.length <= SIZE_MIN_FILE) {
+    if (value.length <= SIZE_MIN_FILE || value === search) {
       return;
     }
 
     const timeoutId = setTimeout(async () => {
-      dispatch({ type: "search", searchValue: value });
+      dispatch({ type: "search", search: value });
     }, 500);
 
     return () => clearTimeout(timeoutId);
@@ -347,7 +410,7 @@ const FilesScreen = () => {
     case "loaded":
       return (
         <SafeAreaView className="bg-primary h-full">
-          <View>
+          <View style={{ flex: 1 }}>
             <View className="my-6 px-5 space-y-6">
               <View className="justify-between items-start flex-row mb-6">
                 <Text className="text-2xl font-psemibold text-white">
@@ -376,6 +439,17 @@ const FilesScreen = () => {
                       resizeMode="contain"
                     />
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => dispatch({ type: "reset" })}
+                  >
+                    <Image
+                      source={icons.reset}
+                      className="w-[18px] h-[20px]"
+                      resizeMode="contain"
+                      tintColor="white"
+                    />
+                  </TouchableOpacity>
                 </View>
               </View>
               <SearchInput
@@ -388,14 +462,17 @@ const FilesScreen = () => {
             <FlatList
               className="mt-5"
               data={files}
-              keyExtractor={(item, index) => String(item.fileId || index)}
+              keyExtractor={(item) => item.fileId.toString()}
               renderItem={({ item }) => (
                 <FileItemComponent
                   item={item}
                   onMovePress={() => openMoveSheet(item)}
                 />
               )}
-              contentContainerStyle={{ paddingBottom: 80 }}
+              style={{ flex: 1 }}
+              contentContainerStyle={{ paddingBottom: 90 }}
+              onEndReached={fetchMoreFiles}
+              onEndReachedThreshold={0.1}
               ListEmptyComponent={() => (
                 <View className="flex-1 items-center justify-center py-10">
                   <Text className="text-white text-lg font-semibold mb-2 text-center">
@@ -403,6 +480,13 @@ const FilesScreen = () => {
                   </Text>
                 </View>
               )}
+              ListFooterComponent={() =>
+                state.isFetchingMore ? (
+                  <View className="bg-primary py-4 justify-center items-center">
+                    <ActivityIndicator size="small" color="#fff" />
+                  </View>
+                ) : null
+              }
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
               }
@@ -414,11 +498,7 @@ const FilesScreen = () => {
             ref={filterSheetRef}
             onFilterChange={handleSelectFilter}
           />
-          <MoveBottomSheet
-            ref={moveSheetRef}
-            file={selectFile}
-            onDelete={(file) => dispatch({ type: "delete-select-file", file })}
-          />
+          <MoveBottomSheet ref={moveSheetRef} file={selectFile} />
         </SafeAreaView>
       );
   }

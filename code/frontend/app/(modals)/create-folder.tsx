@@ -364,7 +364,7 @@ const CreateFolder = () => {
       return (
         <SafeAreaView className="bg-primary h-full">
           <View className="px-6 py-12">
-            <View className="flex-row items-center mb-8">
+            <View className="flex-row  py-5 items-center mb-8">
               <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
                 <Image
                   source={icons.back}

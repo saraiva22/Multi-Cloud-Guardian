@@ -49,6 +49,7 @@ import leave from "../assets/icons/leave.png";
 import delete_icon from "../assets/icons/delete.png";
 import reset from "../assets/icons/reset.png";
 import filter from "../assets/icons/filter.png";
+import close from "../assets/icons/close.png";
 
 export default {
   europe,
@@ -102,4 +103,5 @@ export default {
   delete_icon,
   reset,
   filter,
+  close,
 };

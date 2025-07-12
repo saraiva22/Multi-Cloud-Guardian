@@ -381,7 +381,7 @@ const HomeScreen = () => {
                         activeOpacity={0.85}
                       >
                         <Image
-                          className="w-[44px] h-[32px]"
+                          className="w-[40px] h-[34px]"
                           source={icons.sort_black1}
                           resizeMode="contain"
                         />

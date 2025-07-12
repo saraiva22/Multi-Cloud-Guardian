@@ -259,7 +259,6 @@ const CreateInvite = () => {
     dispatch({ type: "submit" });
 
     const { selectUsername, folderId } = state.inputs;
-    console.log("SELECT NAME ", selectUsername);
 
     if (!selectUsername.trim() || folderId == null) {
       Alert.alert("Error", "Please fill in all fields");
@@ -300,7 +299,11 @@ const CreateInvite = () => {
         const users = await getUsers(value, token);
         dispatch({ type: "search-success", users: users.content });
       } catch (error) {
-        dispatch({ type: "search-error", error: error });
+        Alert.alert(
+          "Error",
+          `${isProblem(error) ? getProblemMessage(error) : error}`
+        );
+        dispatch({ type: "error", error: error });
       }
     }, 500);
 
@@ -328,7 +331,7 @@ const CreateInvite = () => {
       return (
         <SafeAreaView className="bg-primary flex-1">
           <View className="px-6 py-12 flex-1">
-            <View className="flex-row items-center justify-between px-4 mb-6 relative">
+            <View className="flex-row items-center justify-between px-4 mb-6">
               <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
                 <Image
                   source={icons.back}
@@ -337,9 +340,10 @@ const CreateInvite = () => {
                   tintColor="white"
                 />
               </TouchableOpacity>
-              <Text className="absolute left-10 right-0 text-2xl text-white font-semibold text-center">
+              <Text className="text-2xl text-white font-semibold text-center">
                 Create Invite in Folder
               </Text>
+              <View></View>
             </View>
 
             <SearchInput
@@ -389,25 +393,36 @@ const CreateInvite = () => {
                   style={{
                     height: 1,
                     backgroundColor: "#eee",
-                    marginVertical: 18,
+                    marginVertical: 10,
                   }}
                 />
-                <Text>
+                <View className="flex-row items-center justify-between">
                   <Text className="text-xl text-white font-semibold">
                     Selected User: {state.inputs.selectUsername}
                   </Text>
-                </Text>
+                  <TouchableOpacity
+                    onPress={() => handleChange("selectUsername", undefined)}
+                    className="m-2"
+                  >
+                    <Image
+                      source={icons.reset}
+                      className="w-7 h-7"
+                      resizeMode="contain"
+                      tintColor="white"
+                    />
+                  </TouchableOpacity>
+                </View>
                 <View
                   style={{
                     height: 1,
                     backgroundColor: "#eee",
-                    marginVertical: 18,
+                    marginVertical: 10,
                   }}
                 />
               </>
             )}
 
-            <View className="mt-2 flex-1">
+            <View className="flex-1">
               <View className="flex-row items-center mb-2">
                 <Text className="text-xl text-white font-semibold">
                   Recent Folders
@@ -418,7 +433,7 @@ const CreateInvite = () => {
                 >
                   <Image
                     source={icons.reset}
-                    className="w-6 h-6"
+                    className="w-7 h-7"
                     resizeMode="contain"
                     tintColor="white"
                   />
