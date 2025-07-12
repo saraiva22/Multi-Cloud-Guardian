@@ -67,7 +67,7 @@ type Action =
   | {
       type: "edit";
       inputName: string | number;
-      inputValue: string | number;
+      inputValue: string | number | undefined;
     }
   | { type: "submit" }
   | { type: "error"; error: Problem | string }
@@ -244,8 +244,9 @@ const CreateFolder = () => {
     dispatch({ type: "submit" });
 
     const folderName = state.inputs.folderName;
-    const parentFolderId = state.inputs.parentFolderId;
+
     const folderType = state.inputs.folderType;
+    const parentFolderId = state.inputs.parentFolderId;
 
     if (!folderName?.trim()) {
       Alert.alert("Error", "Please fill in all fields");
@@ -414,7 +415,12 @@ const CreateFolder = () => {
             <FolderTypeSelector
               title="Folder Type"
               value={folderType}
-              onChange={(type) => handleChange("folderType", type)}
+              onChange={(type) => {
+                handleChange("folderType", type);
+                if (type === FolderType.SHARED) {
+                  handleChange("parentFolderId", undefined);
+                }
+              }}
             />
 
             <View

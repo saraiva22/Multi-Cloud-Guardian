@@ -83,7 +83,8 @@ type Action =
       sort: SortOption;
       filter: FilterOption;
     }
-  | { type: "search"; searchValue: string };
+  | { type: "search"; searchValue: string }
+  | { type: "delete-select-file"; file: File };
 
 // The Logger
 function logUnexpectedAction(state: State, action: Action) {
@@ -157,6 +158,19 @@ function reducer(state: State, action: Action): State {
             filter: state.filter,
             search: action.searchValue,
           };
+
+        case "delete-select-file":
+          return {
+            ...state,
+            tag: "loaded",
+            files: {
+              ...state.files,
+              content: state.files.content.filter(
+                (file) => file.fileId !== action.file.fileId
+              ),
+              totalElements: state.files.totalElements - 1,
+            },
+          };
         default:
           logUnexpectedAction(state, action);
           return state;
@@ -193,10 +207,12 @@ const FilesScreen = () => {
       : state?.search || "";
 
   const openSortSheet = () => {
+    filterSheetRef.current?.close();
     bottomSheetRef.current?.expand();
   };
 
   const openFilterSheet = () => {
+    bottomSheetRef.current?.close();
     filterSheetRef.current?.expand();
   };
 
@@ -398,7 +414,11 @@ const FilesScreen = () => {
             ref={filterSheetRef}
             onFilterChange={handleSelectFilter}
           />
-          <MoveBottomSheet ref={moveSheetRef} file={selectFile} />
+          <MoveBottomSheet
+            ref={moveSheetRef}
+            file={selectFile}
+            onDelete={(file) => dispatch({ type: "delete-select-file", file })}
+          />
         </SafeAreaView>
       );
   }

@@ -13,6 +13,7 @@ import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 type Props = {
   item: Folder;
   onPress?: (folderId: number) => void;
+  
   selectedFolderId?: number | null;
 };
 

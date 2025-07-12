@@ -83,7 +83,8 @@ type Action =
       user: UserInfo;
       folderId: number;
       updatedAt: number;
-    };
+    }
+  | { type: "delete-select-file"; file: File };
 
 function logUnexpectedAction(state: State, action: Action) {
   console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
@@ -151,18 +152,28 @@ function reducer(state: State, action: Action): State {
           files: state.files,
           folders: state.folders,
         };
-      } else if (action.type === "delete-file") {
+      } else if (
+        action.type === "delete-file" ||
+        action.type === "delete-select-file"
+      ) {
+        const fileId =
+          action.type === "delete-file" ? action.fileId : action.file.fileId;
+        const updatedAt =
+          action.type === "delete-file" && action.updatedAt
+            ? action.updatedAt
+            : Date.now();
+
         return {
           tag: "loaded",
           details: {
             ...state.details,
             numberFile: state.details.numberFile - 1,
-            createdAt: action.updatedAt,
+            createdAt: updatedAt,
           },
           files: {
             ...state.files,
             content: state.files.content.filter(
-              (file) => file.fileId !== action.fileId
+              (file) => file.fileId !== fileId
             ),
             totalElements: state.files.totalElements - 1,
           },
@@ -568,7 +579,13 @@ const FolderDetails = () => {
                 ) : null
               }
             />
-            <MoveBottomSheet ref={moveSheetRef} file={selectFile} />
+            <MoveBottomSheet
+              ref={moveSheetRef}
+              file={selectFile}
+              onDelete={(file) =>
+                dispatch({ type: "delete-select-file", file })
+              }
+            />
           </SafeAreaView>
         </GestureHandlerRootView>
       );

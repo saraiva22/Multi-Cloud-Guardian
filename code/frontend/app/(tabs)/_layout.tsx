@@ -46,10 +46,6 @@ const TabIcon = ({ icon, color, name, focused }: Icon) => {
 };
 
 function TabsLayout() {
-  // const colorScheme = useColorScheme();
-  // console.log(colorScheme);
-  // const tabBarBackground = colorScheme !== "dark" ? "#232533" : "#fff";
-  // const tabBarBorder = colorScheme !== "dark" ? "#2C2C38" : "#eee";
   const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheet>(null);
 

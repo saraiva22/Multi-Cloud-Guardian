@@ -25,6 +25,7 @@ import { getFolders, uploadFile } from "@/services/storage/StorageService";
 import { PageResult } from "@/domain/utils/PageResult";
 import { Folder } from "@/domain/storage/Folder";
 import FolderItemComponent from "@/components/FolderItemComponent";
+import { FolderType } from "@/domain/storage/FolderType";
 
 // The State
 type State =
@@ -35,9 +36,11 @@ type State =
       error?: Problem | string;
       inputs: {
         fileName: string;
+        fileExtension: string;
         encryption: boolean;
         file: any;
         parentFolderId: number | undefined;
+        parentFolderType: FolderType | undefined;
       };
       folders: PageResult<Folder>;
     }
@@ -45,9 +48,11 @@ type State =
   | {
       tag: "submitting";
       fileName: string;
+      fileExtension: string;
       encryption: boolean;
       file: any;
       parentFolderId: number | undefined;
+      parentFolderType: FolderType | undefined;
       folders: PageResult<Folder>;
     }
   | { tag: "redirect" };
@@ -84,9 +89,11 @@ function reducer(state: State, action: Action): State {
           tag: "editing",
           inputs: {
             fileName: "",
+            fileExtension: "",
             encryption: false,
             file: null,
             parentFolderId: undefined,
+            parentFolderType: undefined,
           },
           folders: action.folders,
         };
@@ -113,9 +120,11 @@ function reducer(state: State, action: Action): State {
         return {
           tag: "submitting",
           fileName: state.inputs.fileName,
+          fileExtension: state.inputs.fileExtension,
           encryption: state.inputs.encryption,
           file: state.inputs.file,
           parentFolderId: state.inputs.parentFolderId,
+          parentFolderType: state.inputs.parentFolderType,
           folders: state.folders,
         };
       } else {
@@ -132,9 +141,11 @@ function reducer(state: State, action: Action): State {
           error: action.message,
           inputs: {
             fileName: "",
+            fileExtension: "",
             encryption: false,
             file: null,
             parentFolderId: undefined,
+            parentFolderType: undefined,
           },
           folders: state.folders,
         };
@@ -207,24 +218,24 @@ const CreateFile = () => {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const file = result.assets[0];
 
-      const fileExtension = file.name.split(".").pop();
+      const extension = file.name.split(".").pop();
 
-      const nameFile = `${fileName}.${fileExtension}`;
+      const fileExtension = `${fileName}.${extension}`;
 
       dispatch({
         type: "edit",
         inputName: "file",
         inputValue: {
           uri: file.uri,
-          name: nameFile,
+          name: fileName,
           type: file.mimeType,
         },
       });
 
       dispatch({
         type: "edit",
-        inputName: "fileName",
-        inputValue: nameFile,
+        inputName: "fileExtension",
+        inputValue: fileExtension,
       });
     } else {
       Alert.alert("No file selected", "Please select a file to upload.");
@@ -239,6 +250,7 @@ const CreateFile = () => {
     dispatch({ type: "submit" });
 
     const fileName = state.inputs.fileName;
+    const fileExtension = state.inputs.fileExtension;
     const encryption = state.inputs.encryption;
     const file = state.inputs.file;
     const parentFolderId = state.inputs.parentFolderId;
@@ -253,14 +265,14 @@ const CreateFile = () => {
       if (parentFolderId) {
         await uploadFile(
           file,
-          fileName,
+          fileExtension,
           encryption,
           keyMaster,
           token,
           parentFolderId.toString()
         );
       } else {
-        await uploadFile(file, fileName, encryption, keyMaster, token);
+        await uploadFile(file, fileExtension, encryption, keyMaster, token);
       }
 
       Alert.alert("Success", "Your file has been uploaded successfully.");
@@ -357,15 +369,24 @@ const CreateFile = () => {
               style={{ height: 0.5, backgroundColor: "#F8F8F8", marginTop: 20 }}
             />
 
-            <EncryptionToggle
-              value={encryption}
-              onChange={(value) => handleChange("encryption", value)}
-              otherStyles=" mt-7"
-            />
+            {(state.inputs.parentFolderId === undefined ||
+              state.inputs.parentFolderType === FolderType.PRIVATE) && (
+              <>
+                <EncryptionToggle
+                  value={encryption}
+                  onChange={(value) => handleChange("encryption", value)}
+                  otherStyles=" mt-7"
+                />
+                <View
+                  style={{
+                    height: 0.5,
+                    backgroundColor: "#F8F8F8",
+                    marginTop: 20,
+                  }}
+                />
+              </>
+            )}
 
-            <View
-              style={{ height: 0.5, backgroundColor: "#F8F8F8", marginTop: 20 }}
-            />
             <View className="mt-7 space-y-2">
               <Text className="text-base text-gray-100 font-pmedium">
                 Upload Video
@@ -400,7 +421,10 @@ const CreateFile = () => {
                   Recent Folders
                 </Text>
                 <TouchableOpacity
-                  onPress={() => handleChange("parentFolderId", undefined)}
+                  onPress={() => {
+                    handleChange("parentFolderId", undefined);
+                    handleChange("parentFolderType", undefined);
+                  }}
                   className="m-4"
                 >
                   <Image
@@ -417,9 +441,13 @@ const CreateFile = () => {
                   <FolderItemComponent
                     key={folder.folderId}
                     item={folder}
-                    onPress={(folderId) =>
-                      handleChange("parentFolderId", folderId)
-                    }
+                    onPress={(folderId) => {
+                      handleChange("parentFolderId", folderId);
+                      handleChange("parentFolderType", folder.type);
+                      if (folder.type === FolderType.SHARED) {
+                        handleChange("encryption", false);
+                      }
+                    }}
                     selectedFolderId={state.inputs.parentFolderId}
                   />
                 ))}

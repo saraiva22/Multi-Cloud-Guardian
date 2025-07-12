@@ -158,16 +158,16 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-type Props = { file: File };
+type Props = { file: File; onDelete: (file: File) => void };
 
 const firstState: State = { tag: "begin" };
 
 const MoveBottomSheet = forwardRef<BottomSheet, Props>(
-  ({ file }: Props, ref) => {
+  ({ file, onDelete }: Props, ref) => {
     const selectFile = file;
     const [state, dispatch] = useReducer(reducer, firstState);
 
-    const { token, keyMaster } = useAuthentication();
+    const { token, username, keyMaster } = useAuthentication();
 
     const search =
       state.tag === "loading" && state.search
@@ -252,6 +252,7 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
       try {
         await deleteFile(file.fileId.toString(), token);
         Alert.alert("File Deleted", "The file was deleted successfully.");
+        onDelete(file);
         dispatch({ type: "loading-success" });
       } catch (error) {
         Alert.alert(
@@ -341,7 +342,6 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
                             color="bg-secondary"
                           />
                         )}
-
                       <CustomButton
                         title="Download File"
                         handlePress={handleDownload}
@@ -350,7 +350,6 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
                         textStyles="text-base font-semibold"
                         color="bg-secondary"
                       />
-
                       {(file?.folderInfo === null ||
                         file?.folderInfo?.folderType ===
                           FolderType.PRIVATE) && (
@@ -364,14 +363,16 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
                         />
                       )}
 
-                      <CustomButton
-                        title="Delete File"
-                        handlePress={handleDelete}
-                        containerStyles="mt-10 rounded-lg"
-                        isLoading={false}
-                        textStyles="text-base font-semibold"
-                        color="bg-secondary"
-                      />
+                      {file?.user.username === username && (
+                        <CustomButton
+                          title="Delete File"
+                          handlePress={handleDelete}
+                          containerStyles="mt-10 rounded-lg"
+                          isLoading={false}
+                          textStyles="text-base font-semibold"
+                          color="bg-secondary"
+                        />
+                      )}
                     </View>
                   );
 

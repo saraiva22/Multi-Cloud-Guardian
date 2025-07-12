@@ -69,7 +69,8 @@ type Action =
     }
   | { type: "loading-error"; error: Problem | string }
   | { type: "refreshing"; refreshing: boolean; sort: SortOption }
-  | { type: "search"; searchValue: string };
+  | { type: "search"; searchValue: string }
+  | { type: "delete-select-file"; file: File };
 
 function logUnexpectedAction(state: State, action: Action) {
   console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
@@ -130,6 +131,18 @@ function reducer(state: State, action: Action): State {
           ...state,
           tag: "loaded",
           inputs: { ...state.inputs, [action.inputName]: action.inputValue },
+        };
+      } else if (action.type === "delete-select-file") {
+        return {
+          ...state,
+          tag: "loaded",
+          files: {
+            ...state.files,
+            content: state.files.content.filter(
+              (file) => file.fileId !== action.file.fileId
+            ),
+            totalElements: state.files.totalElements - 1,
+          },
         };
       } else {
         logUnexpectedAction(state, action);
@@ -310,13 +323,6 @@ const HomeScreen = () => {
                   Hello, {username}
                 </Text>
               </View>
-              <View className="mt-1.5">
-                <Image
-                  source={icons.notificiation_black}
-                  className="w-[24] h-[24]"
-                  resizeMode="contain"
-                />
-              </View>
             </View>
 
             <SearchInput
@@ -397,7 +403,11 @@ const HomeScreen = () => {
             />
           </View>
           <SortSelector ref={bottomSheetRef} onSortChange={handleSelectSort} />
-          <MoveBottomSheet ref={moveSheetRef} file={selectFile} />
+          <MoveBottomSheet
+            ref={moveSheetRef}
+            file={selectFile}
+            onDelete={(file) => dispatch({ type: "delete-select-file", file })}
+          />
         </SafeAreaView>
       );
   }

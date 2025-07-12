@@ -192,10 +192,12 @@ const FoldersScreen = () => {
       : state?.search || "";
 
   const openSortSheet = () => {
+    filterSheetRef.current?.close();
     bottomSheetRef.current?.expand();
   };
 
   const openFilterSheet = () => {
+    bottomSheetRef.current?.close();
     filterSheetRef.current?.expand();
   };
 

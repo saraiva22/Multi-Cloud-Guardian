@@ -10,7 +10,7 @@ export type FilterOption = {
 
 export const filterOptions: FilterOption[] = [
   { label: "All Files", value: null },
-  { label: "Private Folders", value: FolderType.PRIVATE },
+  { label: "All Private Files", value: FolderType.PRIVATE },
   { label: "Shared Folders", value: FolderType.SHARED },
 ];
 
