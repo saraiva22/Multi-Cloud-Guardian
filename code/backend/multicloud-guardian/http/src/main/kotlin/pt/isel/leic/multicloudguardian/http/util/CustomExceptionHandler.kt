@@ -1,5 +1,6 @@
 package pt.isel.leic.multicloudguardian.http.util
 
+import jakarta.validation.ConstraintViolationException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -34,6 +35,13 @@ class CustomExceptionHandler : ResponseEntityExceptionHandler() {
     ): ResponseEntity<Any> {
         log.info("Handling HttpMessageNotReadableException: {}", ex.message)
         return Problem.response(HttpStatus.BAD_REQUEST.value(), Problem.invalidRequestContent())
+    }
+
+    @ExceptionHandler(ConstraintViolationException::class)
+    fun handleConstraintViolation(ex: ConstraintViolationException): ResponseEntity<Any> {
+        log.info("Handling ConstraintViolationException: {}", ex.message)
+        val errorMessages = ex.constraintViolations.mapNotNull { it.message }
+        return Problem.response(HttpStatus.BAD_REQUEST.value(), Problem.invalidRequestContent(errorMessages))
     }
 
     @ExceptionHandler(Exception::class)

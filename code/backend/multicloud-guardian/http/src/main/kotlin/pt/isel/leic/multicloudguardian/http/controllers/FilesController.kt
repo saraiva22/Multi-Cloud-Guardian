@@ -1,5 +1,6 @@
 package pt.isel.leic.multicloudguardian.http.controllers
 
+import jakarta.validation.constraints.Min
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
@@ -36,6 +37,7 @@ import pt.isel.leic.multicloudguardian.service.storage.StorageService
 import pt.isel.leic.multicloudguardian.service.storage.UploadFileError
 
 @RestController
+@Validated
 class FilesController(
     private val storageService: StorageService,
 ) {
@@ -130,7 +132,7 @@ class FilesController(
 
     @GetMapping(Uris.Files.GET_BY_ID)
     fun getFileById(
-        @Validated @PathVariable fileId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) fileId: Int,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Files.byId(fileId)
@@ -150,7 +152,7 @@ class FilesController(
 
     @PostMapping(Uris.Files.CREATE_URL)
     fun generateTemporaryFileUrl(
-        @Validated @PathVariable fileId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) fileId: Int,
         @RequestBody input: GenerateTempUrlInputModel,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
@@ -176,7 +178,7 @@ class FilesController(
 
     @PatchMapping(Uris.Files.MOVE_FILE)
     fun moveFile(
-        @Validated @PathVariable fileId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) fileId: Int,
         @RequestBody input: MoveFileInputModel,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
@@ -203,7 +205,7 @@ class FilesController(
 
     @GetMapping(Uris.Files.DOWNLOAD_FILE)
     fun downloadFile(
-        @Validated @PathVariable fileId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) fileId: Int,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Files.downloadFile(fileId)
@@ -240,7 +242,7 @@ class FilesController(
 
     @DeleteMapping(Uris.Files.DELETE)
     fun deleteFile(
-        @Validated @PathVariable fileId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) fileId: Int,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Files.deleteFile(fileId)

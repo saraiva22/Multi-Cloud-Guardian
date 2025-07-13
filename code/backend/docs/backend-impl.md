@@ -1,4 +1,4 @@
-# <image src ="../docs/images/cloud.jpg" width=60> Multi Cloud Guardian - Backend Documentation
+#  Multi Cloud Guardian - Backend Documentation
 
 > This is the backend documentation for the Multi Cloud Guardian.
 
@@ -72,7 +72,7 @@ The conceptual model has the following restrictions:
 - `Preferences` entity:
 
   - The `location` attribute only accepts values: `0` (North America), `1` (South America), `2` (Europe), `3` (Others);
-  - The `performance` attribute only accepts values: `0` (Low), `1` (Medium), `2` (High);
+  - The `cost` attribute only accepts values: `0` (Low), `1` (Medium), `2` (High);
   - The `storage_provider` attribute only accepts values: `0` (Amazon), `1` (Azure), `2` (Google Cloud Storage), `3` (Backblaze);
   - Each user has exactly one set of preferences (1:1 relationship).
 
@@ -86,7 +86,7 @@ The conceptual model has the following restrictions:
   - The `path` attribute stores the path associated with the folder on the cloud storage provider.
 
 - `File` entity:
-  - The `file_name` attribute stores the name of the file;
+  - The `file_name` and `file_fake_name` attribute stores the name of the file;
   - The `size` attribute represents the file size in bytes;
   - The `created_at` attribute represents the number of seconds since the [Unix epoch](https://en.wikipedia.org/wiki/Unix_time), and must be greater than 0;
   - The `encryption` attribute is a boolean that indicates whether the file is encrypted;
@@ -94,6 +94,12 @@ The conceptual model has the following restrictions:
   - The `content_type` attribute stores the MIME type of the file (e.g., `image/png`, `application/pdf`);
   - The `path` attribute stores the full storage path of the file on the cloud provider, associated with its folder;
   - Files are automatically categorized in the `user_file_storage_summary` view into one of the following types, based on their `content_type`: Images, Video, Documents, or Others.
+
+- `Join_Folders` entity:
+  - This junction entity manages user access to shared folders.
+    - Composite primary key of user_id (foreign key to Users) and folder_id (foreign key to Folders), both with cascade on delete and update. 
+    - Triggers insert owners or new members into this table for shared folders. 
+    - Deleting from this table triggers removal of previous invitations and user files from the shared folder.
 
 ### Key Relationships
 
@@ -128,9 +134,9 @@ We highlight the following aspects of this model:
 
 ### Application Architecture
 
-| ![Application Architecture](../docs/images/software_%20architect_white.png) |
-| :-------------------------------------------------------------------------: |
-|                     _Application architecture diagram_                      |
+| ![Application Architecture](../docs/images/software_%20architect_white.png.png) |
+|:---------------------------------------------:|
+|      _Application architecture diagram_       |
 
 The JVM application is organized as follows:
 
@@ -313,6 +319,10 @@ In the backend infrastructure, data validation is enforced at two distinct layer
         max = Username.MAX_LENGTH,
         message = "Username must have between ${Username.MIN_LENGTH} and ${Username.MAX_LENGTH} characters",
     )
+    @field:Pattern(
+        regexp = "^[a-zA-Z0-9._-]+$",
+        message = "Username can only contain letters, numbers, '.', '-' and '_'",
+    )
     val username: String,
     @field:NotBlank(message = "Email must not be blank")
     @field:jakarta.validation.constraints.Email(message = "Email must be valid")
@@ -328,9 +338,10 @@ In the backend infrastructure, data validation is enforced at two distinct layer
     val salt: String,
     @field:NotNull(message = "Iterations must not be null")
     val iterations: Int,
-    val costType: PerformanceType,
+    val costType: CostType,
     val locationType: LocationType,
-  )
+  ) 
+  
 
 
   // In the controller handler method, the request body is

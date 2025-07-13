@@ -1,5 +1,6 @@
 package pt.isel.leic.multicloudguardian.http.controllers
 
+import jakarta.validation.constraints.Min
 import kotlinx.datetime.Clock
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -37,6 +38,7 @@ import pt.isel.leic.multicloudguardian.service.user.UsersService
 import java.util.concurrent.TimeUnit
 
 @RestController
+@Validated
 class UsersController(
     private val userService: UsersService,
     private val sseService: SSEService,
@@ -175,7 +177,7 @@ class UsersController(
 
     @GetMapping(Uris.Users.GET_BY_ID)
     fun getById(
-        @PathVariable id: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) id: Int,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Users.byId(id)

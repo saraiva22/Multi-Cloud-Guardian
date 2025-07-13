@@ -1,5 +1,6 @@
 package pt.isel.leic.multicloudguardian.http.controllers
 
+import jakarta.validation.constraints.Min
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
@@ -49,6 +50,7 @@ import pt.isel.leic.multicloudguardian.service.storage.UploadFileError
 import pt.isel.leic.multicloudguardian.service.storage.ValidateFolderInviteError
 
 @RestController
+@Validated
 class FoldersController(
     private val storageService: StorageService,
 ) {
@@ -117,7 +119,7 @@ class FoldersController(
     @PostMapping(Uris.Folders.CREATE_FOLDER_IN_FOLDER)
     fun createFolderInFolder(
         @Validated @RequestBody input: FolderCreateInputModel,
-        @PathVariable folderId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) folderId: Int,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Folders.createFolderInFolder(folderId)
@@ -156,7 +158,7 @@ class FoldersController(
 
     @GetMapping(Uris.Folders.GET_FOLDER_BY_ID)
     fun getFolder(
-        @PathVariable @Validated folderId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) folderId: Int,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Folders.folderById(folderId)
@@ -176,7 +178,7 @@ class FoldersController(
 
     @GetMapping(Uris.Folders.GET_FOLDERS_IN_FOLDER)
     fun getFoldersInFolder(
-        @PathVariable @Validated folderId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) folderId: Int,
         authenticatedUser: AuthenticatedUser,
         @RequestParam(required = false) size: Int?,
         @RequestParam(required = false) page: Int?,
@@ -213,7 +215,7 @@ class FoldersController(
 
     @GetMapping(Uris.Folders.GET_FILES_IN_FOLDER)
     fun getFilesInFolder(
-        @PathVariable @Validated folderId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) folderId: Int,
         authenticatedUser: AuthenticatedUser,
         @RequestParam(required = false) size: Int?,
         @RequestParam(required = false) page: Int?,
@@ -251,8 +253,8 @@ class FoldersController(
 
     @GetMapping(Uris.Folders.GET_FILE_IN_FOLDER)
     fun getFileInFolder(
-        @PathVariable @Validated folderId: Int,
-        @PathVariable @Validated fileId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) folderId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) fileId: Int,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Folders.fileInFolder(folderId, fileId)
@@ -333,8 +335,8 @@ class FoldersController(
 
     @GetMapping(Uris.Folders.DOWNLOAD_FILE_IN_FOLDER)
     fun downloadFileInFolder(
-        @Validated @PathVariable folderId: Int,
-        @Validated @PathVariable fileId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) folderId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) fileId: Int,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Folders.downloadFileInFolder(folderId, fileId)
@@ -372,7 +374,7 @@ class FoldersController(
 
     @DeleteMapping(Uris.Folders.DELETE_FOLDER)
     fun deleteFolder(
-        @PathVariable @Validated folderId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) folderId: Int,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Folders.deleteFolder(folderId)
@@ -398,8 +400,8 @@ class FoldersController(
 
     @DeleteMapping(Uris.Folders.DELETE_FILE_IN_FOLDER)
     fun deleteFileInFolder(
-        @PathVariable @Validated folderId: Int,
-        @PathVariable @Validated fileId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) folderId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) fileId: Int,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Folders.deleteFileInFolder(folderId, fileId)
@@ -426,7 +428,7 @@ class FoldersController(
 
     @PostMapping(Uris.Folders.CREATE_INVITE_FOLDER)
     fun inviteFolder(
-        @PathVariable @Validated folderId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) folderId: Int,
         @RequestBody input: FolderInviteInput,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
@@ -452,8 +454,8 @@ class FoldersController(
 
     @PostMapping(Uris.Folders.VALIDATE_FOLDER_INVITE)
     fun validateFolderInvite(
-        @PathVariable @Validated folderId: Int,
-        @PathVariable @Validated inviteId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) folderId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) inviteId: Int,
         @RequestBody input: FolderInviteStatusInputModel,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
@@ -543,7 +545,7 @@ class FoldersController(
 
     @PostMapping(Uris.Folders.LEAVE_SHARED_FOLDER)
     fun leaveFolder(
-        @PathVariable @Validated folderId: Int,
+        @PathVariable @Min(1, message = Uris.ValidationMessages.ID_MUST_BE_POSITIVE) folderId: Int,
         authenticatedUser: AuthenticatedUser,
     ): ResponseEntity<*> {
         val instance = Uris.Folders.leaveFolder(folderId)

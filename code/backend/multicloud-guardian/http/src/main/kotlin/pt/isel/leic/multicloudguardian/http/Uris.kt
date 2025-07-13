@@ -9,6 +9,10 @@ object Uris {
 
     fun home(): URI = URI(HOME)
 
+    object ValidationMessages {
+        const val ID_MUST_BE_POSITIVE = "The provided ID must be greater than 0."
+    }
+
     object Users {
         const val CREATE = "$PREFIX/users"
         const val TOKEN = "$PREFIX/users/token"

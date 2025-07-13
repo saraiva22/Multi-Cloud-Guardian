@@ -2,6 +2,7 @@ package pt.isel.leic.multicloudguardian.http.model.user
 
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 import pt.isel.leic.multicloudguardian.domain.preferences.CostType
 import pt.isel.leic.multicloudguardian.domain.preferences.LocationType
@@ -14,6 +15,10 @@ data class UserCreateInputModel(
         min = Username.MIN_LENGTH,
         max = Username.MAX_LENGTH,
         message = "Username must have between ${Username.MIN_LENGTH} and ${Username.MAX_LENGTH} characters",
+    )
+    @field:Pattern(
+        regexp = "^[a-zA-Z0-9._-]+$",
+        message = "Username can only contain letters, numbers, '.', '-' and '_'",
     )
     val username: String,
     @field:NotBlank(message = "Email must not be blank")
