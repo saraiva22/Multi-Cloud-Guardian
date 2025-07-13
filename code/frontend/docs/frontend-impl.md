@@ -11,15 +11,23 @@ Contains all **screens** of the application, organized using **Expo Router**. Th
 - **`_layout.tsx`** – Defines the common layout for nested routes.
 - **`index.tsx`** – The root screen (e.g., Home or Welcome).
 
-#### 📁 `(modals)/` - Modal Screens
+#### 📁 `(auth)/` - Modal Screens
+
+Holds **modal screens**, such as:
+
+- `sign-in.tsx` – Screen for user authentication (login).
+- `sign-up.tsx` - Screen for user registration (account creation).
 
 Holds **modal screens**, such as:
 
 - `create-file.tsx` – Modal for creating a new file.
 - `create-folder.tsx` - Modal for creating a new folder.
-- `create.tsx` - Generic creation modal (file or folder).
+- `create-invite.tsx`- Modal for creating a new invite to a shared folder.
+- `preferences.tsx` - Modal for view user preferences.
+- `received-invites.tsx` - Modal for viewing and managing received invitations to shared folders.
+- `sent-invites.tsx` - Modal for viewing and managing sent invitations to shared folders.
 - `signup-success.tsx` – Modal shown after successful signup.
-- `preference.tsx` – Modal for updating user preferences (not part of main tab flow).
+- `storage-details.tsx` – Modal for displaying detailed storage information, such as usage summaries or breakdowns by category.
 
 #### 📁 `(tabs)/` - Tab Navigation Screens
 
@@ -107,6 +115,7 @@ Contains **custom React hooks** to encapsulate and reuse logic.
 Implements the core **application logic** that communicates with the backend or handles data manipulation.
 
 - `media/` – Media-related API logic (e.g., Problem).
+- `notifications/` - Managing notifications, implementing the SSE manager (Server Sent Events) for real-time updates.
 - `security/` – Authentication, encryption, session handling.
 - `storage/` – Storage management (e.g., cloud provider interaction, secure storage).
 - `users/` – User-related services (e.g., profile, preferences).

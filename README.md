@@ -112,14 +112,22 @@ npm install
    [![App Store](https://img.shields.io/badge/App_Store-0D96F6?style=for-the-badge&logo=app-store&logoColor=white)](https://apps.apple.com/us/app/expo-go/id982107779)
    [![Play Store](https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=host.exp.exponent&hl=en)
 
-### 🧰 Installation
+### ⚙️ Configuration
 
-#### Backend
+#### 🖥️ Backend – Development Mode
+
+1. Clone the repository and navigate to the backend folder:
 
 ```bash
 git clone https://github.com/saraiva22/Multi-Cloud-Guardian.git
-cd Multi-Cloud-Guardian/code/backend/multicloud-guardian
-docker-compose up -d
+cd  Multi-Cloud-Guardian/code/backend
+
+```
+
+2. Run the startup script:
+
+```bash
+./scripts/start-all.sh
 ```
 
 > ⚠️ **Important**: To run the backend, you will need a valid `.env` file located at:  
@@ -129,10 +137,59 @@ docker-compose up -d
 >
 > 📧 [a49462@alunos.isel.pt](mailto:a49462@alunos.isel.pt) to request access to this file.
 
+#### ☁️ Backend – Production Mode
+
+To use the backend in production mode, send requests to the production URL (hosted on Cloud SQL).
+You can request the production URL from the developer.
+
 #### Frontend
 
+### 📲 Frontend – Using Backend in Development Mode
+
+1. Navigate to the frontend project folder:
+
 ```bash
-cd Multi-Cloud-Guardian/code/frontend
+cd  Multi-Cloud-Guardian/code/frontend/HttpService.ts
+```
+
+2. Set the local IP in the LOCAL_IP constant inside HttpService.ts:
+
+```bash
+const LOCAL_IP = <your-local-ip>
+```
+
+3. Start the app:
+
+```bash
+cd  Multi-Cloud-Guardian/code/frontend/
+npx expo start
+```
+
+### 🚀 Frontend – Using Backend in Production Mode
+
+1. Navigate to the frontend project folder:
+
+```bash
+cd Multi-Cloud-Guardian/code/frontend/
+```
+
+2. Create a .env file with the following content:
+
+```bash
+EXPO_PUBLIC_APP = <production-url>
+```
+
+> ⚠️ **Important**: To run the frontend, you will need a valid `.env` file located at:  
+> [./code/frontend/](./code/frontend/)
+>
+> Please contact **Francisco Saraiva (Developer)** to request access to this file.
+>
+> 📧 [a49462@alunos.isel.pt](mailto:a49462@alunos.isel.pt) to request access to this file.
+
+3. Start the app:
+
+```bash
+cd  Multi-Cloud-Guardian/code/frontend/
 npx expo start
 ```
 
