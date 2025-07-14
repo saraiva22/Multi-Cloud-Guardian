@@ -229,7 +229,7 @@ const HomeScreen = () => {
       const folders = await getFolders(
         token,
         undefined,
-        undefined,
+        FolderType.PRIVATE,
         OwnershipFilter.OWNER
       );
       dispatch({

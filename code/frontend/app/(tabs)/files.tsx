@@ -20,7 +20,7 @@ import {
   isProblem,
   Problem,
 } from "@/services/media/Problem";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { getFiles } from "@/services/storage/StorageService";
 import { removeValueFor } from "@/services/storage/SecureStorage";
 import FileItemComponent from "@/components/FileItemComponent";
@@ -94,6 +94,7 @@ type Action =
       filter: FilterOption;
     }
   | { type: "search"; search: string }
+  | { type: "delete-select-file"; file: File }
   | {
       type: "reset";
     };
@@ -208,6 +209,18 @@ function reducer(state: State, action: Action): State {
               searchValue: "",
             },
           };
+        case "delete-select-file":
+          return {
+            ...state,
+            tag: "loaded",
+            files: {
+              ...state.files,
+              content: state.files.content.filter(
+                (file) => file.fileId !== action.file.fileId
+              ),
+              totalElements: state.files.totalElements - 1,
+            },
+          };
         default:
           logUnexpectedAction(state, action);
           return state;
@@ -278,6 +291,23 @@ const FilesScreen = () => {
     });
   };
 
+  useEffect(() => {
+    if (state.tag === "begin") {
+      loadData();
+    }
+
+    if (state.tag === "error") {
+      const message = isProblem(state.error)
+        ? getProblemMessage(state.error)
+        : state.error;
+      Alert.alert("Error", `${message}`);
+      setUsername(null);
+      setIsLogged(false);
+      removeValueFor(KEY_NAME);
+      router.replace("/sign-in");
+    }
+  }, [state]);
+
   // Handle input changes
   function handleChange(inputName: string, inputValue: string | boolean | any) {
     dispatch({
@@ -286,6 +316,22 @@ const FilesScreen = () => {
       inputValue,
     });
   }
+
+  const loadData = async () => {
+    try {
+      dispatch({ type: "start-loading" });
+      const filterValue = filter.value || undefined;
+      const files = await getFiles(token, sort.sortBy, search, filterValue);
+
+      dispatch({ type: "loading-success", files });
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        `${isProblem(error) ? getProblemMessage(error) : error}`
+      );
+      dispatch({ type: "loading-error", error: error });
+    }
+  };
 
   // Handle Fetch More Files
   const fetchMoreFiles = async () => {
@@ -312,39 +358,6 @@ const FilesScreen = () => {
       dispatch({ type: "loading-error", error: error });
     }
   };
-
-  const loadData = async () => {
-    try {
-      dispatch({ type: "start-loading" });
-      const filterValue = filter.value || undefined;
-      const files = await getFiles(token, sort.sortBy, search, filterValue);
-
-      dispatch({ type: "loading-success", files });
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        `${isProblem(error) ? getProblemMessage(error) : error}`
-      );
-      dispatch({ type: "loading-error", error: error });
-    }
-  };
-
-  useEffect(() => {
-    if (state.tag === "begin") {
-      loadData();
-    }
-
-    if (state.tag === "error") {
-      const message = isProblem(state.error)
-        ? getProblemMessage(state.error)
-        : state.error;
-      Alert.alert("Error", `${message}`);
-      setUsername(null);
-      setIsLogged(false);
-      removeValueFor(KEY_NAME);
-      router.replace("/sign-in");
-    }
-  }, [state]);
 
   const onRefresh = async () => {
     setTimeout(() => {
@@ -498,7 +511,11 @@ const FilesScreen = () => {
             ref={filterSheetRef}
             onFilterChange={handleSelectFilter}
           />
-          <MoveBottomSheet ref={moveSheetRef} file={selectFile} />
+          <MoveBottomSheet
+            ref={moveSheetRef}
+            file={selectFile}
+            onDelete={(file) => dispatch({ type: "delete-select-file", file })}
+          />
         </SafeAreaView>
       );
   }

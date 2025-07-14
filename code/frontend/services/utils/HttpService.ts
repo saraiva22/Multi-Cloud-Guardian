@@ -1,8 +1,8 @@
 import { useAuthentication } from "@/context/AuthProvider";
 import { MEDIA_TYPE_PROBLEM, Problem } from "../media/Problem";
 
-const LOCAL_IP = "192.168.1.7";
-const PORT = "8080";
+const LOCAL_IP = "192.168.1.71";
+const PORT = "8088";
 
 export const PREFIX_API = `http://${LOCAL_IP}:${PORT}/api`; // Dev Mode
 //export const PREFIX_API = `${process.env.EXPO_PUBLIC_APP}/api;

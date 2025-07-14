@@ -61,6 +61,9 @@ This section provides links and context for exploring the backend codebase and i
 - [**Backend Architecture Overview**](./code/backend/docs/backend-impl.md)  
   Overview of the backend structure and module responsibilities.
 
+- [**API Documentation and Organization**](./code/backend/docs/http-api.md)  
+  Detailed documentation of the API endpoints, their organization into Users, Files, and Folders groups, and usage examples.
+
 ---
 
 ### 📚 Frontend Documentation
@@ -149,7 +152,7 @@ You can request the production URL from the developer.
 1. Navigate to the frontend project folder:
 
 ```bash
-cd  Multi-Cloud-Guardian/code/frontend/HttpService.ts
+cd  Multi-Cloud-Guardian/code/frontend/services/utils/HttpService.ts
 ```
 
 2. Set the local IP in the LOCAL_IP constant inside HttpService.ts:

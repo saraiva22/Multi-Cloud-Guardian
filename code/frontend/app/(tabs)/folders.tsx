@@ -35,7 +35,6 @@ import OwnershipSelector, {
   OwnershipCombination,
   ownershipOptions,
 } from "@/components/OwnershipSelector";
-import { FolderType } from "@/domain/storage/FolderType";
 
 // The State
 type State =
@@ -45,6 +44,9 @@ type State =
       sort: SortOption;
       filter: OwnershipCombination;
       search: string;
+      inputs: {
+        searchValue: string;
+      };
     }
   | {
       tag: "loading";
@@ -52,16 +54,21 @@ type State =
       sort: SortOption;
       filter: OwnershipCombination;
       search: string;
+      inputs: {
+        searchValue: string;
+      };
     }
   | {
       tag: "loaded";
       folders: PageResult<Folder>;
       refreshing: boolean;
       sort: SortOption;
+      search: string;
       filter: OwnershipCombination;
       inputs: {
         searchValue: string;
       };
+      isFetchingMore: boolean;
     }
   | { tag: "error"; error: Problem };
 
@@ -78,13 +85,18 @@ type Action =
       inputValue: string | number;
     }
   | { type: "loading-error"; error: Problem }
+  | { type: "fetch-more-start" }
+  | { type: "fetch-more-success"; files: PageResult<Folder> }
   | {
       type: "refreshing";
       refreshing: boolean;
       sort: SortOption;
       filter: OwnershipCombination;
     }
-  | { type: "search"; searchValue: string };
+  | { type: "search"; searchValue: string }
+  | {
+      type: "reset";
+    };
 
 // The Logger
 function logUnexpectedAction(state: State, action: Action) {
@@ -102,6 +114,9 @@ function reducer(state: State, action: Action): State {
           sort: state.sort,
           search: state.search,
           filter: state.filter,
+          inputs: {
+            searchValue: state.inputs.searchValue,
+          },
         };
       } else {
         logUnexpectedAction(state, action);
@@ -116,8 +131,10 @@ function reducer(state: State, action: Action): State {
           sort: state.sort,
           filter: state.filter,
           inputs: {
-            searchValue: "",
+            searchValue: state.inputs.searchValue,
           },
+          search: state.search,
+          isFetchingMore: false,
         };
       } else if (action.type === "loading-error") {
         return { tag: "error", error: action.error };
@@ -136,6 +153,9 @@ function reducer(state: State, action: Action): State {
             sort: action.sort,
             filter: action.filter,
             search: "",
+            inputs: {
+              searchValue: "",
+            },
           };
         case "edit":
           return {
@@ -148,6 +168,8 @@ function reducer(state: State, action: Action): State {
               ...state.inputs,
               [action.inputName]: action.inputValue,
             },
+            search: state.search,
+            isFetchingMore: state.isFetchingMore,
           };
         case "search":
           return {
@@ -156,6 +178,34 @@ function reducer(state: State, action: Action): State {
             sort: state.sort,
             filter: state.filter,
             search: action.searchValue,
+            inputs: {
+              searchValue: state.inputs.searchValue,
+            },
+          };
+        case "fetch-more-start":
+          return {
+            ...state,
+            isFetchingMore: true,
+          };
+        case "fetch-more-success":
+          return {
+            ...state,
+            folders: {
+              ...action.files,
+              content: [...state.folders.content, ...action.files.content],
+            },
+            isFetchingMore: false,
+          };
+        case "reset":
+          return {
+            tag: "begin",
+            refreshing: false,
+            sort: sortOptions[0],
+            search: "",
+            filter: ownershipOptions[0],
+            inputs: {
+              searchValue: "",
+            },
           };
         default:
           logUnexpectedAction(state, action);
@@ -170,6 +220,9 @@ const firstState: State = {
   sort: sortOptions[0],
   search: "",
   filter: ownershipOptions[0],
+  inputs: {
+    searchValue: "",
+  },
 };
 
 const SIZE_MIN_FOLDER = 2;
@@ -186,10 +239,7 @@ const FoldersScreen = () => {
 
   const filter = state.tag === "error" ? ownershipOptions[0] : state.filter;
 
-  const search =
-    state.tag === "loading" && state.search
-      ? state.search
-      : state?.search || "";
+  const search = state.tag === "error" ? "" : state.search;
 
   const openSortSheet = () => {
     filterSheetRef.current?.close();
@@ -243,6 +293,37 @@ const FoldersScreen = () => {
       );
       dispatch({ type: "loading-success", folders });
     } catch (error) {
+      Alert.alert(
+        "Error",
+        `${isProblem(error) ? getProblemMessage(error) : error}`
+      );
+      dispatch({ type: "loading-error", error: error });
+    }
+  };
+
+  // Handle Fetch More Files
+  const fetchMoreFolders = async () => {
+    if (state.tag !== "loaded" || state.isFetchingMore || state.folders.last) {
+      return;
+    }
+
+    try {
+      dispatch({ type: "fetch-more-start" });
+
+      const nextPage = state.folders.number + 1;
+      const folderType = filter.folderType || undefined;
+
+      const moreFiles = await getFolders(
+        token,
+        sort.sortBy,
+        folderType,
+        filter.ownership,
+        search,
+        nextPage
+      );
+
+      dispatch({ type: "fetch-more-success", files: moreFiles });
+    } catch (error) {
       dispatch({ type: "loading-error", error: error });
     }
   };
@@ -255,8 +336,6 @@ const FoldersScreen = () => {
     if (state.tag === "error") {
       const message = isProblem(state.error)
         ? getProblemMessage(state.error)
-        : isProblem(state.error.body)
-        ? getProblemMessage(state.error.body)
         : state.error;
       Alert.alert("Error", `${message}`);
       setUsername(null);
@@ -277,16 +356,13 @@ const FoldersScreen = () => {
     }, 200);
   };
 
-  const searchValue =
-    state.tag === "loaded" && state.inputs.searchValue
-      ? state.inputs.searchValue
-      : state.inputs?.searchValue || "";
+  const searchValue = state.tag === "loaded" ? state.inputs.searchValue : "";
 
   // Debounced search effect
   useEffect(() => {
     if (state.tag !== "loaded") return;
     const value = searchValue.trim();
-    if (value.length <= SIZE_MIN_FOLDER) {
+    if (value.length <= SIZE_MIN_FOLDER || value === search) {
       return;
     }
 
@@ -334,7 +410,7 @@ const FoldersScreen = () => {
     case "loaded":
       return (
         <SafeAreaView className="bg-primary h-full">
-          <View>
+          <View style={{ flex: 1 }}>
             <View className="my-6 px-5 space-y-6">
               <View className="justify-between items-start flex-row mb-6">
                 <Text className="text-2xl font-psemibold text-white">
@@ -372,6 +448,17 @@ const FoldersScreen = () => {
                       resizeMode="contain"
                     />
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => dispatch({ type: "reset" })}
+                  >
+                    <Image
+                      source={icons.reset}
+                      className="w-[18px] h-[20px]"
+                      resizeMode="contain"
+                      tintColor="white"
+                    />
+                  </TouchableOpacity>
                 </View>
               </View>
               <SearchInput
@@ -401,10 +488,13 @@ const FoldersScreen = () => {
                   <FolderItemGrid item={item} />
                 )
               }
+              style={{ flex: 1 }}
               contentContainerStyle={{
                 paddingBottom: 80,
                 paddingHorizontal: isVerticalLayout ? 0 : 4,
               }}
+              onEndReached={fetchMoreFolders}
+              onEndReachedThreshold={0.1}
               ListEmptyComponent={() => (
                 <View className="flex-1 items-center justify-center py-10">
                   <Text className="text-white text-lg font-semibold mb-2 text-center">
@@ -412,6 +502,13 @@ const FoldersScreen = () => {
                   </Text>
                 </View>
               )}
+              ListFooterComponent={() =>
+                state.isFetchingMore ? (
+                  <View className="bg-primary py-4 justify-center items-center">
+                    <ActivityIndicator size="small" color="#fff" />
+                  </View>
+                ) : null
+              }
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
               }
