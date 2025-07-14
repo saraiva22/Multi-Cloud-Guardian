@@ -30,13 +30,15 @@ import { EventSourceListener } from "react-native-sse";
 type State =
   | { tag: "begin" }
   | { tag: "loading" }
-  | { tag: "loaded"; invites: PageResult<Invite> }
+  | { tag: "loaded"; invites: PageResult<Invite>; isFetchingMore: boolean }
   | { tag: "error"; error: Problem | string };
 
 // The Action
 type Action =
   | { type: "start-loading" }
   | { type: "loading-success"; invites: PageResult<Invite> }
+  | { type: "fetch-more-start" }
+  | { type: "fetch-more-success"; invites: PageResult<Invite> }
   | { type: "loading-error"; error: Problem | string }
   | { type: "invite-response"; invite: Invite };
 
@@ -58,6 +60,7 @@ function reducer(state: State, action: Action): State {
       return {
         tag: "loaded",
         invites: action.invites,
+        isFetchingMore: false,
       };
     case "loading-error":
       if (state.tag !== "loading") {
@@ -78,6 +81,28 @@ function reducer(state: State, action: Action): State {
               : invite
           ),
         },
+        isFetchingMore: false,
+      };
+    case "fetch-more-start":
+      if (state.tag !== "loaded") {
+        return logUnexpectedAction(state, action);
+      }
+      return {
+        ...state,
+        isFetchingMore: true,
+      };
+
+    case "fetch-more-success":
+      if (state.tag !== "loaded") {
+        return logUnexpectedAction(state, action);
+      }
+      return {
+        ...state,
+        invites: {
+          ...action.invites,
+          content: [...state.invites.content, ...action.invites.content],
+        },
+        isFetchingMore: false,
       };
   }
 }
@@ -92,21 +117,14 @@ const SentInvites = () => {
 
   useEffect(() => {
     if (state.tag === "begin") {
-      dispatch({ type: "start-loading" });
       handleGetInvites();
     }
 
     if (state.tag === "error") {
-      Alert.alert(
-        "Error",
-        `${
-          isProblem(state.error)
-            ? getProblemMessage(state.error)
-            : isProblem(state.error.body)
-            ? getProblemMessage(state.error.body)
-            : state.error
-        }`
-      );
+      const message = isProblem(state.error)
+        ? getProblemMessage(state.error)
+        : state.error;
+      Alert.alert("Error", `${message}`);
       setUsername(null);
       setIsLogged(false);
       removeValueFor(KEY_NAME);
@@ -120,9 +138,8 @@ const SentInvites = () => {
     }
   }, []);
 
-  // Handle EventListener - New Invite
+  // Handle EventListener - Invite Response
   const handleInvite: EventSourceListener<CustomEvents> = (event) => {
-    console.log("EVENTO ", event);
     if (event.type === "inviteResponse") {
       const eventData = JSON.parse(event.data);
       const newInvite = {
@@ -139,6 +156,7 @@ const SentInvites = () => {
 
   // Handle FetchInvites
   async function handleGetInvites() {
+    dispatch({ type: "start-loading" });
     try {
       const invites = await getSentInvites(token);
       dispatch({ type: "loading-success", invites });
@@ -150,6 +168,24 @@ const SentInvites = () => {
       dispatch({ type: "loading-error", error: error });
     }
   }
+
+  // Handle Fetch More Invites
+  const fetchMoreFolders = async () => {
+    if (state.tag !== "loaded" || state.isFetchingMore || state.invites.last) {
+      return;
+    }
+
+    try {
+      dispatch({ type: "fetch-more-start" });
+      const nextPage = state.invites.number + 1;
+
+      const moreInvites = await getSentInvites(token, undefined, nextPage);
+
+      dispatch({ type: "fetch-more-success", invites: moreInvites });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
+  };
 
   // Render UI
   switch (state.tag) {
@@ -190,6 +226,9 @@ const SentInvites = () => {
             renderItem={({ item }) => (
               <InviteItemComponent isReceived={true} item={item} />
             )}
+            style={{ flex: 1 }}
+            onEndReached={fetchMoreFolders}
+            onEndReachedThreshold={0.1}
             ListEmptyComponent={() => (
               <EmptyState
                 title="No Invites Sent"

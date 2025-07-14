@@ -4,7 +4,6 @@ import {
   Button,
   SafeAreaViewBase,
   SafeAreaView,
-  FlatList,
   TouchableOpacity,
   Image,
 } from "react-native";

@@ -299,9 +299,7 @@ const HomeScreen = () => {
         undefined,
         FolderType.PRIVATE,
         OwnershipFilter.OWNER,
-        undefined,
-        0,
-        1
+        undefined
       );
       dispatch({
         type: "loading-success",
@@ -355,8 +353,7 @@ const HomeScreen = () => {
         FolderType.PRIVATE,
         OwnershipFilter.OWNER,
         undefined,
-        nextPage,
-        1
+        nextPage
       );
 
       dispatch({ type: "fetch-more-folders-success", folders: moreFiles });

@@ -25,17 +25,16 @@ import {
 } from "@/services/storage/StorageService";
 import { router } from "expo-router";
 import { icons } from "@/constants";
-import { GetStringOptions } from "expo-clipboard";
+
 import { removeValueFor } from "@/services/storage/SecureStorage";
 import { InviteStatusType } from "@/domain/storage/InviteStatusType";
 import InviteItemComponent from "@/components/InviteItemComponent";
-import EmptyState from "@/components/EmptyState";
 
 // The State
 type State =
   | { tag: "begin" }
   | { tag: "loading" }
-  | { tag: "loaded"; invites: PageResult<Invite> }
+  | { tag: "loaded"; invites: PageResult<Invite>; isFetchingMore: boolean }
   | { tag: "validating"; inviteId: number; invites: PageResult<Invite> }
   | { tag: "error"; error: Problem | string }
   | { tag: "redirect"; folderId: number };
@@ -45,6 +44,8 @@ type Action =
   | { type: "start-loading" }
   | { type: "loading-success"; invites: PageResult<Invite> }
   | { type: "loading-error"; error: Problem | string }
+  | { type: "fetch-more-start" }
+  | { type: "fetch-more-success"; invites: PageResult<Invite> }
   | { type: "start-validating"; inviteId: number }
   | { type: "new-invite"; invite: Invite }
   | { type: "accepted-invite"; folderId: number }
@@ -68,6 +69,7 @@ function reducer(state: State, action: Action): State {
       return {
         tag: "loaded",
         invites: action.invites,
+        isFetchingMore: false,
       };
     case "loading-error":
       if (state.tag !== "loading") {
@@ -108,6 +110,7 @@ function reducer(state: State, action: Action): State {
               : invite
           ),
         },
+        isFetchingMore: false,
       };
     case "start-validating":
       if (state.tag !== "loaded") {
@@ -117,6 +120,28 @@ function reducer(state: State, action: Action): State {
         tag: "validating",
         inviteId: action.inviteId,
         invites: state.invites,
+      };
+
+    case "fetch-more-start":
+      if (state.tag !== "loaded") {
+        return logUnexpectedAction(state, action);
+      }
+      return {
+        ...state,
+        isFetchingMore: true,
+      };
+
+    case "fetch-more-success":
+      if (state.tag !== "loaded") {
+        return logUnexpectedAction(state, action);
+      }
+      return {
+        ...state,
+        invites: {
+          ...action.invites,
+          content: [...state.invites.content, ...action.invites.content],
+        },
+        isFetchingMore: false,
       };
   }
 }
@@ -131,20 +156,14 @@ const ReceivedInvites = () => {
 
   useEffect(() => {
     if (state.tag === "begin") {
-      dispatch({ type: "start-loading" });
       handleGetInvites();
     }
+
     if (state.tag === "error") {
-      Alert.alert(
-        "Error",
-        `${
-          isProblem(state.error)
-            ? getProblemMessage(state.error)
-            : isProblem(state.error.body)
-            ? getProblemMessage(state.error.body)
-            : state.error
-        }`
-      );
+      const message = isProblem(state.error)
+        ? getProblemMessage(state.error)
+        : state.error;
+      Alert.alert("Error", `${message}`);
       setUsername(null);
       setIsLogged(false);
       removeValueFor(KEY_NAME);
@@ -179,6 +198,7 @@ const ReceivedInvites = () => {
 
   // Handle FetchInvites()
   async function handleGetInvites() {
+    dispatch({ type: "start-loading" });
     try {
       const invites = await getReceivedInvites(token);
       dispatch({ type: "loading-success", invites });
@@ -190,6 +210,25 @@ const ReceivedInvites = () => {
       dispatch({ type: "loading-error", error: error });
     }
   }
+
+  // Handle Fetch More Invites
+  const fetchMoreFolders = async () => {
+    if (state.tag !== "loaded" || state.isFetchingMore || state.invites.last) {
+      return;
+    }
+
+    try {
+      dispatch({ type: "fetch-more-start" });
+
+      const nextPage = state.invites.number + 1;
+
+      const moreInvites = await getReceivedInvites(token, undefined, nextPage);
+
+      dispatch({ type: "fetch-more-success", invites: moreInvites });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
+  };
 
   // Handle Validate Invite()
   async function handleValidationInvite(
@@ -285,6 +324,8 @@ const ReceivedInvites = () => {
                 }
               />
             )}
+            onEndReached={fetchMoreFolders}
+            onEndReachedThreshold={0.1}
             ListEmptyComponent={() => (
               <Text className="text-[18px] font-semibold text-white text-center mb-16 mt-4">
                 Not Received Invite
