@@ -416,6 +416,16 @@ const CreateFolder = () => {
           </Text>
         </SafeAreaView>
       );
+    case "redirect":
+      return (
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
+          <Text className="mt-4 text-white text-lg font-semibold">
+            Redirect...
+          </Text>
+        </SafeAreaView>
+      );
+
     case "error":
       return (
         <SafeAreaView className="bg-primary flex-1">

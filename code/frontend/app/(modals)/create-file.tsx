@@ -44,6 +44,7 @@ type State =
         folderType: FolderType | undefined;
       };
       folders: PageResult<Folder>;
+      isFetchingMore: boolean;
     }
   | { tag: "error"; error: Problem | string }
   | {
@@ -63,6 +64,8 @@ type Action =
   | { type: "start-loading" }
   | { type: "loading-success"; folders: PageResult<Folder> }
   | { type: "loading-error"; error: Problem | string }
+  | { type: "fetch-more-start" }
+  | { type: "fetch-more-success"; folders: PageResult<Folder> }
   | { type: "edit"; inputName: string; inputValue: string | boolean | any }
   | { type: "submit" }
   | { type: "error"; message: Problem | string }
@@ -97,6 +100,7 @@ function reducer(state: State, action: Action): State {
             folderType: undefined,
           },
           folders: action.folders,
+          isFetchingMore: false,
         };
       } else if (action.type === "loading-error") {
         return {
@@ -115,6 +119,7 @@ function reducer(state: State, action: Action): State {
           tag: "editing",
           error: undefined,
           inputs: { ...state.inputs, [action.inputName]: action.inputValue },
+          isFetchingMore: state.isFetchingMore,
           folders: state.folders,
         };
       } else if (action.type === "submit") {
@@ -127,6 +132,20 @@ function reducer(state: State, action: Action): State {
           folderId: state.inputs.folderId,
           folderType: state.inputs.folderType,
           folders: state.folders,
+        };
+      } else if (action.type === "fetch-more-start") {
+        return {
+          ...state,
+          isFetchingMore: true,
+        };
+      } else if (action.type === "fetch-more-success") {
+        return {
+          ...state,
+          folders: {
+            ...action.folders,
+            content: [...state.folders.content, ...action.folders.content],
+          },
+          isFetchingMore: false,
         };
       } else {
         logUnexpectedAction(state, action);
@@ -149,6 +168,7 @@ function reducer(state: State, action: Action): State {
             folderType: undefined,
           },
           folders: state.folders,
+          isFetchingMore: false,
         };
       } else {
         logUnexpectedAction(state, action);
@@ -191,6 +211,7 @@ const CreateFile = () => {
     });
   }
 
+  // Handle FetchRecentFolders()
   async function handleGetFolder() {
     try {
       const folders = await getFolders(token, sortBy);
@@ -204,6 +225,31 @@ const CreateFile = () => {
       dispatch({ type: "loading-error", error: error });
     }
   }
+
+  // Handle Fetch More Files
+  const fetchMoreFolders = async () => {
+    if (state.tag !== "editing" || state.isFetchingMore || state.folders.last) {
+      return;
+    }
+
+    try {
+      dispatch({ type: "fetch-more-start" });
+
+      const nextPage = state.folders.number + 1;
+      const moreFiles = await getFolders(
+        token,
+        sortBy,
+        undefined,
+        undefined,
+        undefined,
+        nextPage
+      );
+
+      dispatch({ type: "fetch-more-success", folders: moreFiles });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
+  };
 
   // Handle file picker
   async function openPicker() {
@@ -351,6 +397,15 @@ const CreateFile = () => {
           </Text>
         </SafeAreaView>
       );
+    case "redirect":
+      return (
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
+          <Text className="mt-4 text-white text-lg font-semibold">
+            Redirect...
+          </Text>
+        </SafeAreaView>
+      );
     case "editing":
       return (
         <SafeAreaView className="bg-primary h-full">
@@ -463,6 +518,8 @@ const CreateFile = () => {
                       selectedFolderId={state.inputs.folderId}
                     />
                   )}
+                  onEndReached={fetchMoreFolders}
+                  onEndReachedThreshold={0.1}
                   ListEmptyComponent={() => (
                     <View className="flex-1 items-center justify-center py-10">
                       <Text className="text-white text-lg font-semibold mb-2 text-center">

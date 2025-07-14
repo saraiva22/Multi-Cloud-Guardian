@@ -297,7 +297,7 @@ const CreateInvite = () => {
     const timeoutId = setTimeout(async () => {
       try {
         dispatch({ type: "user-search" });
-        const users = await getUsers(value, token,0,4);
+        const users = await getUsers(value, token, 0, 4);
         dispatch({ type: "search-success", users: users.content });
       } catch (error) {
         Alert.alert(
@@ -325,6 +325,15 @@ const CreateInvite = () => {
           <ActivityIndicator size="large" color="#fff" />
           <Text className="mt-4 text-white text-lg font-semibold">
             Loading...
+          </Text>
+        </SafeAreaView>
+      );
+    case "redirect":
+      return (
+        <SafeAreaView className="bg-primary flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#fff" />
+          <Text className="mt-4 text-white text-lg font-semibold">
+            Redirect...
           </Text>
         </SafeAreaView>
       );
