@@ -40,8 +40,8 @@ type State =
         fileExtension: string;
         encryption: boolean;
         file: any;
-        parentFolderId: number | undefined;
-        parentFolderType: FolderType | undefined;
+        folderId: number | undefined;
+        folderType: FolderType | undefined;
       };
       folders: PageResult<Folder>;
     }
@@ -52,8 +52,8 @@ type State =
       fileExtension: string;
       encryption: boolean;
       file: any;
-      parentFolderId: number | undefined;
-      parentFolderType: FolderType | undefined;
+      folderId: number | undefined;
+      folderType: FolderType | undefined;
       folders: PageResult<Folder>;
     }
   | { tag: "redirect" };
@@ -93,8 +93,8 @@ function reducer(state: State, action: Action): State {
             fileExtension: "",
             encryption: false,
             file: null,
-            parentFolderId: undefined,
-            parentFolderType: undefined,
+            folderId: undefined,
+            folderType: undefined,
           },
           folders: action.folders,
         };
@@ -124,8 +124,8 @@ function reducer(state: State, action: Action): State {
           fileExtension: state.inputs.fileExtension,
           encryption: state.inputs.encryption,
           file: state.inputs.file,
-          parentFolderId: state.inputs.parentFolderId,
-          parentFolderType: state.inputs.parentFolderType,
+          folderId: state.inputs.folderId,
+          folderType: state.inputs.folderType,
           folders: state.folders,
         };
       } else {
@@ -145,8 +145,8 @@ function reducer(state: State, action: Action): State {
             fileExtension: "",
             encryption: false,
             file: null,
-            parentFolderId: undefined,
-            parentFolderType: undefined,
+            folderId: undefined,
+            folderType: undefined,
           },
           folders: state.folders,
         };
@@ -194,6 +194,7 @@ const CreateFile = () => {
   async function handleGetFolder() {
     try {
       const folders = await getFolders(token, sortBy);
+
       dispatch({ type: "loading-success", folders });
     } catch (error) {
       Alert.alert(
@@ -254,7 +255,7 @@ const CreateFile = () => {
     const fileExtension = state.inputs.fileExtension;
     const encryption = state.inputs.encryption;
     const file = state.inputs.file;
-    const parentFolderId = state.inputs.parentFolderId;
+    const folderId = state.inputs.folderId;
 
     if (!fileName?.trim() || !file || fileName.length === 0) {
       Alert.alert("Error", "Please fill in all fields");
@@ -263,14 +264,14 @@ const CreateFile = () => {
     }
 
     try {
-      if (parentFolderId) {
+      if (folderId) {
         await uploadFile(
           file,
           fileExtension,
           encryption,
           keyMaster,
           token,
-          parentFolderId.toString()
+          folderId.toString()
         );
       } else {
         await uploadFile(file, fileExtension, encryption, keyMaster, token);
@@ -306,6 +307,11 @@ const CreateFile = () => {
     state.tag === "editing" && Array.isArray(state.folders?.content)
       ? state.folders.content
       : [];
+
+  const folderType =
+    state.tag === "editing" && state.inputs.folderType
+      ? state.inputs.folderType
+      : undefined;
 
   // Render UI
   switch (state.tag) {
@@ -375,8 +381,7 @@ const CreateFile = () => {
               style={{ height: 0.5, backgroundColor: "#F8F8F8", marginTop: 18 }}
             />
 
-            {(state.inputs.parentFolderId === undefined ||
-              state.inputs.parentFolderType === FolderType.PRIVATE) && (
+            {(!state.inputs.folderId || FolderType.PRIVATE === folderType) && (
               <>
                 <EncryptionToggle
                   value={encryption}
@@ -428,8 +433,8 @@ const CreateFile = () => {
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
-                    handleChange("parentFolderId", undefined);
-                    handleChange("parentFolderType", undefined);
+                    handleChange("folderId", undefined);
+                    handleChange("folderType", undefined);
                   }}
                   className="m-4"
                 >
@@ -451,10 +456,11 @@ const CreateFile = () => {
                     <FolderItemComponent
                       key={item.folderId}
                       item={item}
-                      onPress={(folderId) =>
-                        handleChange("parentFolderId", folderId)
-                      }
-                      selectedFolderId={state.inputs.parentFolderId}
+                      onPress={(folderId) => {
+                        handleChange("folderId", folderId);
+                        handleChange("folderType", item.type);
+                      }}
+                      selectedFolderId={state.inputs.folderId}
                     />
                   )}
                   ListEmptyComponent={() => (
