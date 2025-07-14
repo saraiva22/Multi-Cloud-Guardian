@@ -86,7 +86,7 @@ type Action =
     }
   | { type: "loading-error"; error: Problem }
   | { type: "fetch-more-start" }
-  | { type: "fetch-more-success"; files: PageResult<Folder> }
+  | { type: "fetch-more-success"; folders: PageResult<Folder> }
   | {
       type: "refreshing";
       refreshing: boolean;
@@ -191,8 +191,8 @@ function reducer(state: State, action: Action): State {
           return {
             ...state,
             folders: {
-              ...action.files,
-              content: [...state.folders.content, ...action.files.content],
+              ...action.folders,
+              content: [...state.folders.content, ...action.folders.content],
             },
             isFetchingMore: false,
           };
@@ -301,7 +301,7 @@ const FoldersScreen = () => {
     }
   };
 
-  // Handle Fetch More Files
+  // Handle Fetch More Folders
   const fetchMoreFolders = async () => {
     if (state.tag !== "loaded" || state.isFetchingMore || state.folders.last) {
       return;
@@ -313,7 +313,7 @@ const FoldersScreen = () => {
       const nextPage = state.folders.number + 1;
       const folderType = filter.folderType || undefined;
 
-      const moreFiles = await getFolders(
+      const moreFolders = await getFolders(
         token,
         sort.sortBy,
         folderType,
@@ -322,7 +322,7 @@ const FoldersScreen = () => {
         nextPage
       );
 
-      dispatch({ type: "fetch-more-success", files: moreFiles });
+      dispatch({ type: "fetch-more-success", folders: moreFolders });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
     }
@@ -474,7 +474,7 @@ const FoldersScreen = () => {
               horizontal={false}
               numColumns={isVerticalLayout ? 1 : 2}
               key={isVerticalLayout ? "grid" : "list"}
-              keyExtractor={(item, index) => String(item.folderId || index)}
+              keyExtractor={(item) => String(item.folderId)}
               columnWrapperStyle={
                 !isVerticalLayout && {
                   justifyContent: "space-between",

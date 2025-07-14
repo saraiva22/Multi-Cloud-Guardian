@@ -63,7 +63,7 @@ const FolderItem = ({ activeItem, setActiveItem, item }: any) => {
   );
 };
 
-const FolderCard = ({ folders }: any) => {
+const FolderCard = ({ folders, fetchFolders }: any) => {
   const [activeItem, setActiveItem] = useState(folders[0]?.folderId);
 
   const viewableItemsChanged = ({ viewableItems }) => {
@@ -84,10 +84,13 @@ const FolderCard = ({ folders }: any) => {
           item={item}
         />
       )}
+      style={{ flex: 1 }}
       onViewableItemsChanged={viewableItemsChanged}
       viewabilityConfig={{
         itemVisiblePercentThreshold: 70,
       }}
+      onEndReached={fetchFolders}
+      onEndReachedThreshold={0.1}
       contentContainerStyle={{ paddingLeft: 2 }}
       ListEmptyComponent={() => (
         <Text className="text-gray-200 justify-items-center text-base mt-5">

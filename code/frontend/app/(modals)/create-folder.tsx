@@ -36,8 +36,20 @@ import { OwnershipFilter } from "@/domain/storage/OwnershipFilter";
 
 // The State
 type State =
-  | { tag: "begin"; search: string }
-  | { tag: "loading"; search: string }
+  | {
+      tag: "begin";
+      search: string;
+      inputs: {
+        searchValue: string;
+      };
+    }
+  | {
+      tag: "loading";
+      search: string;
+      inputs: {
+        searchValue: string;
+      };
+    }
   | {
       tag: "editing";
       error?: Problem | string;
@@ -47,12 +59,15 @@ type State =
         parentFolderId: number | undefined;
         searchValue: string;
       };
+      search: string;
       folders: PageResult<Folder>;
+      isFetchingMore: boolean;
     }
   | { tag: "error"; error: Problem | string }
   | {
       tag: "submitting";
       folderName: string;
+      search: string;
       folderType: FolderType;
       parentFolderId: number | undefined;
       folders: PageResult<Folder>;
@@ -70,6 +85,8 @@ type Action =
       inputValue: string | number | undefined;
     }
   | { type: "submit" }
+  | { type: "fetch-more-start" }
+  | { type: "fetch-more-success"; folders: PageResult<Folder> }
   | { type: "error"; error: Problem | string }
   | { type: "search"; searchValue: string }
   | { type: "success" };
@@ -85,7 +102,13 @@ function reducer(state: State, action: Action): State {
   switch (state.tag) {
     case "begin":
       if (action.type === "start-loading") {
-        return { tag: "loading", search: state.search };
+        return {
+          tag: "loading",
+          search: state.search,
+          inputs: {
+            searchValue: state.inputs.searchValue,
+          },
+        };
       } else {
         logUnexpectedAction(state, action);
         return state;
@@ -98,8 +121,10 @@ function reducer(state: State, action: Action): State {
             folderName: "",
             folderType: FolderType.PRIVATE,
             parentFolderId: undefined,
-            searchValue: "",
+            searchValue: state.inputs.searchValue,
           },
+          search: state.search,
+          isFetchingMore: false,
           folders: action.folders,
         };
       } else if (action.type === "loading-error") {
@@ -117,8 +142,10 @@ function reducer(state: State, action: Action): State {
       if (action.type === "edit") {
         return {
           tag: "editing",
+          search: state.search,
           error: undefined,
           inputs: { ...state.inputs, [action.inputName]: action.inputValue },
+          isFetchingMore: state.isFetchingMore,
           folders: state.folders,
         };
       } else if (action.type === "submit") {
@@ -128,11 +155,29 @@ function reducer(state: State, action: Action): State {
           folderType: state.inputs.folderType,
           parentFolderId: state.inputs.parentFolderId,
           folders: state.folders,
+          search: state.search,
         };
       } else if (action.type === "search") {
         return {
           tag: "begin",
+          inputs: {
+            searchValue: state.inputs.searchValue,
+          },
           search: action.searchValue,
+        };
+      } else if (action.type === "fetch-more-start") {
+        return {
+          ...state,
+          isFetchingMore: true,
+        };
+      } else if (action.type === "fetch-more-success") {
+        return {
+          ...state,
+          folders: {
+            ...action.folders,
+            content: [...state.folders.content, ...action.folders.content],
+          },
+          isFetchingMore: false,
         };
       } else {
         logUnexpectedAction(state, action);
@@ -154,7 +199,9 @@ function reducer(state: State, action: Action): State {
             parentFolderId: undefined,
             searchValue: "",
           },
+          search: "",
           folders: state.folders,
+          isFetchingMore: false,
         };
       } else {
         logUnexpectedAction(state, action);
@@ -167,7 +214,13 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-const firstState: State = { tag: "begin", search: "" };
+const firstState: State = {
+  tag: "begin",
+  search: "",
+  inputs: {
+    searchValue: "",
+  },
+};
 
 const SIZE_MIN_FOLDER = 2;
 
@@ -176,9 +229,7 @@ const CreateFolder = () => {
   const { token, setIsLogged, setUsername } = useAuthentication();
 
   const search =
-    state.tag === "loading" && state.search
-      ? state.search
-      : state?.search || "";
+    state.tag === "error" || state.tag === "redirect" ? "" : state.search;
 
   useEffect(() => {
     if (state.tag === "begin") {
@@ -186,16 +237,10 @@ const CreateFolder = () => {
     }
 
     if (state.tag === "error") {
-      Alert.alert(
-        "Error",
-        `${
-          isProblem(state.error)
-            ? getProblemMessage(state.error)
-            : isProblem(state.error.body)
-            ? getProblemMessage(state.error.body)
-            : state.error
-        }`
-      );
+      const message = isProblem(state.error)
+        ? getProblemMessage(state.error)
+        : state.error;
+      Alert.alert("Error", `${message}`);
       setUsername(null);
       setIsLogged(false);
       removeValueFor(KEY_NAME);
@@ -236,6 +281,32 @@ const CreateFolder = () => {
       dispatch({ type: "loading-error", error: error });
     }
   }
+
+  // Handle Fetch More Files
+  const fetchMoreFolders = async () => {
+    if (state.tag !== "editing" || state.isFetchingMore || state.folders.last) {
+      return;
+    }
+
+    try {
+      dispatch({ type: "fetch-more-start" });
+
+      const nextPage = state.folders.number + 1;
+
+      const moreFiles = await getFolders(
+        token,
+        undefined,
+        FolderType.PRIVATE,
+        OwnershipFilter.OWNER,
+        search,
+        nextPage
+      );
+
+      dispatch({ type: "fetch-more-success", folders: moreFiles });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
+  };
 
   // Handle form submission
   async function handleSubmit() {
@@ -287,16 +358,13 @@ const CreateFolder = () => {
     }
   }
 
-  const searchValue =
-    state.tag === "editing" && state.inputs.searchValue
-      ? state.inputs.searchValue
-      : state.inputs?.searchValue || "";
+  const searchValue = state.tag === "editing" ? state.inputs.searchValue : "";
 
   // Debounced search effect
   useEffect(() => {
     if (state.tag !== "editing") return;
     const value = searchValue.trim();
-    if (value.length <= SIZE_MIN_FOLDER) {
+    if (value.length <= SIZE_MIN_FOLDER || value === search) {
       return;
     }
 
@@ -308,14 +376,14 @@ const CreateFolder = () => {
   }, [searchValue]);
 
   const folderName =
-    state.tag === "submitting" && state.folderName
-      ? state.folderName
-      : state.inputs?.folderName || "";
+    state.tag === "editing" && state.inputs.folderName
+      ? state.inputs.folderName
+      : "";
 
   const folderType =
-    state.tag === "submitting" && state.folderType
-      ? state.folderType
-      : state.inputs?.folderType || FolderType.PRIVATE;
+    state.tag === "editing" && state.inputs.folderType
+      ? state.inputs.folderType
+      : FolderType.PRIVATE;
 
   const folders =
     state.tag === "editing" && Array.isArray(state.folders?.content)
@@ -363,8 +431,8 @@ const CreateFolder = () => {
     case "editing":
       return (
         <SafeAreaView className="bg-primary h-full">
-          <View className="px-6 py-12">
-            <View className="flex-row  py-5 items-center mb-8">
+          <View className="px-6 py-6">
+            <View className="flex-row  py-5 items-center">
               <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
                 <Image
                   source={icons.back}
@@ -453,7 +521,7 @@ const CreateFolder = () => {
 
                   <View style={{ flexGrow: 1 }}>
                     <FlatList
-                      style={{ maxHeight: 270 }}
+                      style={{ maxHeight: 200 }}
                       data={folders}
                       keyExtractor={(item) => String(item.folderId)}
                       renderItem={({ item }) => (
@@ -466,6 +534,8 @@ const CreateFolder = () => {
                           selectedFolderId={state.inputs.parentFolderId}
                         />
                       )}
+                      onEndReached={fetchMoreFolders}
+                      onEndReachedThreshold={0.1}
                       ListEmptyComponent={() => (
                         <View className="flex-1 items-center justify-center py-10">
                           <Text className="text-white text-lg font-semibold mb-2 text-center">
@@ -481,7 +551,7 @@ const CreateFolder = () => {
               <CustomButton
                 title="Create Folder"
                 handlePress={handleSubmit}
-                containerStyles="mt-10 rounded-lg"
+                containerStyles="mt-7 rounded-lg"
                 isLoading={false}
                 textStyles="text-base font-semibold"
                 color="bg-secondary"

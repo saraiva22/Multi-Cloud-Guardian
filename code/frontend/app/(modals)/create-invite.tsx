@@ -47,6 +47,7 @@ type State =
         selectUsername: string;
         folderId: number | undefined;
       };
+
       folders: PageResult<Folder>;
       users: UserHomeOutputModel[];
       isSearchingUsers: boolean;
@@ -296,7 +297,7 @@ const CreateInvite = () => {
     const timeoutId = setTimeout(async () => {
       try {
         dispatch({ type: "user-search" });
-        const users = await getUsers(value, token);
+        const users = await getUsers(value, token,0,4);
         dispatch({ type: "search-success", users: users.content });
       } catch (error) {
         Alert.alert(
@@ -330,7 +331,7 @@ const CreateInvite = () => {
     case "editing":
       return (
         <SafeAreaView className="bg-primary flex-1">
-          <View className="px-6 py-12 flex-1">
+          <View className="px-6 py-12 flex-1" style={{ flex: 1 }}>
             <View className="flex-row items-center justify-between px-4 mb-6">
               <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
                 <Image
@@ -381,9 +382,16 @@ const CreateInvite = () => {
                   <Text style={{ color: "white" }}>{item.username}</Text>
                 </TouchableOpacity>
               )}
+              ListEmptyComponent={() => (
+                <View className="flex-1 items-center justify-center py-10">
+                  <Text className="text-white text-lg font-semibold mb-2 text-center">
+                    No foles match your search
+                  </Text>
+                </View>
+              )}
               style={{
                 marginTop: 8,
-                maxHeight: state.users.length > 0 ? 150 : 0,
+                maxHeight: 160,
               }}
             />
 
@@ -450,6 +458,10 @@ const CreateInvite = () => {
                     selectedFolderId={state.inputs.folderId}
                   />
                 )}
+                style={{ flex: 1, maxHeight: 320 }}
+                contentContainerStyle={{
+                  paddingBottom: 80,
+                }}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={() => (
                   <EmptyState
@@ -464,7 +476,7 @@ const CreateInvite = () => {
               <CustomButton
                 title="Create Invite"
                 handlePress={handleSubmit}
-                containerStyles="rounded-lg"
+                containerStyles="rounded-lg mt-10"
                 isLoading={false}
                 textStyles="text-base font-semibold"
                 color="bg-secondary"

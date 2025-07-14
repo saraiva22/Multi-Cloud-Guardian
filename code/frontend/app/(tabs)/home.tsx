@@ -40,17 +40,35 @@ import MoveBottomSheet from "@/components/MoveBottomSheet";
 
 // The State
 type State =
-  | { tag: "begin"; refreshing: boolean; sort: SortOption; search: string }
-  | { tag: "loading"; refreshing: boolean; sort: SortOption; search: string }
+  | {
+      tag: "begin";
+      refreshing: boolean;
+      sort: SortOption;
+      search: string;
+      inputs: {
+        searchValue: string;
+      };
+    }
+  | {
+      tag: "loading";
+      refreshing: boolean;
+      sort: SortOption;
+      search: string;
+      inputs: {
+        searchValue: string;
+      };
+    }
   | {
       tag: "loaded";
       files: PageResult<File>;
       folders: PageResult<Folder>;
       refreshing: boolean;
+      search: string;
       sort: SortOption;
       inputs: {
         searchValue: string;
       };
+      isFetchingMore: boolean;
     }
   | { tag: "error"; error: Problem | string };
 
@@ -67,10 +85,16 @@ type Action =
       inputName: string | number;
       inputValue: string | number;
     }
+  | { type: "fetch-more-start" }
+  | { type: "fetch-more-files-success"; files: PageResult<File> }
+  | { type: "fetch-more-folders-success"; folders: PageResult<Folder> }
   | { type: "loading-error"; error: Problem | string }
   | { type: "refreshing"; refreshing: boolean; sort: SortOption }
-  | { type: "search"; searchValue: string }
-  | { type: "delete-select-file"; file: File };
+  | { type: "search"; search: string }
+  | { type: "delete-select-file"; file: File }
+  | {
+      type: "reset";
+    };
 
 function logUnexpectedAction(state: State, action: Action) {
   console.log(`Unexpected action '${action.type} on state '${state.tag}'`);
@@ -86,6 +110,9 @@ function reducer(state: State, action: Action): State {
           refreshing: false,
           sort: state.sort,
           search: state.search,
+          inputs: {
+            searchValue: state.inputs.searchValue,
+          },
         };
       } else {
         logUnexpectedAction(state, action);
@@ -100,8 +127,10 @@ function reducer(state: State, action: Action): State {
           refreshing: false,
           sort: state.sort,
           inputs: {
-            searchValue: "",
+            searchValue: state.inputs.searchValue,
           },
+          search: state.search,
+          isFetchingMore: false,
         };
       } else if (action.type === "loading-error") {
         return { tag: "error", error: action.error };
@@ -118,13 +147,19 @@ function reducer(state: State, action: Action): State {
           refreshing: action.refreshing,
           sort: action.sort,
           search: "",
+          inputs: {
+            searchValue: "",
+          },
         };
       } else if (action.type === "search") {
         return {
           tag: "begin",
           refreshing: false,
           sort: state.sort,
-          search: action.searchValue,
+          search: action.search,
+          inputs: {
+            searchValue: state.inputs.searchValue,
+          },
         };
       } else if (action.type === "edit") {
         return {
@@ -144,6 +179,39 @@ function reducer(state: State, action: Action): State {
             totalElements: state.files.totalElements - 1,
           },
         };
+      } else if (action.type === "fetch-more-start") {
+        return {
+          ...state,
+          isFetchingMore: true,
+        };
+      } else if (action.type === "fetch-more-files-success") {
+        return {
+          ...state,
+          files: {
+            ...action.files,
+            content: [...state.files.content, ...action.files.content],
+          },
+          isFetchingMore: false,
+        };
+      } else if (action.type === "fetch-more-folders-success") {
+        return {
+          ...state,
+          folders: {
+            ...action.folders,
+            content: [...state.folders.content, ...action.folders.content],
+          },
+          isFetchingMore: false,
+        };
+      } else if (action.type === "reset") {
+        return {
+          tag: "begin",
+          refreshing: false,
+          sort: sortOptions[0],
+          search: "",
+          inputs: {
+            searchValue: "",
+          },
+        };
       } else {
         logUnexpectedAction(state, action);
         return state;
@@ -156,6 +224,9 @@ const firstState: State = {
   refreshing: false,
   sort: sortOptions[0],
   search: "",
+  inputs: {
+    searchValue: "",
+  },
 };
 
 const SIZE_MIN_FILE = 2;
@@ -170,18 +241,22 @@ const HomeScreen = () => {
 
   const sort = state.tag === "error" ? sortOptions[0] : state.sort;
 
-  const search =
-    state.tag === "loading" && state.search
-      ? state.search
-      : state?.search || "";
+  const search = state.tag === "error" ? "" : state.search;
 
   const openSortSheet = () => {
+    moveSheetRef.current?.close();
     bottomSheetRef.current?.expand();
   };
 
   const openMoveSheet = (file: File) => {
+    bottomSheetRef.current?.close();
     setSelectFile(file);
     moveSheetRef.current?.expand();
+  };
+
+  const handleSelectSort = (sort: SortOption) => {
+    bottomSheetRef.current?.close();
+    dispatch({ type: "refreshing", refreshing: true, sort: sort });
   };
 
   useEffect(() => {
@@ -192,8 +267,6 @@ const HomeScreen = () => {
     if (state.tag === "error") {
       const message = isProblem(state.error)
         ? getProblemMessage(state.error)
-        : isProblem(state.error.body)
-        ? getProblemMessage(state.error.body)
         : state.error;
       Alert.alert("Error", `${message}`);
       setUsername(null);
@@ -212,11 +285,6 @@ const HomeScreen = () => {
     });
   }
 
-  const handleSelectSort = (sort: SortOption) => {
-    bottomSheetRef.current?.close();
-    dispatch({ type: "refreshing", refreshing: true, sort: sort });
-  };
-
   const loadData = async () => {
     try {
       dispatch({ type: "start-loading" });
@@ -230,7 +298,10 @@ const HomeScreen = () => {
         token,
         undefined,
         FolderType.PRIVATE,
-        OwnershipFilter.OWNER
+        OwnershipFilter.OWNER,
+        undefined,
+        0,
+        1
       );
       dispatch({
         type: "loading-success",
@@ -242,27 +313,76 @@ const HomeScreen = () => {
     }
   };
 
+  // Handle Fetch More Files
+  const fetchMoreFiles = async () => {
+    if (state.tag !== "loaded" || state.isFetchingMore || state.files.last) {
+      return;
+    }
+
+    try {
+      dispatch({ type: "fetch-more-start" });
+
+      const nextPage = state.files.number + 1;
+
+      const moreFiles = await getFiles(
+        token,
+        sort.sortBy,
+        search,
+        FolderType.PRIVATE,
+        nextPage
+      );
+
+      dispatch({ type: "fetch-more-files-success", files: moreFiles });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
+  };
+
+  // Handle Fetch More Folders
+  const fetchMoreFolders = async () => {
+    if (state.tag !== "loaded" || state.isFetchingMore || state.folders.last) {
+      return;
+    }
+
+    try {
+      dispatch({ type: "fetch-more-start" });
+
+      const nextPage = state.folders.number + 1;
+
+      const moreFiles = await getFolders(
+        token,
+        undefined,
+        FolderType.PRIVATE,
+        OwnershipFilter.OWNER,
+        undefined,
+        nextPage,
+        1
+      );
+
+      dispatch({ type: "fetch-more-folders-success", folders: moreFiles });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
+  };
+
   const onRefresh = async () => {
     setTimeout(() => {
       dispatch({ type: "refreshing", refreshing: true, sort: sort });
     }, 200);
   };
 
-  const searchValue =
-    state.tag === "loaded" && state.inputs.searchValue
-      ? state.inputs.searchValue
-      : state.inputs?.searchValue || "";
+  const searchValue = state.tag === "loaded" ? state.inputs.searchValue : "";
 
   // Debounced search effect
   useEffect(() => {
     if (state.tag !== "loaded") return;
     const value = searchValue.trim();
-    if (value.length <= SIZE_MIN_FILE) {
+    if (value.length <= SIZE_MIN_FILE || value === search) {
       return;
     }
 
     const timeoutId = setTimeout(async () => {
-      dispatch({ type: "search", searchValue: value });
+      dispatch({ type: "search", search: value });
     }, 500);
 
     return () => clearTimeout(timeoutId);
@@ -311,7 +431,7 @@ const HomeScreen = () => {
     case "loaded":
       return (
         <SafeAreaView className="bg-primary h-full">
-          <View className="my-6 px-4 space-y-6">
+          <View className="my-6 px-4 space-y-6" style={{ flex: 1 }}>
             <View className="flex-row justify-between items-center mb-5">
               <View className="flex-row items-center space-x-10">
                 <Image
@@ -326,21 +446,31 @@ const HomeScreen = () => {
             </View>
 
             <SearchInput
-              placeholder="Folder"
+              placeholder="Files"
               value={searchValue}
               onChangeText={(text) => handleChange("searchValue", text)}
             />
 
             <FlatList
               data={files}
-              keyExtractor={(item) => String(item.fileId)}
+              keyExtractor={(item) => item.fileId.toString()}
               renderItem={({ item }) => (
                 <FileItemComponent
                   item={item}
                   onMovePress={() => openMoveSheet(item)}
                 />
               )}
-              contentContainerStyle={{ paddingBottom: 150 }}
+              style={{ flex: 1 }}
+              contentContainerStyle={{ paddingBottom: 70 }}
+              onEndReached={fetchMoreFiles}
+              onEndReachedThreshold={0.1}
+              ListFooterComponent={() =>
+                state.isFetchingMore ? (
+                  <View className="bg-primary py-4 justify-center items-center">
+                    <ActivityIndicator size="small" color="#fff" />
+                  </View>
+                ) : null
+              }
               ListHeaderComponent={() => (
                 <>
                   <View className="w-full flex-1 pt-5 pb-8">
@@ -362,7 +492,10 @@ const HomeScreen = () => {
                       </Text>
                     </View>
 
-                    <FolderCard folders={folders} />
+                    <FolderCard
+                      folders={folders}
+                      fetchFolders={fetchMoreFolders}
+                    />
                   </View>
                   <View className="w-full flex-1 pt-2">
                     <Text className="text-2xl font-bold text-gray-100">
@@ -374,18 +507,31 @@ const HomeScreen = () => {
                           {sort.label}
                         </Text>
                       </View>
-
-                      <TouchableOpacity
-                        onPress={openSortSheet}
-                        className="borderrounded-full p-2 ml-2"
-                        activeOpacity={0.85}
-                      >
-                        <Image
-                          className="w-[40px] h-[34px]"
-                          source={icons.sort_black1}
-                          resizeMode="contain"
-                        />
-                      </TouchableOpacity>
+                      <View className="flex-row ">
+                        <TouchableOpacity
+                          onPress={openSortSheet}
+                          className="borderrounded-full p-1"
+                          activeOpacity={0.85}
+                        >
+                          <Image
+                            className="w-[40px] h-[34px]"
+                            source={icons.sort_black1}
+                            resizeMode="contain"
+                          />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          activeOpacity={0.85}
+                          className="p-1"
+                          onPress={() => dispatch({ type: "reset" })}
+                        >
+                          <Image
+                            source={icons.reset}
+                            className="w-[40px] h-[30px]"
+                            resizeMode="contain"
+                            tintColor="white"
+                          />
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
                 </>

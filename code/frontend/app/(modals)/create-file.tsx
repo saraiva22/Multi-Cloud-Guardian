@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  FlatList,
 } from "react-native";
 import React, { useEffect, useReducer, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -255,7 +256,7 @@ const CreateFile = () => {
     const file = state.inputs.file;
     const parentFolderId = state.inputs.parentFolderId;
 
-    if (!fileName?.trim() || !file) {
+    if (!fileName?.trim() || !file || fileName.length === 0) {
       Alert.alert("Error", "Please fill in all fields");
       dispatch({ type: "error", message: "Please fill in all field" });
       return;
@@ -301,6 +302,11 @@ const CreateFile = () => {
       ? state.file
       : state.inputs?.file || null;
 
+  const folders =
+    state.tag === "editing" && Array.isArray(state.folders?.content)
+      ? state.folders.content
+      : [];
+
   // Render UI
   switch (state.tag) {
     case "begin":
@@ -342,8 +348,8 @@ const CreateFile = () => {
     case "editing":
       return (
         <SafeAreaView className="bg-primary h-full">
-          <ScrollView className="px-4 my-6 mt-12">
-            <View className="flex-row py-5 items-center mb-8">
+          <View className="px-6 py-6">
+            <View className="flex-row py-5 items-center">
               <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
                 <Image
                   source={icons.back}
@@ -366,7 +372,7 @@ const CreateFile = () => {
             />
 
             <View
-              style={{ height: 0.5, backgroundColor: "#F8F8F8", marginTop: 20 }}
+              style={{ height: 0.5, backgroundColor: "#F8F8F8", marginTop: 18 }}
             />
 
             {(state.inputs.parentFolderId === undefined ||
@@ -381,7 +387,7 @@ const CreateFile = () => {
                   style={{
                     height: 0.5,
                     backgroundColor: "#F8F8F8",
-                    marginTop: 20,
+                    marginTop: 18,
                   }}
                 />
               </>
@@ -393,7 +399,7 @@ const CreateFile = () => {
               </Text>
 
               <TouchableOpacity onPress={openPicker} className="mt-3">
-                <View className="w-full h-40 px-4 bg-black-100 rounded-2xl border border-black-200 flex justify-center items-center">
+                <View className="w-full h-36 px-4 bg-black-100 rounded-2xl border border-black-200 flex justify-center items-center">
                   <View className="w-14 h-14 border border-dashed border-secondary-100 flex justify-center items-center">
                     {file === null ? (
                       <Image
@@ -436,31 +442,40 @@ const CreateFile = () => {
                 </TouchableOpacity>
               </View>
 
-              {state.tag === "editing" &&
-                state.folders.content.map((folder) => (
-                  <FolderItemComponent
-                    key={folder.folderId}
-                    item={folder}
-                    onPress={(folderId) => {
-                      handleChange("parentFolderId", folderId);
-                      handleChange("parentFolderType", folder.type);
-                      if (folder.type === FolderType.SHARED) {
-                        handleChange("encryption", false);
+              <View style={{ flexGrow: 1 }}>
+                <FlatList
+                  style={{ maxHeight: 200 }}
+                  data={folders}
+                  keyExtractor={(item) => String(item.folderId)}
+                  renderItem={({ item }) => (
+                    <FolderItemComponent
+                      key={item.folderId}
+                      item={item}
+                      onPress={(folderId) =>
+                        handleChange("parentFolderId", folderId)
                       }
-                    }}
-                    selectedFolderId={state.inputs.parentFolderId}
-                  />
-                ))}
+                      selectedFolderId={state.inputs.parentFolderId}
+                    />
+                  )}
+                  ListEmptyComponent={() => (
+                    <View className="flex-1 items-center justify-center py-10">
+                      <Text className="text-white text-lg font-semibold mb-2 text-center">
+                        No files match your search
+                      </Text>
+                    </View>
+                  )}
+                />
+              </View>
             </View>
             <CustomButton
-              title="Submit & Publish"
+              title="Upload File"
               handlePress={handleSubmit}
               containerStyles="mt-7"
               isLoading={false}
               textStyles={""}
               color="bg-secondary"
             />
-          </ScrollView>
+          </View>
         </SafeAreaView>
       );
   }

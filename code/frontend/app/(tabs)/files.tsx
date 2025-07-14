@@ -414,7 +414,7 @@ const FilesScreen = () => {
     case "error":
       return (
         <SafeAreaView className="bg-primary flex-1">
-          <ActivityIndicator />
+          <ActivityIndicator size="large" color="#fff" />
           <Text className="text-[24px] font-semibold text-white text-center mb-16 mt-4">
             {state.tag === "error" && state.error.detail}
           </Text>
@@ -501,7 +501,11 @@ const FilesScreen = () => {
                 ) : null
               }
               refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                <RefreshControl
+                  className="color-white"
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                />
               }
             />
           </View>
