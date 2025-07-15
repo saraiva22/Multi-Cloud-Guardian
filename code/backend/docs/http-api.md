@@ -33,7 +33,7 @@ For the complete list of API endpoint paths, see the [**Uris**](../multicloud-gu
 | `/api/files/{fileId}`          | [GET](#get-apifilesfileid), [DELETE](#delete-apifilesfileid) |
 | `/api/files/{fileId}/temp-url` | [POST](#post-apifilesfileidtemp-url)                         |
 | `/api/files/{fileId}/download` | [GET](#get-apifilesfileiddownload)                           |
-| `/api/files/{fileId}/move`     | [PATCH](#post-apifilesfileidmove)                            |
+| `/api/files/{fileId}/move`     | [PATCH](#patch-apifilesfileidmove)                            |
 
 ## Folders
 
@@ -504,7 +504,7 @@ data: {
 
 # Files
 
-### POST /api/files/upload
+### POST /api/files
 
 **Description:** Uploads a file for the authenticated user. Encryption is optional.
 
@@ -680,10 +680,314 @@ curl --location --request GET 'http://localhost:8088/api/files?size=3&page=1' \
   }
   ```
 
-
-
 **Error Responses:**
 
 - 401 Unauthorized – Unauthorized Request
 
 - 400 Bad Request – Invalid request content
+
+### GET /api/files/{fileId}
+
+**Description:** Retrieves detailed information about a specific file by ID.
+
+**Request:**
+
+- **Path Parameter:**: fileId – The ID of the file (must be positive integer)
+
+- **Authorization:**
+  - **Bearer {Access Token}**
+
+**Example:**
+
+```shell
+curl --location --request GET 'http://localhost:8080/api/files/1' \
+--header 'Authorization: Bearer <token>'
+```
+
+**Success Response:**
+
+- **Status Code:** 200 OK
+
+  - **Content Type:** application/json
+  - **Schema:**
+
+```
+{
+    "fileId": 1,
+    "user": {
+        "id": 2,
+        "username": "BobTest",
+        "email": "Bobtest@gmail.com"
+    },
+    "folderInfo": null,
+    "name": "Cat23.jpg",
+    "size": 122667,
+    "contentType": "image/jpeg",
+    "createdAt": 1752485022,
+    "encryption": false,
+    "url": null
+}
+```
+
+**Error Responses:**
+
+- 401 Unauthorized – Unauthorized Request
+
+- 404 Not Found – File not found
+
+- 400 Bad Request – Invalid request content (e.g., invalid file ID)
+
+### POST /api/files/{fileId}/temp-url
+
+**Description:** Generates a temporary URL for accessing a file.
+
+**Request:**
+
+- **Path Parameter:**: fileId – The ID of the file (must be positive integer)
+
+- **Authorization:**
+
+  - **Bearer {Access Token}**
+
+- **Content:** An object with expiration time
+  - **Content Type:** application/json
+  - **Schema:**
+
+```
+{
+   "expiresIn": Integer (minutes)
+}
+```
+
+**Example:**
+
+```shell
+curl --location --request POST 'http://localhost:8080/api/files/1/temp-url' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer <token>' \
+--data-raw '{ "expiresIn": 15 }'
+```
+
+**Success Response:**
+
+- **Status Code:** 200 OK
+
+  - **Content:** An object with the token value
+  - **Content Type:** application/json
+
+  - **Schema:**
+
+  ```
+   {
+    "fileId": 1,
+    "user": {
+        "id": 2,
+        "username": "BobTest",
+        "email": "Bobtest@gmail.com"
+    },
+    "folderInfo": null,
+    "name": "Cat23.jpg",
+    "size": 122667,
+    "contentType": "image/jpeg",
+    "createdAt": 1752485022,
+    "encryption": false,
+    "url": "https://storage.googleapis.com/xxxx/xxxxx/Cat23.jpg?X-Goog-Algorithm=xxxxxxxxx"
+  }
+  ```
+
+**Error Responses:**
+
+- 404 Not Found – File not found
+
+- 400 Bad Request – File is encrypted
+
+- 400 Bad Request – Folder is shared
+
+- 400 Bad Request – Invalid request content (e.g., invalid file ID)
+
+- 500 Internal Server Error – Invalid create context
+
+- 500 Internal Server Error – Invalid creation global bucket
+
+- 500 Internal Server Error – Invalid credential
+
+### PATCH /api/files/{fileId}/move
+
+**Description:** Moves a file to a different folder. If the folderId is not provided in the request body, the file is moved to the root of the authenticated user's storage.
+
+**Request:**
+
+- **Path Parameter:**: fileId – The ID of the file (must be positive integer)
+
+- **Authorization:**
+
+  - **Bearer {Access Token}**
+
+- **Content:** An object with target folder ID
+  - **Content Type:** application/json
+  - **Schema:**
+
+```
+{
+  "folderId": Integer (optional – if omitted, moves the file to the user's root storage)
+}
+```
+
+**Example:**
+
+```shell
+curl --location --request PATCH 'http://localhost:8080/api/files/1/move' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer <token>' \
+--data-raw '{ "folderId": 2 }'
+```
+
+**Example (moving to root – omit folderId):**
+
+```shell
+curl --location --request PATCH 'http://localhost:8080/api/files/1/move' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer <token>' \
+--data-raw '{}'
+```
+
+**Success Response:**
+
+- **Status Code:** 200 OK
+
+  - **Content:** An object with the token value
+  - **Content Type:** application/json
+
+**Error Responses:**
+
+- 404 Not Found – File not found
+- 400 Bad Request – Folder is shared
+
+- 400 Bad Request – Invalid request content (e.g., invalid file ID)
+
+- 400 Bad Request – Invalid file name
+
+- 404 Not Found – Folder not found
+
+- 500 Internal Server Error – Invalid create context
+
+- 500 Internal Server Error – Invalid creation global bucket
+
+- 500 Internal Server Error – Invalid credential
+
+- 500 Internal Server Error – Invalid blob creation
+
+### GET /api/files/{fileId}/download
+
+**Description:** Downloads a file by ID. The response includes the file's content and metadata. For encrypted files, an encrypted file key is provided, which can only be decrypted using the client's master key (stored exclusively on the user's device for security).
+
+**Request:**
+
+- **Path Parameter:**: fileId – The ID of the file (must be positive integer)
+
+- **Authorization:**
+  - **Bearer {Access Token}**
+
+**Example:**
+
+```shell
+curl --location --request GET 'http://localhost:8080/api/files/1/download' \
+--header 'Authorization: Bearer <token>'
+```
+
+**Success Response:**
+
+- **Status Code:** 200 OK
+
+  - **Content Type:** application/json (with file content and metadata)
+  - **Schema (Non-Encrypted File):**
+
+```
+{
+    "file": {
+        "fileContent: "base64encodedfilecontent"
+        "fileName": "Cat23.jpg",
+        "mimeType": "image/jpeg",
+        "encrypted": false
+    },
+    "fileKeyEncrypted": null
+}
+```
+
+- **Schema (Encrypted File):**
+
+```
+{
+    "file": {
+        "fileContent: "base64encodedfilecontent"
+       "fileName": "Isel12323.pdf",
+        "mimeType": "application/pdf",
+        "encrypted": true
+    },
+    "fileKeyEncrypted": "NNW8t04F4Zqg3rAYaYMPXiPDpyvxo+LdViOljtHxpEhpUcwD3uADmvhmLOeoakerVFax+dwLjVlsztWD"
+}
+```
+
+- **Additional Notes:**
+
+  - **fileContent:** The actual file data encoded in Base64 format, ready for decoding and use on the client side.
+
+  - **fileKeyEncrypted:** (Present only for encrypted files) This is the encrypted representation of the file's encryption key. It can only be decrypted using the client's master key, which is securely stored solely on the user's device and never transmitted to or stored on the server.
+
+**Error Responses:**
+
+- 400 Bad Request – Invalid download file
+
+- 404 Not Found – File not found
+
+- 400 Bad Request – Invalid key
+
+- 404 Not Found – Parent folder not found
+
+- 400 Bad Request – Invalid request content (e.g., invalid file ID)
+
+- 500 Internal Server Error – Invalid create context
+
+- 500 Internal Server Error – Invalid creation global bucket
+
+- 500 Internal Server Error – Invalid credential
+
+### DELETE /api/files/{fileId}
+
+**Description:** Deletes a file by ID.
+
+**Request:**
+
+- **Path Parameter:**: fileId – The ID of the file (must be positive integer)
+
+- **Authorization:**
+  - **Bearer {Access Token}**
+
+**Example:**
+
+```shell
+curl --location --request DELETE 'http://localhost:8080/api/files/1' \
+--header 'Authorization: Bearer <token>'
+```
+
+**Success Response:**
+
+- **Status Code:** 200 OK
+
+**Error Responses:**
+
+- 404 Not Found – File not found
+
+- 400 Bad Request – Invalid delete file
+
+- 404 Not Found – Parent folder not found
+
+- 403 Forbidden – User not permissions type
+
+- 400 Bad Request – Invalid request content (e.g., invalid file ID)
+
+- 500 Internal Server Error – Invalid credential
+
+- 500 Internal Server Error – Invalid create context
+
+- 500 Internal Server Error – Invalid creation global bucket
