@@ -53,6 +53,8 @@ For the complete list of API endpoint paths, see the [**Uris**](../multicloud-gu
 | `/api/folders/invites/sent`                       | [GET](#get-apifoldersinvitessent)                                                                      |
 | `/api/folders/{folderId}/leave`                   | [POST](#post-apifoldersfolderidleave)                                                                  |
 
+---
+
 # Users
 
 ### POST /api/users
@@ -80,7 +82,7 @@ For the complete list of API endpoint paths, see the [**Uris**](../multicloud-gu
 **Example:**
 
 ```shell
-  curl --location --request GET 'http://localhost:8080/api/users' --header 'Content-Type: application/json'
+  curl --location --request POST 'http://localhost:8080/api/users' --header 'Content-Type: application/json'
 --data-raw '{ "username": "user1", "email": "user1@example.com", "password": "SecureP_123", "salt": "15435435435329",
 "iterations": 15100, "costType": "HIGH","locationType": "EUROPE"}'
 ```
@@ -174,7 +176,8 @@ For the complete list of API endpoint paths, see the [**Uris**](../multicloud-gu
 
 - **Query Params:** username (required), page (optional, default: 0), size (optional, default: 10)
 
-- **Authentication:** Required
+- **Authorization:**
+  - **Bearer {Access Token}**
 
 **Example:**
 
@@ -199,39 +202,39 @@ For the complete list of API endpoint paths, see the [**Uris**](../multicloud-gu
             "username": "BobUser"
         },
         {
-            "id": 14,
+            "id": 3,
             "username": "Userlvn1"
         },
         {
-            "id": 15,
+            "id": 4,
             "username": "Userlhlvn1"
         },
         {
-            "id": 16,
+            "id": 5,
             "username": "Userjn1"
         },
         {
-            "id": 10,
+            "id": 6,
             "username": "Userva1"
         },
         {
-            "id": 4,
+            "id": 7,
             "username": "Usera123"
         },
         {
-            "id": 5,
+            "id": 8,
             "username": "Usera13"
         },
         {
-            "id": 7,
+            "id": 9,
             "username": "User143"
         },
         {
-            "id": 9,
+            "id": 10,
             "username": "User33433"
         },
         {
-            "id": 6,
+            "id": 11,
             "username": "User343"
         }
     ],
@@ -253,8 +256,434 @@ For the complete list of API endpoint paths, see the [**Uris**](../multicloud-gu
   }
 
 ```
+
 **Error Responses:**
 
 - 401 Unauthorized
 
 - 400 Bad Request (Invalid parameters)
+
+### GET /api/users/{id}
+
+**Description:** Get user information by ID.
+
+**Request:**
+
+- **Path Parameter:** id – The ID of the user.
+
+- **Authorization:**
+  - **Bearer {Access Token}**
+
+**Example:**
+
+```shell
+curl --location --request GET 'http://localhost:8080/api/users/2' \
+--header 'Authorization: Bearer <token>'
+```
+
+**Success Response:**
+
+- **Status Code:** 200 OK
+
+  - **Content Type:** application/json
+  - **Schema:**
+
+```
+  {
+    "id": 2,
+    "username": "BobTest",
+    "email": "Bobtest@gmail.com",
+    "locationType": "EUROPE",
+    "costType": "MEDIUM"
+}
+
+```
+
+**Error Responses:**
+
+- 401 Unauthorized
+
+- 404 Not Found – User not found
+
+### GET /api/users/info
+
+**Description:** Get the full user profile information of the authenticated user.
+
+**Request:**
+
+- **Query String:**
+  - username (_String_,_Required_) – The target user's username.
+
+* **Authorization:**
+  - **Bearer {Access Token}**
+
+**Example:**
+
+```shell
+curl --location --request GET 'http://localhost:8080/api/users/info' \
+--header 'Authorization: Bearer <token>'
+```
+
+**Success Response:**
+
+- **Status Code:** 200 OK
+
+  - **Content Type:** application/json
+  - **Schema:** (example only, depends on implementation)
+
+```
+  {
+    "id": 6,
+    "username": "Saraiva14343",
+    "email": "testIs2343l@gmail.com",
+    "locationType": "EUROPE",
+    "costType": "HIGH"
+}
+```
+
+**Error Responses:**
+
+- 401 Unauthorized
+
+- 404 Not Found – User not found
+
+### GET /api/users/credentials
+
+**Description:** Get credentials configuration info for the authenticated user.
+
+**Request:**
+
+- **Authorization:**
+  - **Bearer {Access Token}**
+
+**Example:**
+
+```shell
+curl --location --request GET 'http://localhost:8080/api/users/credentials' \
+--header 'Authorization: Bearer <token>'
+```
+
+**Success Response:**
+
+- **Status Code:** 201 Created
+  - **Content:**: An object with the file ID
+  - **Content Type:** application/json
+  - **Schema:**
+
+```
+{
+  "id": Integer
+}
+```
+
+**Error Responses:**
+
+- 401 Unauthorized
+
+- 404 Not Found – User not found
+
+### GET /api/users/storage
+
+**Description:** Get cloud storage usage and capacity by provider for the authenticated user.
+
+**Request:**
+
+- **Authorization:**
+  - **Bearer {Access Token}**
+
+**Example:**
+
+```shell
+curl --location --request GET 'http://localhost:8080/api/users/storage' \
+--header 'Authorization: Bearer <token>'
+```
+
+**Success Response:**
+
+- **Status Code:** 200 OK
+
+  - **Content Type:** application/json
+  - **Schema:**
+
+```
+  {
+    "totalSize": 3825151,
+    "images": 3148149,
+    "video": 0,
+    "documents": 677002,
+    "others": 0
+}
+```
+
+**Error Responses:**
+
+- 401 Unauthorized
+
+- 404 Not Found – User not found
+
+### GET /api/me
+
+**Description:** Get minimal info (ID and username) for the authenticated user.
+
+**Request:**
+
+- **Authorization:**
+  - **Bearer {Access Token}**
+
+**Example:**
+
+```shell
+curl --location --request GET 'http://localhost:8080/api/me' \
+--header 'Authorization: Bearer <token>'
+```
+
+**Success Response:**
+
+- **Status Code:** 200 OK
+
+  - **Content Type:** application/json
+  - **Schema:**
+
+```
+ {
+    "id": 2,
+    "username": "BobTest"
+ }
+```
+
+**Error Responses:**
+
+- 401 Unauthorized
+
+- 404 Not Found – User not found
+
+### GET /api/users/notifications
+
+**Description:** Open a Server-Sent Events (SSE) connection to receive real-time notifications.
+
+**Request:**
+
+- **Authorization:**
+  - **Bearer {Access Token}**
+
+**Example:**
+
+```shell
+curl --location --request GET 'http://localhost:8080/api/users/notifications' \
+--header 'Authorization: Bearer <token>'
+```
+
+**Success Response:**
+
+- **Status Code:** 200 OK
+
+  - **Content Type:** text/event-stream
+  - **Schema:**
+
+```
+event: invite
+data: {
+    "id": 0,
+    "inviteId": 13,
+    "status": "PENDING",
+    "user": {
+        "id": 6,
+        "username": "Saraiva14343",
+        "email": "testIs2343l@gmail.com",
+    },
+    "folderId": 38,
+    "folderName": "ISEL1234"
+}
+```
+
+**Error Responses:**
+
+- 401 Unauthorized
+
+---
+
+# Files
+
+### POST /api/files/upload
+
+**Description:** Uploads a file for the authenticated user. Encryption is optional.
+
+**Request:**
+
+- **Content Type:** multipart/form-data
+
+- **Authorization:**
+
+  - **Bearer {Access Token}**
+
+- **Form Parameters:**
+
+  - **file:** File to upload (MultipartFile)
+
+  - **mimeType:**: MIME type (e.g., application/pdf)
+
+  - **encryption:**: true or false
+
+  - **encryptedKey:**: Encrypted key (base64)
+
+**Example:**
+
+```shell
+curl --location --request POST 'http://localhost:8080/api/files' \
+--header 'Authorization: Bearer <token>' \
+--form 'file=@"/path/to/file.pdf"' \
+--form 'mimeType="application/pdf"' \
+--form 'encryption="true"' \
+--form 'encryptedKey="base64encodedkey"'
+
+```
+
+**Success Response:**
+
+- **Status Code:** 201 Created
+
+  - **Content:** An object with the user ID
+  - **Content Type:** application/json
+
+  - **Schema:**
+
+  ```
+    {
+        "id": Integer,
+    }
+  ```
+
+- **Headers:**
+
+  - Location: URI of the created file (e.g., /api/files/{fileId})
+
+**Error Responses:**
+
+- 400 Bad Request – Invalid creation storage
+
+- 400 Bad Request – Invalid file name
+
+- 404 Not Found – Parent folder not found
+
+- 400 Bad Request – Encryption not supported in shared folder
+
+- 500 Internal Server Error – Invalid creation global bucket
+
+- 500 Internal Server Error – Invalid create context
+
+- 500 Internal Server Error – Invalid credential
+
+### GET /api/files
+
+**Description:** Retrieves a paginated list of files for
+the authenticated user, with optional search, filtering by folder type, and sorting.
+
+**Request:**
+
+- **Query Params**
+
+  - search (optional): String to search files
+
+  - size (optional, default: 10): Number of items per page
+
+  - page (optional, default: 0): Page number
+
+  - type (optional): FolderType (e.g., PRIVATE, SHARED)
+
+  - sort (optional, default: created_asc): Sorting criteria
+
+- **Authorization:**
+
+  - **Bearer {Access Token}**
+
+**Example:**
+
+```shell
+curl --location --request GET 'http://localhost:8088/api/files?size=3&page=1' \
+--header 'Authorization: Bearer <token>'
+
+
+```
+
+**Success Response:**
+
+- **Status Code:** 200 OK
+
+  - **Content Type:** application/json (paginated list of file info)
+
+  - **Schema Example:**
+
+  ```
+    {
+    "content": [
+        {
+            "fileId": 26,
+            "user": {
+                "id": 2,
+                "username": "BobTest",
+                "email": "Bobtest@gmail.com"
+            },
+            "folderInfo": null,
+            "name": "Cat23.jpg",
+            "size": 122667,
+            "contentType": "image/jpeg",
+            "createdAt": 1752485022,
+            "encryption": false,
+            "url": null
+        },
+        {
+            "fileId": 27,
+            "user": {
+                "id": 2,
+                "username": "BobTest",
+                "email": "Bobtest@gmail.com"
+            },
+            "folderInfo": null,
+            "name": "Cat12334.jpg",
+            "size": 122667,
+            "contentType": "image/jpeg",
+            "createdAt": 1752485035,
+            "encryption": false,
+            "url": null
+        },
+        {
+            "fileId": 28,
+            "user": {
+                "id": 2,
+                "username": "BobTest",
+                "email": "Bobtest@gmail.com"
+            },
+            "folderInfo": null,
+            "name": "Cat4.jpg",
+            "size": 122667,
+            "contentType": "image/jpeg",
+            "createdAt": 1752485049,
+            "encryption": false,
+            "url": null
+        }
+    ],
+    "pageable": {
+        "sort": {
+            "sorted": true,
+            "unsorted": false
+        },
+        "pageNumber": 1,
+        "pageSize": 3,
+        "offset": 3
+    },
+    "totalElements": 21,
+    "totalPages": 7,
+    "last": false,
+    "first": false,
+    "size": 3,
+    "number": 1
+  }
+  ```
+
+
+
+**Error Responses:**
+
+- 401 Unauthorized – Unauthorized Request
+
+- 400 Bad Request – Invalid request content
