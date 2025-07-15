@@ -185,7 +185,7 @@ const firstState: State = {
   tag: "begin",
 };
 
-const sortBy = "created_desc";
+const sortBy = "updated_desc";
 
 const CreateFile = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
@@ -520,6 +520,13 @@ const CreateFile = () => {
                   )}
                   onEndReached={fetchMoreFolders}
                   onEndReachedThreshold={0.1}
+                  ListFooterComponent={() =>
+                    state.isFetchingMore ? (
+                      <View className="bg-primary py-4 justify-center items-center">
+                        <ActivityIndicator size="small" color="#fff" />
+                      </View>
+                    ) : null
+                  }
                   ListEmptyComponent={() => (
                     <View className="flex-1 items-center justify-center py-10">
                       <Text className="text-white text-lg font-semibold mb-2 text-center">

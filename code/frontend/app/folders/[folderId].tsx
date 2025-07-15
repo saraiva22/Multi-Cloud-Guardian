@@ -56,6 +56,7 @@ type State =
       details: FolderOutputModel;
       files: PageResult<File>;
       folders: PageResult<Folder> | null;
+      isFetchingMore: boolean;
     }
   | { tag: "redirect" }
   | { tag: "error"; error: Problem | string };
@@ -74,6 +75,9 @@ type Action =
   | { type: "leave-loading" }
   | { type: "success-delete" }
   | { type: "success-leave" }
+  | { type: "fetch-more-start" }
+  | { type: "fetch-more-folders-success"; folders: PageResult<Folder> }
+  | { type: "fetch-more-files-success"; files: PageResult<File> }
   | { type: "new-file"; file: File }
   | { type: "new-member"; member: UserInfo }
   | { type: "leave-user"; member: UserInfo }
@@ -107,6 +111,7 @@ function reducer(state: State, action: Action): State {
           details: action.details,
           files: action.files,
           folders: action.folders,
+          isFetchingMore: false,
         };
       } else if (action.type === "loading-error") {
         return { tag: "error", error: action.error };
@@ -141,6 +146,7 @@ function reducer(state: State, action: Action): State {
             totalElements: state.files.totalElements + 1,
           },
           folders: state.folders,
+          isFetchingMore: state.isFetchingMore,
         };
       } else if (action.type === "new-member") {
         return {
@@ -151,6 +157,7 @@ function reducer(state: State, action: Action): State {
           },
           files: state.files,
           folders: state.folders,
+          isFetchingMore: state.isFetchingMore,
         };
       } else if (
         action.type === "delete-file" ||
@@ -178,6 +185,7 @@ function reducer(state: State, action: Action): State {
             totalElements: state.files.totalElements - 1,
           },
           folders: state.folders,
+          isFetchingMore: state.isFetchingMore,
         };
       } else if (action.type === "leave-user") {
         const numberFile = state.files.content.filter(
@@ -200,6 +208,34 @@ function reducer(state: State, action: Action): State {
             ),
           },
         };
+      } else if (action.type === "fetch-more-start") {
+        return {
+          ...state,
+          isFetchingMore: true,
+        };
+      } else if (
+        action.type === "fetch-more-folders-success" &&
+        state.details.type === FolderType.PRIVATE
+      ) {
+        return {
+          ...state,
+          folders: state.folders
+            ? {
+                ...action.folders,
+                content: [...state.folders.content, ...action.folders.content],
+              }
+            : action.folders,
+          isFetchingMore: false,
+        };
+      } else if (action.type === "fetch-more-files-success") {
+        return {
+          ...state,
+          files: {
+            ...action.files,
+            content: [...state.files.content, ...action.files.content],
+          },
+          isFetchingMore: false,
+        };
       } else {
         logUnexpectedAction(state, action);
         return state;
@@ -220,6 +256,8 @@ type CustomEventsFile = "file";
 type CustomEventsMember = "newMember";
 type CustomEventLeaveFolder = "leaveFolder";
 type CustomEventDeleteFile = "deleteFile";
+
+const sortBy = "updated_desc";
 
 type FolderInfoDetailsProps = {
   folderDetails: FolderOutputModel;
@@ -447,7 +485,7 @@ const FolderDetails = () => {
       const isPrivate = details.type === FolderType.PRIVATE;
 
       const folders = isPrivate
-        ? await getFoldersInFolder(folderId.toString(), token)
+        ? await getFoldersInFolder(folderId.toString(), token, sortBy)
         : null;
 
       dispatch({ type: "loading-success", details, files, folders });
@@ -469,6 +507,60 @@ const FolderDetails = () => {
         removeValueFor(KEY_NAME);
         router.replace("/sign-in");
       }
+    }
+  };
+
+  // Handle Fetch More Files
+  const fetchMoreFiles = async () => {
+    if (state.tag !== "loaded" || state.isFetchingMore || state.files.last) {
+      return;
+    }
+    try {
+      dispatch({ type: "fetch-more-start" });
+
+      const nextPage = state.files.number + 1;
+
+      const moreFiles = await getFilesInFolder(
+        folderId.toString(),
+        token,
+        undefined,
+        nextPage
+      );
+
+      dispatch({ type: "fetch-more-files-success", files: moreFiles });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
+  };
+
+  // Handle Fetch More Folders
+  const fetchMoreFolders = async () => {
+    if (
+      state.tag !== "loaded" ||
+      state.isFetchingMore ||
+      state.folders === null ||
+      state.details.type !== FolderType.PRIVATE ||
+      state.folders.last
+    ) {
+      return;
+    }
+
+    try {
+      dispatch({ type: "fetch-more-start" });
+
+      const nextPage = state.folders.number + 1;
+
+      const moreFolders = await getFoldersInFolder(
+        folderId.toString(),
+        token,
+        sortBy,
+        nextPage,
+        2
+      );
+
+      dispatch({ type: "fetch-more-folders-success", folders: moreFolders });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
     }
   };
 
@@ -527,7 +619,7 @@ const FolderDetails = () => {
     case "loaded": {
       return (
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <SafeAreaView className="flex-1 bg-primary h-full px-6 py-12">
+          <SafeAreaView className="flex-1 bg-primary h-full px-6 py-10">
             <FlatList
               data={state.files.content}
               keyExtractor={(item) => String(item.fileId)}
@@ -538,7 +630,9 @@ const FolderDetails = () => {
                   owner={state.details.user.username}
                 />
               )}
-              contentContainerStyle={{ paddingBottom: 80 }}
+              onEndReached={fetchMoreFiles}
+              onEndReachedThreshold={0.1}
+              contentContainerStyle={{ paddingBottom: 40 }}
               showsVerticalScrollIndicator={false}
               ListHeaderComponent={() => (
                 <View className="my-6 px-4 space-y-6">
@@ -568,6 +662,13 @@ const FolderDetails = () => {
                   </View>
                 </View>
               )}
+              ListFooterComponent={() =>
+                state.isFetchingMore ? (
+                  <View className="bg-primary py-4 justify-center items-center">
+                    <ActivityIndicator size="small" color="#fff" />
+                  </View>
+                ) : null
+              }
               ListEmptyComponent={() =>
                 state.tag === "loaded" ? (
                   <EmptyState

@@ -223,6 +223,7 @@ const firstState: State = {
 };
 
 const SIZE_MIN_FOLDER = 2;
+const sortBy = "updated_desc";
 
 const CreateFolder = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
@@ -267,7 +268,7 @@ const CreateFolder = () => {
       dispatch({ type: "start-loading" });
       const folders = await getFolders(
         token,
-        undefined,
+        sortBy,
         FolderType.PRIVATE,
         OwnershipFilter.OWNER,
         search
@@ -282,7 +283,7 @@ const CreateFolder = () => {
     }
   }
 
-  // Handle Fetch More Files
+  // Handle Fetch More Folders
   const fetchMoreFolders = async () => {
     if (state.tag !== "editing" || state.isFetchingMore || state.folders.last) {
       return;
@@ -293,16 +294,16 @@ const CreateFolder = () => {
 
       const nextPage = state.folders.number + 1;
 
-      const moreFiles = await getFolders(
+      const moreFolders = await getFolders(
         token,
-        undefined,
+        sortBy,
         FolderType.PRIVATE,
         OwnershipFilter.OWNER,
         search,
         nextPage
       );
 
-      dispatch({ type: "fetch-more-success", folders: moreFiles });
+      dispatch({ type: "fetch-more-success", folders: moreFolders });
     } catch (error) {
       dispatch({ type: "loading-error", error: error });
     }
@@ -544,6 +545,13 @@ const CreateFolder = () => {
                           selectedFolderId={state.inputs.parentFolderId}
                         />
                       )}
+                      ListFooterComponent={() =>
+                        state.isFetchingMore ? (
+                          <View className="bg-primary py-4 justify-center items-center">
+                            <ActivityIndicator size="small" color="#fff" />
+                          </View>
+                        ) : null
+                      }
                       onEndReached={fetchMoreFolders}
                       onEndReachedThreshold={0.1}
                       ListEmptyComponent={() => (

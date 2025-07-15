@@ -47,9 +47,10 @@ type State =
         selectUsername: string;
         folderId: number | undefined;
       };
-
       folders: PageResult<Folder>;
-      users: UserHomeOutputModel[];
+      users: PageResult<UserHomeOutputModel> | null;
+      isFetchingMoreFolders: boolean;
+      isFetchingMoreUsers: boolean;
       isSearchingUsers: boolean;
     }
   | { tag: "error"; error: Problem | string }
@@ -75,10 +76,14 @@ type Action =
       inputValue: string | number;
     }
   | { type: "user-search" }
-  | { type: "search-success"; users: UserHomeOutputModel[] }
+  | { type: "search-success"; users: PageResult<UserHomeOutputModel> }
   | { type: "reset" }
   | { type: "search-error"; error: Problem | string }
   | { type: "select-user"; selectUsername: string }
+  | { type: "fetch-more-start-folders" }
+  | { type: "fetch-more-folders-success"; folders: PageResult<Folder> }
+  | { type: "fetch-more-start-users" }
+  | { type: "fetch-more-users-success"; users: PageResult<UserHomeOutputModel> }
   | { type: "submit" }
   | { type: "error"; error: Problem | string }
   | { type: "success" };
@@ -109,7 +114,9 @@ function reducer(state: State, action: Action): State {
             folderId: undefined,
           },
           folders: action.folders,
-          users: [],
+          users: null,
+          isFetchingMoreFolders: false,
+          isFetchingMoreUsers: false,
           isSearchingUsers: false,
         };
       } else if (action.type === "loading-error") {
@@ -135,11 +142,11 @@ function reducer(state: State, action: Action): State {
             },
           };
         case "user-search":
-          return { ...state, isSearchingUsers: true, users: [] };
+          return { ...state, users: state.users, isSearchingUsers: true };
         case "search-success":
-          return { ...state, isSearchingUsers: false, users: action.users };
+          return { ...state, users: action.users, isSearchingUsers: true };
         case "reset":
-          return { ...state, isSearchingUsers: false, users: [] };
+          return { ...state, users: null };
         case "select-user":
           return {
             ...state,
@@ -148,11 +155,41 @@ function reducer(state: State, action: Action): State {
               selectUsername: action.selectUsername,
               username: "",
             },
-            users: [],
+            users: null,
             isSearchingUsers: false,
           };
         case "search-error":
           return { tag: "error", error: action.error };
+        case "fetch-more-start-users":
+          return {
+            ...state,
+            isFetchingMoreUsers: true,
+          };
+        case "fetch-more-start-folders":
+          return {
+            ...state,
+            isFetchingMoreFolders: true,
+          };
+        case "fetch-more-folders-success":
+          return {
+            ...state,
+            folders: {
+              ...action.folders,
+              content: [...state.folders.content, ...action.folders.content],
+            },
+            isFetchingMoreFolders: false,
+          };
+        case "fetch-more-users-success":
+          return {
+            ...state,
+            users: state.users
+              ? {
+                  ...action.users,
+                  content: [...state.users.content, ...action.users.content],
+                }
+              : action.users,
+            isFetchingMoreUsers: false,
+          };
         case "submit":
           return {
             tag: "submitting",
@@ -160,6 +197,7 @@ function reducer(state: State, action: Action): State {
             folderId: state.inputs.folderId,
             folders: state.folders,
           };
+
         default:
           return logUnexpectedAction(state, action);
       }
@@ -177,8 +215,10 @@ function reducer(state: State, action: Action): State {
               folderId: undefined,
             },
             folders: state.folders,
-            users: [],
+            users: null,
             isSearchingUsers: false,
+            isFetchingMoreUsers: false,
+            isFetchingMoreFolders: false,
           };
         default:
           return logUnexpectedAction(state, action);
@@ -192,6 +232,7 @@ function reducer(state: State, action: Action): State {
 
 const firstState: State = { tag: "begin" };
 const SIZE_MIN_USERNAME = 2;
+const sortBy = "updated_desc";
 
 const CreateInvite = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
@@ -239,7 +280,7 @@ const CreateInvite = () => {
     try {
       const folders = await getFolders(
         token,
-        undefined,
+        sortBy,
         FolderType.SHARED,
         OwnershipFilter.OWNER
       );
@@ -252,6 +293,60 @@ const CreateInvite = () => {
       dispatch({ type: "loading-error", error: error });
     }
   }
+
+  // Handle Fetch More Folders
+  const fetchMoreFolders = async () => {
+    if (
+      state.tag !== "editing" ||
+      state.isFetchingMoreFolders ||
+      state.folders.last
+    ) {
+      return;
+    }
+
+    try {
+      dispatch({ type: "fetch-more-start-folders" });
+
+      const nextPage = state.folders.number + 1;
+
+      const moreFolders = await getFolders(
+        token,
+        sortBy,
+        FolderType.SHARED,
+        OwnershipFilter.OWNER,
+        undefined,
+        nextPage
+      );
+
+      dispatch({ type: "fetch-more-folders-success", folders: moreFolders });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
+  };
+
+  // Handle Fetch More Users
+  const fetchMoreUsers = async () => {
+    if (
+      state.tag !== "editing" ||
+      state.isFetchingMoreUsers ||
+      state.users === null ||
+      state.users.last
+    ) {
+      return;
+    }
+
+    try {
+      dispatch({ type: "fetch-more-start-users" });
+
+      const nextPage = state.users.number + 1;
+
+      const moreUsers = await getUsers(selectUsername, token, nextPage, 4);
+
+      dispatch({ type: "fetch-more-users-success", users: moreUsers });
+    } catch (error) {
+      dispatch({ type: "loading-error", error: error });
+    }
+  };
 
   // Handle form submission
   async function handleSubmit() {
@@ -298,7 +393,7 @@ const CreateInvite = () => {
       try {
         dispatch({ type: "user-search" });
         const users = await getUsers(value, token, 0, 4);
-        dispatch({ type: "search-success", users: users.content });
+        dispatch({ type: "search-success", users: users });
       } catch (error) {
         Alert.alert(
           "Error",
@@ -362,17 +457,10 @@ const CreateInvite = () => {
               onChangeText={(text) => handleChange("username", text)}
             />
 
-            {state.isSearchingUsers && (
-              <View className="items-center justify-center mt-4">
-                <ActivityIndicator size="small" color="#FFFFFF" />
-                <Text className="mt-2 text-white text-base">
-                  Loading Users...
-                </Text>
-              </View>
-            )}
-
             <FlatList
-              data={state.users.filter((user) => user.username !== username)}
+              data={state.users?.content.filter(
+                (user) => user.username !== username
+              )}
               keyExtractor={(item) => item.username}
               renderItem={({ item }) => (
                 <TouchableOpacity
@@ -391,11 +479,22 @@ const CreateInvite = () => {
                   <Text style={{ color: "white" }}>{item.username}</Text>
                 </TouchableOpacity>
               )}
+              onEndReached={fetchMoreUsers}
+              ListFooterComponent={() =>
+                state.isFetchingMoreUsers ? (
+                  <View className="bg-primary py-4 justify-center items-center">
+                    <ActivityIndicator size="small" color="#fff" />
+                  </View>
+                ) : null
+              }
+              onEndReachedThreshold={0.1}
               ListEmptyComponent={() => (
                 <View className="flex-1 items-center justify-center py-10">
-                  <Text className="text-white text-lg font-semibold mb-2 text-center">
-                    No foles match your search
-                  </Text>
+                  {state.isSearchingUsers && (
+                    <Text className="text-white text-lg font-semibold mb-2 text-center">
+                      No users match your search
+                    </Text>
+                  )}
                 </View>
               )}
               style={{
@@ -467,10 +566,19 @@ const CreateInvite = () => {
                     selectedFolderId={state.inputs.folderId}
                   />
                 )}
-                style={{ flex: 1, maxHeight: 320 }}
+                onEndReached={fetchMoreFolders}
+                onEndReachedThreshold={0.1}
+                style={{ flex: 1, maxHeight: 250 }}
                 contentContainerStyle={{
                   paddingBottom: 80,
                 }}
+                ListFooterComponent={() =>
+                  state.isFetchingMoreFolders ? (
+                    <View className="bg-primary py-4 justify-center items-center">
+                      <ActivityIndicator size="small" color="#fff" />
+                    </View>
+                  ) : null
+                }
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={() => (
                   <EmptyState

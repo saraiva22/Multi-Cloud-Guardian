@@ -324,6 +324,13 @@ const ReceivedInvites = () => {
                 }
               />
             )}
+            ListFooterComponent={() =>
+              state.isFetchingMore ? (
+                <View className="bg-primary py-4 justify-center items-center">
+                  <ActivityIndicator size="small" color="#fff" />
+                </View>
+              ) : null
+            }
             onEndReached={fetchMoreFolders}
             onEndReachedThreshold={0.1}
             ListEmptyComponent={() => (

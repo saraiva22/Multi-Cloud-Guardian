@@ -297,10 +297,16 @@ const FilesScreen = () => {
     }
 
     if (state.tag === "error") {
-      const message = isProblem(state.error)
-        ? getProblemMessage(state.error)
-        : state.error;
-      Alert.alert("Error", `${message}`);
+      Alert.alert(
+        "Error",
+        `${
+          isProblem(state.error)
+            ? getProblemMessage(state.error)
+            : isProblem(state.error.body)
+            ? getProblemMessage(state.error.body)
+            : state.error
+        }`
+      );
       setUsername(null);
       setIsLogged(false);
       removeValueFor(KEY_NAME);
