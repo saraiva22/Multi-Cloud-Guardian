@@ -1,4 +1,4 @@
-#  Multi Cloud Guardian - Backend Documentation
+# Multi Cloud Guardian - Backend Documentation
 
 > This is the backend documentation for the Multi Cloud Guardian.
 
@@ -86,6 +86,7 @@ The conceptual model has the following restrictions:
   - The `path` attribute stores the path associated with the folder on the cloud storage provider.
 
 - `File` entity:
+
   - The `file_name` and `file_fake_name` attribute stores the name of the file;
   - The `size` attribute represents the file size in bytes;
   - The `created_at` attribute represents the number of seconds since the [Unix epoch](https://en.wikipedia.org/wiki/Unix_time), and must be greater than 0;
@@ -97,8 +98,8 @@ The conceptual model has the following restrictions:
 
 - `Join_Folders` entity:
   - This junction entity manages user access to shared folders.
-    - Composite primary key of user_id (foreign key to Users) and folder_id (foreign key to Folders), both with cascade on delete and update. 
-    - Triggers insert owners or new members into this table for shared folders. 
+    - Composite primary key of user_id (foreign key to Users) and folder_id (foreign key to Folders), both with cascade on delete and update.
+    - Triggers insert owners or new members into this table for shared folders.
     - Deleting from this table triggers removal of previous invitations and user files from the shared folder.
 
 ### Key Relationships
@@ -116,10 +117,10 @@ The physical model of the database is available in [create-schema.sql](../src/sq
 
 To implement and manage the database [PostgreSQL](https://www.postgresql.org/) was used.
 
-The [code/jvm/src/sql](../src/sql) folder contains all SQL scripts developed:
+The [multicloud-guardian/repository-jdbi/src/sql/](../multicloud-guardian/repository-jdbi/src/sql/) folder contains all SQL scripts developed:
 
-- [create-schema.sql](../src/sql/create-schema.sql) - creates the database schema;
-- [insert-data.sql](../src/sql/insert-test-data.sql) - adds test data to the database;
+- [create-schema.sql](../multicloud-guardian/repository-jdbi/src/sql/create-schema.sql) - creates the database schema;
+
 
 We highlight the following aspects of this model:
 
@@ -135,8 +136,8 @@ We highlight the following aspects of this model:
 ### Application Architecture
 
 | ![Application Architecture](../docs/images/software_%20architect_white.png.png) |
-|:---------------------------------------------:|
-|      _Application architecture diagram_       |
+| :-----------------------------------------------------------------------------: |
+|                       _Application architecture diagram_                        |
 
 The JVM application is organized as follows:
 
@@ -340,8 +341,8 @@ In the backend infrastructure, data validation is enforced at two distinct layer
     val iterations: Int,
     val costType: CostType,
     val locationType: LocationType,
-  ) 
-  
+  )
+
 
 
   // In the controller handler method, the request body is
