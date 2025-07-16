@@ -36,7 +36,7 @@ import SortSelector, {
 import SearchInput from "@/components/SearchBar";
 import { FolderType } from "@/domain/storage/FolderType";
 import { OwnershipFilter } from "@/domain/storage/OwnershipFilter";
-import MoveBottomSheet from "@/components/MoveBottomSheet";
+import FileActionsBottomSheet from "@/components/FileActionsBottomSheet";
 
 // The State
 type State =
@@ -69,6 +69,7 @@ type State =
         searchValue: string;
       };
       isFetchingMore: boolean;
+      selectFile: File | null;
     }
   | { tag: "error"; error: Problem | string };
 
@@ -92,6 +93,7 @@ type Action =
   | { type: "refreshing"; refreshing: boolean; sort: SortOption }
   | { type: "search"; search: string }
   | { type: "delete-select-file"; file: File }
+  | { type: "select-file"; file: File }
   | {
       type: "reset";
     };
@@ -131,6 +133,7 @@ function reducer(state: State, action: Action): State {
           },
           search: state.search,
           isFetchingMore: false,
+          selectFile: null,
         };
       } else if (action.type === "loading-error") {
         return { tag: "error", error: action.error };
@@ -167,6 +170,8 @@ function reducer(state: State, action: Action): State {
           tag: "loaded",
           inputs: { ...state.inputs, [action.inputName]: action.inputValue },
         };
+      } else if (action.type === "select-file") {
+        return { ...state, selectFile: action.file };
       } else if (action.type === "delete-select-file") {
         return {
           ...state,
@@ -236,22 +241,21 @@ const HomeScreen = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
   const router = useRouter();
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const moveSheetRef = useRef<BottomSheet>(null);
-  const [selectFile, setSelectFile] = useState<File | null>(null);
+  const fileSheetRef = useRef<BottomSheet>(null);
 
   const sort = state.tag === "error" ? sortOptions[0] : state.sort;
 
   const search = state.tag === "error" ? "" : state.search;
 
   const openSortSheet = () => {
-    moveSheetRef.current?.close();
+    fileSheetRef.current?.close();
     bottomSheetRef.current?.expand();
   };
 
   const openMoveSheet = (file: File) => {
     bottomSheetRef.current?.close();
-    setSelectFile(file);
-    moveSheetRef.current?.expand();
+    dispatch({ type: "select-file", file });
+    fileSheetRef.current?.expand();
   };
 
   const handleSelectSort = (sort: SortOption) => {
@@ -304,8 +308,7 @@ const HomeScreen = () => {
         token,
         undefined,
         FolderType.PRIVATE,
-        OwnershipFilter.OWNER,
-        undefined
+        OwnershipFilter.OWNER
       );
       dispatch({
         type: "loading-success",
@@ -552,11 +555,7 @@ const HomeScreen = () => {
             />
           </View>
           <SortSelector ref={bottomSheetRef} onSortChange={handleSelectSort} />
-          <MoveBottomSheet
-            ref={moveSheetRef}
-            file={selectFile}
-            onDelete={(file) => dispatch({ type: "delete-select-file", file })}
-          />
+          <FileActionsBottomSheet ref={fileSheetRef} file={state.selectFile} />
         </SafeAreaView>
       );
   }

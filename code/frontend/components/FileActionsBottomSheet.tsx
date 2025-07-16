@@ -36,6 +36,7 @@ import { OwnershipFilter } from "@/domain/storage/OwnershipFilter";
 import { useAuthentication } from "@/context/AuthProvider";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { icons } from "@/constants";
+import { router } from "expo-router";
 
 // The State
 type State =
@@ -49,14 +50,14 @@ type State =
       fileDetails: File;
       folders: PageResult<Folder>;
     }
-  | { tag: "redirect" }
+  | { tag: "redirect"; replaceHistory: boolean }
   | { tag: "error"; error: Problem };
 
 // The Action
 type Action =
   | { type: "start-loading" }
   | { type: "loading-error"; error: Problem }
-  | { type: "loading-success" }
+  | { type: "loading-success"; replaceHistory: boolean }
   | { type: "url-start" }
   | { type: "edit-url"; minutes: number }
   | { type: "url-success"; url: string }
@@ -86,7 +87,7 @@ function reducer(state: State, action: Action): State {
       }
     case "loading":
       if (action.type === "loading-success") {
-        return { tag: "redirect" };
+        return { tag: "redirect", replaceHistory: action.replaceHistory };
       } else if (action.type === "loading-error") {
         return { tag: "error", error: action.error };
       } else if (action.type === "url-success") {
@@ -158,12 +159,12 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-type Props = { file: File; onDelete: (file: File) => void };
+type Props = { file: File };
 
 const firstState: State = { tag: "begin" };
 
-const MoveBottomSheet = forwardRef<BottomSheet, Props>(
-  ({ file, onDelete }: Props, ref) => {
+const FileActionsBottomSheet = forwardRef<BottomSheet, Props>(
+  ({ file }: Props, ref) => {
     const selectFile = file;
     const [state, dispatch] = useReducer(reducer, firstState);
 
@@ -197,6 +198,10 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
     useEffect(() => {
       if (state.tag === "redirect" || state.tag === "error") {
         handleAction();
+      }
+
+      if (state.tag === "redirect" && state.replaceHistory) {
+        router.replace("/files");
       }
     }, [state]);
 
@@ -236,7 +241,7 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
       try {
         const result = await downloadFile(file.fileId.toString(), token);
         await processAndSaveDownloadedFile(result, keyMaster);
-        dispatch({ type: "loading-success" });
+        dispatch({ type: "loading-success", replaceHistory: false });
       } catch (error) {
         Alert.alert(
           "Error",
@@ -252,8 +257,7 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
       try {
         await deleteFile(file.fileId.toString(), token);
         Alert.alert("File Deleted", "The file was deleted successfully.");
-        onDelete(file);
-        dispatch({ type: "loading-success" });
+        dispatch({ type: "loading-success", replaceHistory: true });
       } catch (error) {
         Alert.alert(
           "Error",
@@ -301,7 +305,7 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
 
         await moveFile(fileId, selectFolderId, token);
 
-        dispatch({ type: "loading-success" });
+        dispatch({ type: "loading-success", replaceHistory: true });
       } catch (error) {
         Alert.alert(
           "Error",
@@ -639,7 +643,7 @@ const MoveBottomSheet = forwardRef<BottomSheet, Props>(
   }
 );
 
-export default MoveBottomSheet;
+export default FileActionsBottomSheet;
 
 const styles = StyleSheet.create({
   sheetBackground: {

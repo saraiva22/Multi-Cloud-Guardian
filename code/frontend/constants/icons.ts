@@ -51,6 +51,7 @@ import reset from "../assets/icons/reset.png";
 import filter from "../assets/icons/filter.png";
 import close from "../assets/icons/close.png";
 import download from "../assets/icons/download.png";
+import more from "../assets/icons/more.png";
 
 export default {
   europe,
@@ -106,4 +107,5 @@ export default {
   filter,
   close,
   download,
+  more,
 };

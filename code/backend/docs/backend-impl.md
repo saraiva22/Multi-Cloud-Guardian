@@ -113,14 +113,13 @@ The conceptual model has the following restrictions:
 
 ### Physical Model
 
-The physical model of the database is available in [create-schema.sql](../src/sql/create-schema.sql).
+The physical model of the database is available in [create-schema.sql](../multicloud-guardian/repository-jdbi/src/sql/create-schema.sql).
 
 To implement and manage the database [PostgreSQL](https://www.postgresql.org/) was used.
 
 The [multicloud-guardian/repository-jdbi/src/sql/](../multicloud-guardian/repository-jdbi/src/sql/) folder contains all SQL scripts developed:
 
 - [create-schema.sql](../multicloud-guardian/repository-jdbi/src/sql/create-schema.sql) - creates the database schema;
-
 
 We highlight the following aspects of this model:
 

@@ -1,10 +1,9 @@
 import { View, Text, TouchableOpacity, Image } from "react-native";
-import React from "react";
+import React, { useRef } from "react";
 import { images } from "@/constants";
 import { formatFolderType, formatSize } from "@/services/utils/Function";
 import { useRouter } from "expo-router";
 import { Folder } from "@/domain/storage/Folder";
-import { MaterialIcons } from "@expo/vector-icons";
 
 type Props = {
   item: Folder;
@@ -14,9 +13,16 @@ type Props = {
 
 const FolderGridItemComponent = ({ item }: Props) => {
   const router = useRouter();
+  const hasNavigated = useRef(false);
 
   const handlePress = () => {
+    if (hasNavigated.current) return;
+    hasNavigated.current = true;
+
     router.push(`/folders/${item.folderId}`);
+    setTimeout(() => {
+      hasNavigated.current = false;
+    }, 2000);
   };
 
   return (

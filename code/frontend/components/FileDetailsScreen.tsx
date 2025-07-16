@@ -6,7 +6,7 @@ import {
   Image,
   TouchableOpacity,
 } from "react-native";
-import React, { useEffect, useReducer } from "react";
+import React, { useEffect, useReducer, useRef } from "react";
 import { router } from "expo-router";
 import {
   generateTemporaryUrl,
@@ -26,6 +26,9 @@ import CustomButton from "@/components/CustomButton";
 import { formatDate, formatSize } from "@/services/utils/Function";
 import * as Clipboard from "expo-clipboard";
 import { FolderType } from "@/domain/storage/FolderType";
+import BottomSheet from "@gorhom/bottom-sheet";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import FileActionsBottomSheet from "./FileActionsBottomSheet";
 
 // The State
 type State =
@@ -106,9 +109,10 @@ type FileInfoProps = {
   username: string;
   owner: string;
   state: State;
-  handleDownload: (func: () => void) => Promise<any>;
-  handleDelete: (func: () => void) => Promise<any>;
+  handleDownload: () => Promise<any>;
+  handleDelete: () => Promise<any>;
   handleGenerateTemporaryUrl: () => Promise<any>;
+  onMovePress: () => void;
 };
 
 const FileInfo = ({
@@ -119,24 +123,51 @@ const FileInfo = ({
   handleDownload,
   handleDelete,
   handleGenerateTemporaryUrl,
+  onMovePress,
 }: FileInfoProps) => (
   <SafeAreaView className="flex-1 bg-primary h-full px-6 py-12">
-    <TouchableOpacity
-      className="absolute left-6 top-6 z-10 mt-28"
-      onPress={() => router.back()}
-      hitSlop={12}
-    >
-      <Image
-        source={icons.back}
-        className="w-6 h-6"
-        resizeMode="contain"
-        tintColor="white"
-      />
-    </TouchableOpacity>
+    <View className="flex-row items-center justify-between px-4 mt-12 mb-10">
+      <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
+        <Image
+          source={icons.back}
+          className="w-6 h-6"
+          resizeMode="contain"
+          tintColor="white"
+        />
+      </TouchableOpacity>
 
-    <Text className="text-[24px] font-semibold text-white text-center mb-16 mt-4">
-      File Details
-    </Text>
+      <Text className="text-[24px] ml-14 font-semibold text-white text-center">
+        File Details
+      </Text>
+
+      <View className="flex-row gap-3">
+        <TouchableOpacity onPress={onMovePress} hitSlop={12}>
+          <Image source={icons.more} className="w-8 h-8" resizeMode="contain" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleDownload} hitSlop={12}>
+          <Image
+            source={icons.download}
+            className="w-8 h-8"
+            style={{ tintColor: "#fff" }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+
+        {(fileInfo.user.username === username ||
+          (fileInfo.folderInfo?.folderType === FolderType.SHARED &&
+            owner === username)) && (
+          <>
+            <TouchableOpacity onPress={handleDelete} hitSlop={12}>
+              <Image
+                source={icons.delete_icon}
+                className="w-8 h-8"
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    </View>
 
     <View className="items-center mb-12">
       <Image
@@ -176,18 +207,10 @@ const FileInfo = ({
     </View>
 
     <View>
-      <CustomButton
-        title="Download"
-        handlePress={handleDownload}
-        containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
-        textStyles="text-black text-center font-bold"
-        isLoading={state.tag === "loading"}
-        color="border-secondary"
-      />
       {fileInfo.encryption === false &&
         fileInfo.folderInfo?.folderType !== FolderType.SHARED && (
           <CustomButton
-            title="Generate Temporary URL"
+            title="Generate Temporary URL (15 minutes)"
             handlePress={handleGenerateTemporaryUrl}
             containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
             textStyles="text-black text-center font-bold"
@@ -195,18 +218,6 @@ const FileInfo = ({
             color="border-secondary"
           />
         )}
-      {(fileInfo.user.username === username ||
-        (fileInfo.folderInfo?.folderType === FolderType.SHARED &&
-          owner === username)) && (
-        <CustomButton
-          title="Delete"
-          handlePress={handleDelete}
-          containerStyles="w-full mb-4 bg-secondary-200 rounded-lg py-4"
-          textStyles="text-black text-center font-bold"
-          isLoading={state.tag === "loading"}
-          color="border-secondary"
-        />
-      )}
     </View>
     {state.tag === "loaded" &&
       fileInfo.encryption === false &&
@@ -253,6 +264,11 @@ const FileDetailsScreen = ({
   const { username, token, keyMaster, setUsername, setIsLogged } =
     useAuthentication();
 
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  const openMoveSheet = () => {
+    bottomSheetRef.current?.expand();
+  };
   const fetchFileDetails = async () => {
     dispatch({ type: "start-loading" });
     try {
@@ -368,15 +384,19 @@ const FileDetailsScreen = ({
       );
     case "loaded": {
       return (
-        <FileInfo
-          fileInfo={state.details}
-          username={username ? username : ""}
-          owner={owner}
-          state={state}
-          handleDownload={handleDownload}
-          handleDelete={handleDelete}
-          handleGenerateTemporaryUrl={handleGenerateTemporaryUrl}
-        />
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <FileInfo
+            fileInfo={state.details}
+            username={username ? username : ""}
+            owner={owner}
+            state={state}
+            handleDownload={handleDownload}
+            handleDelete={handleDelete}
+            handleGenerateTemporaryUrl={handleGenerateTemporaryUrl}
+            onMovePress={openMoveSheet}
+          />
+          <FileActionsBottomSheet ref={bottomSheetRef} file={state.details} />
+        </GestureHandlerRootView>
       );
     }
   }

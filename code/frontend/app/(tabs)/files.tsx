@@ -29,12 +29,12 @@ import SortSelector, {
   sortOptions,
 } from "@/components/SortSelector";
 import BottomSheet from "@gorhom/bottom-sheet";
-import MoveBottomSheet from "@/components/MoveBottomSheet";
 import { FolderType } from "@/domain/storage/FolderType";
 import FilterSelector, {
   FilterOption,
   filterOptions,
 } from "@/components/FilterFolderSelector";
+import FileActionsBottomSheet from "@/components/FileActionsBottomSheet";
 
 // The State
 type State =
@@ -69,6 +69,7 @@ type State =
         searchValue: string;
       };
       isFetchingMore: boolean;
+      selectFile: File | null;
     }
   | { tag: "error"; error: Problem };
 
@@ -95,6 +96,7 @@ type Action =
     }
   | { type: "search"; search: string }
   | { type: "delete-select-file"; file: File }
+  | { type: "select-file"; file: File }
   | {
       type: "reset";
     };
@@ -136,6 +138,7 @@ function reducer(state: State, action: Action): State {
           },
           search: state.search,
           isFetchingMore: false,
+          selectFile: null,
         };
       } else if (action.type === "loading-error") {
         return { tag: "error", error: action.error };
@@ -171,6 +174,7 @@ function reducer(state: State, action: Action): State {
             },
             search: state.search,
             isFetchingMore: state.isFetchingMore,
+            selectFile: null,
           };
 
         case "search":
@@ -221,6 +225,9 @@ function reducer(state: State, action: Action): State {
               totalElements: state.files.totalElements - 1,
             },
           };
+        case "select-file":
+          return { ...state, selectFile: action.file };
+
         default:
           logUnexpectedAction(state, action);
           return state;
@@ -248,7 +255,6 @@ const FilesScreen = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const moveSheetRef = useRef<BottomSheet>(null);
   const filterSheetRef = useRef<BottomSheet>(null);
-  const [selectFile, setSelectFile] = useState<File | null>(null);
 
   const sort = state.tag === "error" ? sortOptions[0] : state.sort;
 
@@ -267,7 +273,7 @@ const FilesScreen = () => {
   };
 
   const openMoveSheet = (file: File) => {
-    setSelectFile(file);
+    dispatch({ type: "select-file", file });
     moveSheetRef.current?.expand();
   };
 
@@ -521,11 +527,7 @@ const FilesScreen = () => {
             ref={filterSheetRef}
             onFilterChange={handleSelectFilter}
           />
-          <MoveBottomSheet
-            ref={moveSheetRef}
-            file={selectFile}
-            onDelete={(file) => dispatch({ type: "delete-select-file", file })}
-          />
+          <FileActionsBottomSheet ref={moveSheetRef} file={state.selectFile} />
         </SafeAreaView>
       );
   }

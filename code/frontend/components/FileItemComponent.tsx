@@ -16,8 +16,11 @@ type Props = {
 const FileItemComponent = ({ item, onMovePress, owner }: Props) => {
   const router = useRouter();
   const { folderId } = useLocalSearchParams();
+  const hasNavigated = useRef(false);
 
   const handlePress = () => {
+    if (hasNavigated.current) return;
+    hasNavigated.current = true;
     if (folderId) {
       router.push({
         pathname: "/folders/[folderId]/files/[fileId]",
@@ -33,6 +36,9 @@ const FileItemComponent = ({ item, onMovePress, owner }: Props) => {
         params: { fileId: item.fileId },
       });
     }
+    setTimeout(() => {
+      hasNavigated.current = false;
+    }, 2000);
   };
 
   return (

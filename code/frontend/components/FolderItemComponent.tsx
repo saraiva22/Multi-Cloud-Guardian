@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, Image } from "react-native";
-import React from "react";
+import React, { useRef } from "react";
 import { Link, useRouter } from "expo-router";
 import { icons } from "@/constants";
 import {
@@ -13,20 +13,25 @@ import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 type Props = {
   item: Folder;
   onPress?: (folderId: number) => void;
-  
   selectedFolderId?: number | null;
 };
 
 const FolderItemComponent = ({ item, onPress, selectedFolderId }: Props) => {
   const router = useRouter();
   const isSelected = selectedFolderId === item.folderId;
+  const hasNavigated = useRef(false);
 
   const handlePress = () => {
+    if (hasNavigated.current) return;
+    hasNavigated.current = true;
     if (onPress) {
       onPress(item.folderId);
     } else {
       router.push(`/folders/${item.folderId}`);
     }
+    setTimeout(() => {
+      hasNavigated.current = false;
+    }, 2000);
   };
 
   return (

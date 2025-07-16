@@ -44,8 +44,8 @@ import { EventSourceListener } from "react-native-sse";
 import { UserInfo } from "@/domain/user/UserInfo";
 import MemberCard from "@/components/MemberCard";
 import BottomSheet from "@gorhom/bottom-sheet";
-import MoveBottomSheet from "@/components/MoveBottomSheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import FileActionsBottomSheet from "@/components/FileActionsBottomSheet";
 
 // The State
 type State =
@@ -57,6 +57,7 @@ type State =
       files: PageResult<File>;
       folders: PageResult<Folder> | null;
       isFetchingMore: boolean;
+      selectFile: File | null;
     }
   | { tag: "redirect" }
   | { tag: "error"; error: Problem | string };
@@ -76,6 +77,7 @@ type Action =
   | { type: "success-delete" }
   | { type: "success-leave" }
   | { type: "fetch-more-start" }
+  | { type: "select-file"; file: File }
   | { type: "fetch-more-folders-success"; folders: PageResult<Folder> }
   | { type: "fetch-more-files-success"; files: PageResult<File> }
   | { type: "new-file"; file: File }
@@ -112,6 +114,7 @@ function reducer(state: State, action: Action): State {
           files: action.files,
           folders: action.folders,
           isFetchingMore: false,
+          selectFile: null,
         };
       } else if (action.type === "loading-error") {
         return { tag: "error", error: action.error };
@@ -147,6 +150,7 @@ function reducer(state: State, action: Action): State {
           },
           folders: state.folders,
           isFetchingMore: state.isFetchingMore,
+          selectFile: null,
         };
       } else if (action.type === "new-member") {
         return {
@@ -158,7 +162,10 @@ function reducer(state: State, action: Action): State {
           files: state.files,
           folders: state.folders,
           isFetchingMore: state.isFetchingMore,
+          selectFile: null,
         };
+      } else if (action.type === "select-file") {
+        return { ...state, selectFile: action.file };
       } else if (
         action.type === "delete-file" ||
         action.type === "delete-select-file"
@@ -186,6 +193,7 @@ function reducer(state: State, action: Action): State {
           },
           folders: state.folders,
           isFetchingMore: state.isFetchingMore,
+          selectFile: null,
         };
       } else if (action.type === "leave-user") {
         const numberFile = state.files.content.filter(
@@ -363,7 +371,6 @@ const FolderDetails = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
   const { token, username, setIsLogged, setUsername } = useAuthentication();
   const moveSheetRef = useRef<BottomSheet>(null);
-  const [selectFile, setSelectFile] = useState<File | null>(null);
 
   const listener = getSSE();
 
@@ -391,7 +398,7 @@ const FolderDetails = () => {
   }, [state.tag]);
 
   const openMoveSheet = (file: File) => {
-    setSelectFile(file);
+    dispatch({ type: "select-file", file });
     moveSheetRef.current?.expand();
   };
 
@@ -554,8 +561,7 @@ const FolderDetails = () => {
         folderId.toString(),
         token,
         sortBy,
-        nextPage,
-        2
+        nextPage
       );
 
       dispatch({ type: "fetch-more-folders-success", folders: moreFolders });
@@ -652,7 +658,10 @@ const FolderDetails = () => {
                         </Text>
                       </View>
 
-                      <FolderCard folders={state.folders.content} />
+                      <FolderCard
+                        folders={state.folders.content}
+                        fetchFolders={fetchMoreFolders}
+                      />
                     </View>
                   ) : null}
                   <View className="w-full flex-1 pt-2">
@@ -680,12 +689,9 @@ const FolderDetails = () => {
                 ) : null
               }
             />
-            <MoveBottomSheet
+            <FileActionsBottomSheet
               ref={moveSheetRef}
-              file={selectFile}
-              onDelete={(file) =>
-                dispatch({ type: "delete-select-file", file })
-              }
+              file={state.selectFile}
             />
           </SafeAreaView>
         </GestureHandlerRootView>
