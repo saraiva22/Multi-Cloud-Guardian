@@ -295,6 +295,8 @@ const firstState: State = {
 };
 
 const SIZE_MIN_FOLDER = 2;
+const DEFAULT_PAGE_SIZE = 14;
+const STARTING_PAGE = 0;
 
 type CustomEventsFile = "file";
 type CustomEventDeleteFile = "deleteFile";
@@ -415,7 +417,6 @@ const FoldersScreen = () => {
       };
 
       dispatch({ type: "delete-folder", user, folderInfo });
-    
     }
   };
 
@@ -428,7 +429,9 @@ const FoldersScreen = () => {
         sort.sortBy,
         folderType,
         filter.ownership,
-        search
+        search,
+        STARTING_PAGE,
+        DEFAULT_PAGE_SIZE
       );
       dispatch({ type: "loading-success", folders });
     } catch (error) {
@@ -458,7 +461,8 @@ const FoldersScreen = () => {
         folderType,
         filter.ownership,
         search,
-        nextPage
+        nextPage,
+        DEFAULT_PAGE_SIZE
       );
 
       dispatch({ type: "fetch-more-success", folders: moreFolders });

@@ -523,7 +523,9 @@ const CreateFile = () => {
                       onPress={(folderId) => {
                         handleChange("folderId", folderId);
                         handleChange("folderType", item.type);
-                        handleChange("encryption", false);
+                        if (item.type === FolderType.SHARED) {
+                          handleChange("encryption", false);
+                        }
                       }}
                       selectedFolderId={state.inputs.folderId}
                     />

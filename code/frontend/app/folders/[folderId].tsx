@@ -461,7 +461,7 @@ const FolderDetails = () => {
         username: eventData.newMember.username,
         email: eventData.newMember.email,
       };
-
+      
       dispatch({ type: "new-member", member: member });
     }
   };

@@ -640,7 +640,7 @@ class StorageService(
             val ownerId = folder.user.id.value
             return@run when (inviteStatus) {
                 InviteStatus.ACCEPT -> {
-                    sseService.sendNewMember(ownerId, invitedInfo, folderId.value, folder.folderName)
+                    sseService.sendNewMember(ownerId, invitedInfo, folderId.value, folder.folderName, folderMembers.members)
                     sseService.inviteResponse(inviteId.value, inviteStatus, invitedInfo, ownerId, folderId.value, folder.folderName)
                     success(InviteStatusResult.InviteAccepted(folderMembers))
                 }

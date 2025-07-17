@@ -92,7 +92,6 @@ type Action =
   | { type: "loading-error"; error: Problem | string }
   | { type: "refreshing"; refreshing: boolean; sort: SortOption }
   | { type: "search"; search: string }
-  | { type: "delete-select-file"; file: File }
   | { type: "select-file"; file: File }
   | {
       type: "reset";
@@ -172,18 +171,6 @@ function reducer(state: State, action: Action): State {
         };
       } else if (action.type === "select-file") {
         return { ...state, selectFile: action.file };
-      } else if (action.type === "delete-select-file") {
-        return {
-          ...state,
-          tag: "loaded",
-          files: {
-            ...state.files,
-            content: state.files.content.filter(
-              (file) => file.fileId !== action.file.fileId
-            ),
-            totalElements: state.files.totalElements - 1,
-          },
-        };
       } else if (action.type === "fetch-more-start") {
         return {
           ...state,

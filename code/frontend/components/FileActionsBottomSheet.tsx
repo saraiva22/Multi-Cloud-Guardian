@@ -23,8 +23,6 @@ import {
 import CustomButton from "./CustomButton";
 import { Picker } from "@react-native-picker/picker";
 import {
-  deleteFile,
-  deleteFileInFolder,
   downloadFile,
   downloadFileInFolder,
   generateTemporaryUrl,
@@ -261,29 +259,6 @@ const FileActionsBottomSheet = forwardRef<BottomSheet, Props>(
       }
     }
 
-    async function handleDelete() {
-      if (state.tag !== "begin") return;
-      dispatch({ type: "start-loading" });
-      try {
-        const fileId = file.fileId.toString();
-        file.folderInfo?.folderId
-          ? await deleteFileInFolder(
-              file.folderInfo.folderId.toString(),
-              fileId,
-              token
-            )
-          : await deleteFile(fileId, token);
-        Alert.alert("File Deleted", "The file was deleted successfully.");
-        dispatch({ type: "loading-success", replaceHistory: true });
-      } catch (error) {
-        Alert.alert(
-          "Error",
-          `${isProblem(error) ? getProblemMessage(error) : error}`
-        );
-        dispatch({ type: "loading-error", error: error });
-      }
-    }
-
     // Handle GetFolders
     async function handleGetFolders() {
       dispatch({ type: "start-loading" });
@@ -377,17 +352,6 @@ const FileActionsBottomSheet = forwardRef<BottomSheet, Props>(
                         <CustomButton
                           title="Move FIle"
                           handlePress={handleGetFolders}
-                          containerStyles="mt-10 rounded-lg"
-                          isLoading={false}
-                          textStyles="text-base font-semibold"
-                          color="bg-secondary"
-                        />
-                      )}
-
-                      {file?.user.username === username && (
-                        <CustomButton
-                          title="Delete File"
-                          handlePress={handleDelete}
                           containerStyles="mt-10 rounded-lg"
                           isLoading={false}
                           textStyles="text-base font-semibold"

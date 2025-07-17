@@ -202,10 +202,12 @@ class SSEService : NeedsShutdown {
         newMember: UserInfo,
         folderId: Int,
         folderName: String,
+        members: List<UserInfo>,
     ) = lock.withLock {
         logger.info("newMember")
         val id = currentNewMemberId++
-        sendEventToAll(listOf(ownerId), Event.NewMember(id, ownerId, UserInfoOutput.fromDomain(newMember), folderId, folderName))
+        val membersFolder = members.map { it.id.value }
+        sendEventToAll(membersFolder, Event.NewMember(id, ownerId, UserInfoOutput.fromDomain(newMember), folderId, folderName))
     }
 
     fun disconnectListener(

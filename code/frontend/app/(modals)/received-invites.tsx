@@ -8,7 +8,7 @@ import {
   Image,
   FlatList,
 } from "react-native";
-import React, { useCallback, useEffect, useReducer } from "react";
+import React, { useCallback, useEffect, useReducer, useRef } from "react";
 import { PageResult } from "@/domain/utils/PageResult";
 import { Invite } from "@/domain/storage/Invite";
 import {
@@ -153,6 +153,7 @@ const ReceivedInvites = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
   const { token, setIsLogged, setUsername } = useAuthentication();
   const listener = getSSE();
+  const hasNavigated = useRef(false);
 
   useEffect(() => {
     if (state.tag === "begin") {
@@ -241,6 +242,8 @@ const ReceivedInvites = () => {
     status: InviteStatusType
   ) {
     if (state.tag === "redirect") return;
+    if (hasNavigated.current) return;
+
     try {
       dispatch({ type: "start-validating", inviteId });
 
@@ -252,6 +255,7 @@ const ReceivedInvites = () => {
       );
 
       if (status === InviteStatusType.ACCEPT) {
+        hasNavigated.current = true;
         dispatch({ type: "accepted-invite", folderId });
       } else {
         dispatch({ type: "reject-invite", inviteId });
