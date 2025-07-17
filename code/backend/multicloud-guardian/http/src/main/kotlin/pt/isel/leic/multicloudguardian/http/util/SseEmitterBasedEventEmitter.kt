@@ -35,6 +35,13 @@ class SseEmitterBasedEventEmitter(
                         .name("leaveFolder")
                         .data(event)
 
+                is Event.DeleteFolder ->
+                    SseEmitter
+                        .event()
+                        .id(event.id.toString())
+                        .name("deleteFolder")
+                        .data(event)
+
                 is Event.Invite ->
                     SseEmitter
                         .event()

@@ -12,7 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import SearchInput from "@/components/SearchBar";
 import { icons } from "@/constants";
 import { KEY_NAME, useAuthentication } from "@/context/AuthProvider";
-import React, { useEffect, useReducer, useRef, useState } from "react";
+import React, { act, useEffect, useReducer, useRef, useState } from "react";
 import { PageResult } from "@/domain/utils/PageResult";
 import { File } from "@/domain/storage/File";
 import {
@@ -35,6 +35,10 @@ import FilterSelector, {
   filterOptions,
 } from "@/components/FilterFolderSelector";
 import FileActionsBottomSheet from "@/components/FileActionsBottomSheet";
+import { UserInfo } from "@/domain/user/UserInfo";
+import { FolderInfo } from "@/domain/storage/FolderInfo";
+import { getSSE } from "@/services/notifications/SSEManager";
+import { EventSourceListener } from "react-native-sse";
 
 // The State
 type State =
@@ -96,7 +100,14 @@ type Action =
     }
   | { type: "search"; search: string }
   | { type: "delete-select-file"; file: File }
+  | { type: "delete-folder"; user: UserInfo; folderInfo: FolderInfo }
   | { type: "select-file"; file: File }
+  | { type: "new-file"; file: File }
+  | { type: "leave-user"; member: UserInfo; folderId: number }
+  | {
+      type: "delete-file";
+      fileId: number;
+    }
   | {
       type: "reset";
     };
@@ -228,6 +239,53 @@ function reducer(state: State, action: Action): State {
         case "select-file":
           return { ...state, selectFile: action.file };
 
+        case "new-file":
+          return {
+            ...state,
+            tag: "loaded",
+            files: {
+              ...state.files,
+              content: [...state.files.content, action.file],
+              totalElements: state.files.totalElements + 1,
+            },
+          };
+
+        case "delete-file":
+          return {
+            ...state,
+            tag: "loaded",
+            files: {
+              ...state.files,
+              content: state.files.content.filter(
+                (file) => file.fileId !== action.fileId
+              ),
+              totalElements: state.files.totalElements - 1,
+            },
+          };
+        case "delete-folder":
+          return {
+            ...state,
+            files: {
+              ...state.files,
+              content: state.files.content.filter(
+                (file) =>
+                  file.folderInfo?.folderId !== action.folderInfo.folderId
+              ),
+            },
+          };
+        case "leave-user":
+          return {
+            ...state,
+            tag: "loaded",
+            files: {
+              ...state.files,
+              content: state.files.content.filter(
+                (file) =>
+                  file?.folderInfo?.folderId === action.folderId &&
+                  file.user.id !== action.member.id
+              ),
+            },
+          };
         default:
           logUnexpectedAction(state, action);
           return state;
@@ -246,6 +304,11 @@ const firstState: State = {
   },
 };
 
+type CustomEventsFile = "file";
+type CustomEventLeaveFolder = "leaveFolder";
+type CustomEventDeleteFile = "deleteFile";
+type CustomEventDeleteFolder = "deleteFolder";
+
 const SIZE_MIN_FILE = 2;
 
 const FilesScreen = () => {
@@ -255,6 +318,7 @@ const FilesScreen = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const moveSheetRef = useRef<BottomSheet>(null);
   const filterSheetRef = useRef<BottomSheet>(null);
+  const listener = getSSE();
 
   const sort = state.tag === "error" ? sortOptions[0] : state.sort;
 
@@ -320,6 +384,21 @@ const FilesScreen = () => {
     }
   }, [state]);
 
+  useEffect(() => {
+    if (!listener) return;
+    listener.addEventListener("file", handleNewFile);
+    listener.addEventListener("leaveFolder", handleLeaveFolder);
+    listener.addEventListener("deleteFile", handleDeleteFile);
+    listener.addEventListener("deleteFolder", handleDeleteFolder);
+
+    return () => {
+      listener.removeEventListener("file", handleNewFile);
+      listener.removeEventListener("leaveFolder", handleLeaveFolder);
+      listener.removeEventListener("deleteFile", handleDeleteFile);
+      listener.removeEventListener("deleteFolder", handleDeleteFolder);
+    };
+  }, []);
+
   // Handle input changes
   function handleChange(inputName: string, inputValue: string | boolean | any) {
     dispatch({
@@ -329,6 +408,77 @@ const FilesScreen = () => {
     });
   }
 
+  // Handle EventListener - New File
+  const handleNewFile: EventSourceListener<CustomEventsFile> = (event) => {
+    if (event.type === "file") {
+      const eventData = JSON.parse(event.data);
+      const newFile = {
+        fileId: eventData.fileId,
+        user: eventData.user,
+        folderInfo: eventData.folderInfo,
+        name: eventData.fileName,
+        path: eventData.path,
+        size: eventData.size,
+        contentType: eventData.contentType,
+        createdAt: eventData.createdAt,
+        encryption: eventData.encryption,
+        url: null,
+      };
+
+      dispatch({ type: "new-file", file: newFile });
+    }
+  };
+
+  // Handle EventListener - Leave Folder
+  const handleLeaveFolder: EventSourceListener<CustomEventLeaveFolder> = (
+    event
+  ) => {
+    if (event.type === "leaveFolder") {
+      const eventData = JSON.parse(event.data);
+      const member = {
+        id: eventData.user.id,
+        username: eventData.user.username,
+        email: eventData.user.email,
+      };
+      const folderId = eventData.folderInfo.folderId;
+
+      dispatch({ type: "leave-user", member: member, folderId: folderId });
+    }
+  };
+
+  // Handle EventListener - Delete File
+  const handleDeleteFile: EventSourceListener<CustomEventDeleteFile> = (
+    event
+  ) => {
+    if (event.type === "deleteFile") {
+      const eventData = JSON.parse(event.data);
+      dispatch({
+        type: "delete-file",
+        fileId: eventData.fileId,
+      });
+    }
+  };
+
+  // Handle EventListener - Delete Folder
+  const handleDeleteFolder: EventSourceListener<CustomEventDeleteFolder> = (
+    event
+  ) => {
+    if (event.type === "deleteFolder") {
+      const eventData = JSON.parse(event.data);
+      const user = {
+        id: eventData.user.id,
+        username: eventData.user.username,
+        email: eventData.user.email,
+      };
+      const folderInfo = {
+        folderId: eventData.folderInfo.folderId,
+        folderName: eventData.folderInfo.folderName,
+        folderType: eventData.folderInfo.folderType,
+      };
+
+      dispatch({ type: "delete-folder", user, folderInfo });
+    }
+  };
   const loadData = async () => {
     try {
       dispatch({ type: "start-loading" });

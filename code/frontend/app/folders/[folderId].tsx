@@ -9,7 +9,7 @@ import {
   FlatList,
 } from "react-native";
 import React, { useEffect, useReducer, useRef, useState } from "react";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useRouter } from "expo-router";
 import {
   deleteFolder,
   getFilesInFolder,
@@ -90,6 +90,7 @@ type Action =
       folderId: number;
       updatedAt: number;
     }
+  | { type: "delete-folder" }
   | { type: "delete-select-file"; file: File };
 
 function logUnexpectedAction(state: State, action: Action) {
@@ -141,7 +142,7 @@ function reducer(state: State, action: Action): State {
             ...state.details,
             numberFile: state.details.numberFile + 1,
             createdAt: action.file.createdAt,
-            size: action.file.size,
+            size: state.details.size + action.file.size,
           },
           files: {
             ...state.files,
@@ -216,6 +217,8 @@ function reducer(state: State, action: Action): State {
             ),
           },
         };
+      } else if (action.type === "delete-folder") {
+        return { tag: "redirect" };
       } else if (action.type === "fetch-more-start") {
         return {
           ...state,
@@ -236,11 +239,18 @@ function reducer(state: State, action: Action): State {
           isFetchingMore: false,
         };
       } else if (action.type === "fetch-more-files-success") {
+        const existingIds = new Set(
+          state.files.content.map((file) => file.fileId)
+        );
+        const newFiles = action.files.content.filter(
+          (file) => !existingIds.has(file.fileId)
+        );
+
         return {
           ...state,
           files: {
             ...action.files,
-            content: [...state.files.content, ...action.files.content],
+            content: [...state.files.content, ...newFiles],
           },
           isFetchingMore: false,
         };
@@ -264,6 +274,7 @@ type CustomEventsFile = "file";
 type CustomEventsMember = "newMember";
 type CustomEventLeaveFolder = "leaveFolder";
 type CustomEventDeleteFile = "deleteFile";
+type CustomEventDeleteFolder = "deleteFolder";
 
 const sortBy = "updated_desc";
 
@@ -371,6 +382,7 @@ const FolderDetails = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
   const { token, username, setIsLogged, setUsername } = useAuthentication();
   const moveSheetRef = useRef<BottomSheet>(null);
+  const router = useRouter();
 
   const listener = getSSE();
 
@@ -408,12 +420,14 @@ const FolderDetails = () => {
     listener.addEventListener("newMember", handleNewMember);
     listener.addEventListener("leaveFolder", handleLeaveFolder);
     listener.addEventListener("deleteFile", handleDeleteFile);
+    listener.addEventListener("deleteFolder", handleDeleteFolder);
 
     return () => {
       listener.removeEventListener("file", handleNewFile);
       listener.removeEventListener("newMember", handleNewMember);
       listener.removeEventListener("leaveFolder", handleLeaveFolder);
       listener.removeEventListener("deleteFile", handleDeleteFile);
+      listener.removeEventListener("deleteFolder", handleDeleteFolder);
     };
   }, []);
 
@@ -465,6 +479,17 @@ const FolderDetails = () => {
       };
 
       dispatch({ type: "leave-user", member: member });
+    }
+  };
+
+  // Handle EventListener - Delete Folder
+  const handleDeleteFolder: EventSourceListener<CustomEventDeleteFolder> = (
+    event
+  ) => {
+    if (event.type === "deleteFolder") {
+      const eventData = JSON.parse(event.data);
+      if (eventData.user.username === username) return;
+      dispatch({ type: "delete-folder" });
     }
   };
 
@@ -593,7 +618,14 @@ const FolderDetails = () => {
   }
 
   async function handleUploadFile() {
-    router.push("/(modals)/create-file");
+    if (folderId) {
+      router.push({
+        pathname: "/(modals)/create-file",
+        params: { folderId: folderId },
+      });
+    } else {
+      router.push("/(modals)/create-file");
+    }
   }
 
   // Render UI

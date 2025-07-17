@@ -133,9 +133,13 @@ const SentInvites = () => {
   }, [state]);
 
   useEffect(() => {
-    if (listener) {
-      listener.addEventListener("inviteResponse", handleInvite);
-    }
+    if (!listener) return;
+
+    listener.addEventListener("inviteResponse", handleInvite);
+
+    return () => {
+      listener.removeEventListener("inviteResponse", handleInvite);
+    };
   }, []);
 
   // Handle EventListener - Invite Response

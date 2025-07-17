@@ -176,9 +176,13 @@ const ReceivedInvites = () => {
   }, [state]);
 
   useEffect(() => {
-    if (listener) {
-      listener.addEventListener("invite", handleInvite);
-    }
+    if (!listener) return;
+
+    listener.addEventListener("invite", handleInvite);
+
+    return () => {
+      listener.removeEventListener("invite", handleInvite);
+    };
   }, []);
 
   // Handle EventListener - New Invite
@@ -236,6 +240,7 @@ const ReceivedInvites = () => {
     inviteId: number,
     status: InviteStatusType
   ) {
+    if (state.tag === "redirect") return;
     try {
       dispatch({ type: "start-validating", inviteId });
 

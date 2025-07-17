@@ -122,7 +122,6 @@ class StorageFileJclouds(
                 }
             }
 
-            logger.info("Blob $path downloaded successfully as ByteArray")
             return success(byteArrayOutputStream.toByteArray())
         } catch (e: Exception) {
             logger.info("Failed to upload blob: $path", e)
@@ -186,10 +185,9 @@ class StorageFileJclouds(
                             .prefix(folderPath)
                             .recursive(),
                     ).map { it.name }
-            logger.info("Blobs to delete: $blobs")
+
             if (blobs.isNotEmpty()) {
                 blobStore.removeBlobs(bucketName, blobs)
-                logger.info("Deleted folder $folderPath and contents: $blobs")
             } else {
                 logger.info("No blobs found for folder $folderPath")
             }

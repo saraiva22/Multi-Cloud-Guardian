@@ -23,10 +23,17 @@ sealed interface Event {
         val user: UserInfoOutput,
         val folderInfo: FolderInfoOutput?,
         val fileName: String,
+        val size: Long,
         val createdAt: Long,
     ) : Event
 
     data class LeaveFolder(
+        val id: Long,
+        val user: UserInfoOutput,
+        val folderInfo: FolderInfoOutput?,
+    ) : Event
+
+    data class DeleteFolder(
         val id: Long,
         val user: UserInfoOutput,
         val folderInfo: FolderInfoOutput?,

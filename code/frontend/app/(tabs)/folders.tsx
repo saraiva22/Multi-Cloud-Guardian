@@ -35,6 +35,11 @@ import OwnershipSelector, {
   OwnershipCombination,
   ownershipOptions,
 } from "@/components/OwnershipSelector";
+import { UserInfo } from "@/domain/user/UserInfo";
+import { File } from "@/domain/storage/File";
+import { getSSE } from "@/services/notifications/SSEManager";
+import { EventSourceListener } from "react-native-sse";
+import { FolderInfo } from "@/domain/storage/FolderInfo";
 
 // The State
 type State =
@@ -94,6 +99,21 @@ type Action =
       filter: OwnershipCombination;
     }
   | { type: "search"; searchValue: string }
+  | {
+      type: "new-file";
+      folderId: number;
+      size: number;
+      updatedAt: number;
+    }
+  | {
+      type: "delete-file";
+      fileId: number;
+      user: UserInfo;
+      folderId: number;
+      size: number;
+      updatedAt: number;
+    }
+  | { type: "delete-folder"; user: UserInfo; folderInfo: FolderInfo }
   | {
       type: "reset";
     };
@@ -171,6 +191,43 @@ function reducer(state: State, action: Action): State {
             search: state.search,
             isFetchingMore: state.isFetchingMore,
           };
+        case "new-file":
+          return {
+            ...state,
+            folders: {
+              ...state.folders,
+              content: state.folders.content.map((folder) => {
+                if (folder.folderId === action.folderId) {
+                  return {
+                    ...folder,
+                    size: folder.size + action.size,
+                    numberFile: folder.numberFile + 1,
+                    updatedAt: action.updatedAt,
+                  };
+                }
+                return folder;
+              }),
+            },
+          };
+        case "delete-file":
+          return {
+            ...state,
+            folders: {
+              ...state.folders,
+              content: state.folders.content.map((folder) => {
+                if (folder.folderId === action.folderId) {
+                  return {
+                    ...folder,
+                    numberFile: Math.max(folder.numberFile - 1, 0),
+                    size: Math.max(folder.size - action.size, 0),
+                    updatedAt: action.updatedAt,
+                  };
+                }
+                return folder;
+              }),
+            },
+          };
+
         case "search":
           return {
             tag: "begin",
@@ -207,6 +264,18 @@ function reducer(state: State, action: Action): State {
               searchValue: "",
             },
           };
+        case "delete-folder": {
+          return {
+            ...state,
+            tag: "loaded",
+            folders: {
+              ...state.folders,
+              content: state.folders.content.filter(
+                (folder) => folder.folderId !== action.folderInfo.folderId
+              ),
+            },
+          };
+        }
         default:
           logUnexpectedAction(state, action);
           return state;
@@ -227,6 +296,10 @@ const firstState: State = {
 
 const SIZE_MIN_FOLDER = 2;
 
+type CustomEventsFile = "file";
+type CustomEventDeleteFile = "deleteFile";
+type CustomEventDeleteFolder = "deleteFolder";
+
 const FoldersScreen = () => {
   const { token, setUsername, setIsLogged } = useAuthentication();
   const [state, dispatch] = useReducer(reducer, firstState);
@@ -234,6 +307,7 @@ const FoldersScreen = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const filterSheetRef = useRef<BottomSheet>(null);
   const [isVerticalLayout, setIsVerticalLayout] = useState(false);
+  const listener = getSSE();
 
   const sort = state.tag === "error" ? sortOptions[0] : state.sort;
 
@@ -279,6 +353,71 @@ const FoldersScreen = () => {
       inputValue,
     });
   }
+
+  useEffect(() => {
+    if (!listener) return;
+    listener.addEventListener("file", handleNewFile);
+    listener.addEventListener("deleteFile", handleDeleteFile);
+    listener.addEventListener("deleteFolder", handleDeleteFolder);
+
+    return () => {
+      listener.removeEventListener("file", handleNewFile);
+      listener.removeEventListener("deleteFile", handleDeleteFile);
+      listener.removeEventListener("deleteFolder", handleDeleteFolder);
+    };
+  }, []);
+
+  // Handle EventListener - New File
+  const handleNewFile: EventSourceListener<CustomEventsFile> = (event) => {
+    if (event.type === "file") {
+      const eventData = JSON.parse(event.data);
+      dispatch({
+        type: "new-file",
+        folderId: eventData.folderInfo.folderId,
+        size: eventData.size,
+        updatedAt: eventData.createdAt,
+      });
+    }
+  };
+
+  // Handle EventListener - Delete File
+  const handleDeleteFile: EventSourceListener<CustomEventDeleteFile> = (
+    event
+  ) => {
+    if (event.type === "deleteFile") {
+      const eventData = JSON.parse(event.data);
+      dispatch({
+        type: "delete-file",
+        fileId: eventData.fileId,
+        user: eventData.user,
+        folderId: eventData.folderInfo.folderId,
+        size: 0,
+        updatedAt: eventData.createdAt,
+      });
+    }
+  };
+
+  // Handle EventListener - Delete Folder
+  const handleDeleteFolder: EventSourceListener<CustomEventDeleteFolder> = (
+    event
+  ) => {
+    if (event.type === "deleteFolder") {
+      const eventData = JSON.parse(event.data);
+      const user = {
+        id: eventData.user.id,
+        username: eventData.user.username,
+        email: eventData.user.email,
+      };
+      const folderInfo = {
+        folderId: eventData.folderInfo.folderId,
+        folderName: eventData.folderInfo.folderName,
+        folderType: eventData.folderInfo.folderType,
+      };
+
+      dispatch({ type: "delete-folder", user, folderInfo });
+    
+    }
+  };
 
   const loadData = async () => {
     try {

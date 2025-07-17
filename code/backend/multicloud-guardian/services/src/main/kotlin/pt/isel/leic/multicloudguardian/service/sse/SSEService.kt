@@ -28,6 +28,7 @@ class SSEService : NeedsShutdown {
     private var currentDeleteFile = 0L
     private var currentLeaveFolder = 0L
     private var currentRespondInvite = 0L
+    private var currentDeleteFolder = 0L
     private val lock = ReentrantLock()
 
     // A scheduler to send the periodic keep-alive events
@@ -110,6 +111,7 @@ class SSEService : NeedsShutdown {
         user: UserInfo,
         folderInfo: FolderInfo?,
         fileName: String,
+        size: Long,
         createdAt: Long,
         members: List<UserInfo>,
     ) = lock.withLock {
@@ -124,7 +126,26 @@ class SSEService : NeedsShutdown {
                 UserInfoOutput.fromDomain(user),
                 FolderInfoOutput.fromDomain(folderInfo),
                 fileName,
+                size,
                 createdAt,
+            ),
+        )
+    }
+
+    fun deleteFolder(
+        user: UserInfo,
+        folderInfo: FolderInfo,
+        members: List<UserInfo>,
+    ) = lock.withLock {
+        logger.info("deleteFolder")
+        val id = currentDeleteFolder++
+        val membersFolder = members.map { it.id.value }
+        sendEventToAll(
+            membersFolder,
+            Event.DeleteFolder(
+                id,
+                UserInfoOutput.fromDomain(user),
+                FolderInfoOutput.fromDomain(folderInfo),
             ),
         )
     }

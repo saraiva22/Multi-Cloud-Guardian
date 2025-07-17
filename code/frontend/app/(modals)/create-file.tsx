@@ -14,7 +14,7 @@ import * as DocumentPicker from "expo-document-picker";
 import FormField from "@/components/FormField";
 import CustomButton from "@/components/CustomButton";
 import { icons } from "@/constants";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import EncryptionToggle from "@/components/EncryptionToggle";
 import { useAuthentication } from "@/context/AuthProvider";
 import {
@@ -57,7 +57,7 @@ type State =
       folderType: FolderType | undefined;
       folders: PageResult<Folder>;
     }
-  | { tag: "redirect" };
+  | { tag: "redirect"; folderId: number | undefined };
 
 // The Action
 type Action =
@@ -69,7 +69,7 @@ type Action =
   | { type: "edit"; inputName: string; inputValue: string | boolean | any }
   | { type: "submit" }
   | { type: "error"; message: Problem | string }
-  | { type: "success" };
+  | { type: "success"; folderId: number | undefined };
 
 // The Logger
 function logUnexpectedAction(state: State, action: Action) {
@@ -154,7 +154,7 @@ function reducer(state: State, action: Action): State {
 
     case "submitting":
       if (action.type === "success") {
-        return { tag: "redirect" };
+        return { tag: "redirect", folderId: action.folderId };
       } else if (action.type === "error") {
         return {
           tag: "editing",
@@ -191,6 +191,11 @@ const CreateFile = () => {
   const [state, dispatch] = useReducer(reducer, firstState);
   const { token, keyMaster } = useAuthentication();
 
+  const selectFolderId =
+    state.tag === "redirect" && state.folderId
+      ? state.folderId.toString()
+      : undefined;
+
   useEffect(() => {
     if (state.tag === "begin") {
       dispatch({ type: "start-loading" });
@@ -198,7 +203,11 @@ const CreateFile = () => {
     }
 
     if (state.tag === "redirect") {
-      router.replace("/files");
+      if (selectFolderId) {
+        router.replace(`/folders/${selectFolderId}`);
+      } else {
+        router.replace("/files");
+      }
     }
   }, [state]);
 
@@ -324,7 +333,7 @@ const CreateFile = () => {
       }
 
       Alert.alert("Success", "Your file has been uploaded successfully.");
-      dispatch({ type: "success" });
+      dispatch({ type: "success", folderId: folderId });
     } catch (error) {
       Alert.alert(
         "Error",
@@ -514,6 +523,7 @@ const CreateFile = () => {
                       onPress={(folderId) => {
                         handleChange("folderId", folderId);
                         handleChange("folderType", item.type);
+                        handleChange("encryption", false);
                       }}
                       selectedFolderId={state.inputs.folderId}
                     />

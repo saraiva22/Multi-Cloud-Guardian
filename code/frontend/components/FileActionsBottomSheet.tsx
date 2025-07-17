@@ -24,7 +24,9 @@ import CustomButton from "./CustomButton";
 import { Picker } from "@react-native-picker/picker";
 import {
   deleteFile,
+  deleteFileInFolder,
   downloadFile,
+  downloadFileInFolder,
   generateTemporaryUrl,
   getFolders,
   moveFile,
@@ -239,7 +241,15 @@ const FileActionsBottomSheet = forwardRef<BottomSheet, Props>(
       if (state.tag !== "begin") return;
       dispatch({ type: "start-loading" });
       try {
-        const result = await downloadFile(file.fileId.toString(), token);
+        const fileId = file.fileId.toString();
+        const result = file.folderInfo?.folderId
+          ? await downloadFileInFolder(
+              file.folderInfo.folderId.toString(),
+              fileId,
+              token
+            )
+          : await downloadFile(fileId, token);
+
         await processAndSaveDownloadedFile(result, keyMaster);
         dispatch({ type: "loading-success", replaceHistory: false });
       } catch (error) {
@@ -255,7 +265,14 @@ const FileActionsBottomSheet = forwardRef<BottomSheet, Props>(
       if (state.tag !== "begin") return;
       dispatch({ type: "start-loading" });
       try {
-        await deleteFile(file.fileId.toString(), token);
+        const fileId = file.fileId.toString();
+        file.folderInfo?.folderId
+          ? await deleteFileInFolder(
+              file.folderInfo.folderId.toString(),
+              fileId,
+              token
+            )
+          : await deleteFile(fileId, token);
         Alert.alert("File Deleted", "The file was deleted successfully.");
         dispatch({ type: "loading-success", replaceHistory: true });
       } catch (error) {

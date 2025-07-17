@@ -145,10 +145,11 @@ class StorageService(
                                 )
                             if (folderMembers?.folder?.type == FolderType.SHARED) {
                                 val userInfo = UserInfo(user.id, user.username, user.email)
+                                val folder = folderMembers.folder
                                 sseService.sendFile(
                                     fileId.value,
                                     userInfo,
-                                    folderMembers.folder.parentFolderInfo,
+                                    FolderInfo(folder.folderId, folder.folderName, folder.type),
                                     file.blobName,
                                     path,
                                     file.size,
@@ -432,6 +433,7 @@ class StorageService(
                                     userInfo,
                                     file.folderInfo,
                                     file.fileName,
+                                    file.size,
                                     clock.epochSeconds,
                                     members,
                                 )
@@ -453,7 +455,7 @@ class StorageService(
             val fileRepository = it.storageRepository
 
             val folderMembers =
-                fileRepository.getFolderById(folderId, false)
+                fileRepository.getFolderById(folderId, true)
                     ?: return@run failure(DeleteFolderError.FolderNotFound)
 
             when (folderMembers.folder.type) {
@@ -491,6 +493,15 @@ class StorageService(
                         is Success -> {
                             contextStorage.value.close()
                             fileRepository.deleteFolder(user.id, folderMembers.folder)
+                            if (folderMembers.folder.type == FolderType.SHARED) {
+                                val userInfo = UserInfo(user.id, user.username, user.email)
+                                val folder = folderMembers.folder
+                                sseService.deleteFolder(
+                                    userInfo,
+                                    FolderInfo(folder.folderId, folder.folderName, folder.type),
+                                    folderMembers.members,
+                                )
+                            }
                             success(true)
                         }
                     }
@@ -553,6 +564,7 @@ class StorageService(
                                     userInfo,
                                     file.folderInfo,
                                     file.fileName,
+                                    file.size,
                                     clock.epochSeconds,
                                     members,
                                 )

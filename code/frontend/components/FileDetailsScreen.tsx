@@ -29,6 +29,9 @@ import { FolderType } from "@/domain/storage/FolderType";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import FileActionsBottomSheet from "./FileActionsBottomSheet";
+import { UserInfo } from "@/domain/user/UserInfo";
+import { getSSE } from "@/services/notifications/SSEManager";
+import { EventSourceListener } from "react-native-sse";
 
 // The State
 type State =
@@ -49,6 +52,7 @@ type Action =
   | { type: "download-loading"; details: FileOutputModel }
   | { type: "url-loading"; details: FileOutputModel }
   | { type: "delete-loading" }
+  | { type: "event-sse" }
   | { type: "success-delete" };
 
 function logUnexpectedAction(state: State, action: Action) {
@@ -87,6 +91,8 @@ function reducer(state: State, action: Action): State {
         return { tag: "loading" };
       } else if (action.type === "delete-loading") {
         return { tag: "loading" };
+      } else if (action.type === "event-sse") {
+        return { tag: "redirect" };
       } else {
         logUnexpectedAction(state, action);
         return state;
@@ -103,6 +109,10 @@ function reducer(state: State, action: Action): State {
 const firstState: State = {
   tag: "begin",
 };
+
+type CustomEventLeaveFolder = "leaveFolder";
+type CustomEventDeleteFile = "deleteFile";
+type CustomEventDeleteFolder = "deleteFolder";
 
 type FileInfoProps = {
   fileInfo: FileOutputModel;
@@ -264,11 +274,62 @@ const FileDetailsScreen = ({
   const { username, token, keyMaster, setUsername, setIsLogged } =
     useAuthentication();
 
+  const listener = getSSE();
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   const openMoveSheet = () => {
     bottomSheetRef.current?.expand();
   };
+
+  useEffect(() => {
+    if (state.tag === "begin") {
+      fetchFileDetails();
+    }
+    if (state.tag === "redirect") {
+      router.replace("/files");
+    }
+
+    if (state.tag === "error") {
+      Alert.alert(
+        "Error",
+        `${
+          isProblem(state.error)
+            ? getProblemMessage(state.error)
+            : isProblem(state.error.body)
+            ? getProblemMessage(state.error.body)
+            : state.error
+        }`
+      );
+      router.replace(`/files`);
+    }
+  }, [state.tag]);
+
+  useEffect(() => {
+    if (!listener) return;
+    listener.addEventListener("leaveFolder", handleEventSSE);
+    listener.addEventListener("deleteFile", handleEventSSE);
+    listener.addEventListener("deleteFolder", handleEventSSE);
+
+    return () => {
+      listener.removeEventListener("leaveFolder", handleEventSSE);
+      listener.removeEventListener("deleteFile", handleEventSSE);
+      listener.removeEventListener("deleteFolder", handleEventSSE);
+    };
+  }, []);
+
+  // Handle EventListener - EventSSE
+  const handleEventSSE: EventSourceListener<
+    CustomEventDeleteFile | CustomEventDeleteFolder | CustomEventLeaveFolder
+  > = (event) => {
+    if (
+      event.type === "leaveFolder" ||
+      event.type === "deleteFile" ||
+      event.type === "deleteFolder"
+    ) {
+      dispatch({ type: "event-sse" });
+    }
+  };
+
   const fetchFileDetails = async () => {
     dispatch({ type: "start-loading" });
     try {
@@ -331,29 +392,6 @@ const FileDetailsScreen = ({
       dispatch({ type: "loading-error", error: error });
     }
   }
-
-  useEffect(() => {
-    if (state.tag === "begin") {
-      fetchFileDetails();
-    }
-    if (state.tag === "redirect") {
-      router.replace("/files");
-    }
-
-    if (state.tag === "error") {
-      Alert.alert(
-        "Error",
-        `${
-          isProblem(state.error)
-            ? getProblemMessage(state.error)
-            : isProblem(state.error.body)
-            ? getProblemMessage(state.error.body)
-            : state.error
-        }`
-      );
-      router.replace(`/files`);
-    }
-  }, [state.tag]);
 
   // Render UI
   switch (state.tag) {
