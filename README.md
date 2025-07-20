@@ -15,9 +15,11 @@
     Secure and manage your files with client-side, privacy-first encryption
     <br />
     <br />
+      <a href="https://www.youtube.com/watch?v=Sdm-y7RC0tk">View Demo</a>
     <br />
 
   </p>
+  
 </div>
 
 ---
