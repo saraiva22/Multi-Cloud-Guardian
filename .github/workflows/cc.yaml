@@ -18,5 +18,18 @@ jobs:
           distribution: temurin
       - name: Build with Gradle
         env:
-          DB_URL: jdbc:postgresql://localhost:5432/${{ secrets.POSTGRES_DB }}?user=${{ secrets.POSTGRES_USER }}&password=${{ secrets.POSTGRES_PASSWORD }}
+          DB_URL: ${{ secrets.DB_URL }}
+          BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          GOOGLE_IDENTITY: ${{ secrets.GOOGLE_IDENTITY }}
+          GOOGLE_LOCATION: ${{ secrets.GOOGLE_LOCATION }}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_IDENTITY: ${{ secrets.AZURE_IDENTITY }}
+          AZURE_LOCATION: ${{ secrets.AZURE_LOCATION }}
+          AWS_CREDENTIALS: ${{ secrets.AWS_CREDENTIALS }}
+          AWS_IDENTITY: ${{ secrets.AWS_IDENTITY }}
+          AWS_LOCATION: ${{ secrets.AWS_LOCATION }}
+          BACK_BLAZE_CREDENTIALS: ${{ secrets.BACK_BLAZE_CREDENTIALS }}
+          BACK_BLAZE_IDENTITY: ${{ secrets.BACK_BLAZE_IDENTITY }}
+          BACK_BLAZE_LOCATION: ${{ secrets.BACK_BLAZE_LOCATION }}
         run: ./code/backend/gradlew -p code/backend check --info

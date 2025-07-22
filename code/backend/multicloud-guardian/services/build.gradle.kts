@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     kotlin("jvm")
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
@@ -53,12 +55,26 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
+val envFile = rootProject.file(".env")
+val envProps = Properties()
+
+if (envFile.exists()) {
+    envFile.inputStream().use { envProps.load(it) }
+}
+
 tasks.test {
     useJUnitPlatform()
+    envProps.forEach { (key, value) ->
+        environment(key.toString(), value.toString())
+    }
+
     if (System.getenv("DB_URL") == null) {
         environment("DB_URL", "jdbc:postgresql://localhost:5432/db?user=dbuser&password=changeit")
     }
+    dependsOn(":multicloud-guardian:repository-jdbi:dbTestsWait")
+    finalizedBy(":multicloud-guardian:repository-jdbi:dbTestsDown")
 }
+
 kotlin {
     jvmToolchain(21)
 }

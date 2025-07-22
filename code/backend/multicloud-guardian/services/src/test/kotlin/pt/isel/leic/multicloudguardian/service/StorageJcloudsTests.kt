@@ -1,5 +1,6 @@
 package pt.isel.leic.multicloudguardian.service
 
+import org.junit.jupiter.api.Disabled
 import pt.isel.leic.multicloudguardian.domain.provider.ProviderType
 import pt.isel.leic.multicloudguardian.domain.utils.Failure
 import pt.isel.leic.multicloudguardian.domain.utils.Success
@@ -59,6 +60,7 @@ class StorageJcloudsTests : ServiceTests() {
     }
 
     @Test
+    @Disabled("Tests disabled because the free Amazon plan has been disabled")
     fun `should upload and delete blob in Amazon S3`() {
         uploadAndDeleteBlobTest(ProviderType.AMAZON)
     }
@@ -306,6 +308,7 @@ class StorageJcloudsTests : ServiceTests() {
     }
 
     @Test
+    @Disabled("Tests disabled because the free Amazon plan has been disabled")
     fun `should move blob into a folder - Amazon`() {
         // Arrange
         val provider = ProviderType.AMAZON

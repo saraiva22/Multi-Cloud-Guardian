@@ -5,6 +5,7 @@ build/
 !**/src/test/**/build/
 multicloud-guardian/host/.env
 multicloud-guardian/host/json-key.json
+build.sh
 
 ### IntelliJ IDEA ###
 .idea/

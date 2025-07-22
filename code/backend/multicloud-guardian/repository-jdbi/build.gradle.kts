@@ -43,7 +43,10 @@ tasks.test {
     if (System.getenv("DB_URL") == null) {
         environment("DB_URL", "jdbc:postgresql://localhost:5432/db?user=dbuser&password=changeit")
     }
+    dependsOn(":multicloud-guardian:repository-jdbi:dbTestsWait")
+    finalizedBy(":multicloud-guardian:repository-jdbi:dbTestsDown")
 }
+
 kotlin {
     jvmToolchain(21)
 }
@@ -59,14 +62,14 @@ val composeFileDir: Directory by parent!!.extra
 val dockerComposePath = composeFileDir.file("docker-compose.yml").toString()
 
 task<Exec>("dbTestsUp") {
-    commandLine("docker", "compose", "-f", dockerComposePath, "up", "-d", "--build", "--force-recreate", "db-tests")
+    commandLine("/usr/local/bin/docker", "compose", "-f", dockerComposePath, "up", "-d", "--build", "--force-recreate", "db-tests")
 }
 
 task<Exec>("dbTestsWait") {
-    commandLine("docker", "exec", "db-tests", "/app/bin/wait-for-postgres.sh", "localhost")
+    commandLine("/usr/local/bin/docker", "exec", "db-tests", "/app/bin/wait-for-postgres.sh", "localhost")
     dependsOn("dbTestsUp")
 }
 
 task<Exec>("dbTestsDown") {
-    commandLine("docker", "compose", "-f", dockerComposePath, "down", "db-tests")
+    commandLine("/usr/local/bin/docker", "compose", "-f", dockerComposePath, "down", "db-tests")
 }
