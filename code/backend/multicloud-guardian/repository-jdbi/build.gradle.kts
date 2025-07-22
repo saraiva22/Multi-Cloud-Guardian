@@ -62,14 +62,14 @@ val composeFileDir: Directory by parent!!.extra
 val dockerComposePath = composeFileDir.file("docker-compose.yml").toString()
 
 task<Exec>("dbTestsUp") {
-    commandLine("/usr/local/bin/docker", "compose", "-f", dockerComposePath, "up", "-d", "--build", "--force-recreate", "db-tests")
+    commandLine("docker", "compose", "-f", dockerComposePath, "up", "-d", "--build", "--force-recreate", "db-tests")
 }
 
 task<Exec>("dbTestsWait") {
-    commandLine("/usr/local/bin/docker", "exec", "db-tests", "/app/bin/wait-for-postgres.sh", "localhost")
+    commandLine("docker", "exec", "db-tests", "/app/bin/wait-for-postgres.sh", "localhost")
     dependsOn("dbTestsUp")
 }
 
 task<Exec>("dbTestsDown") {
-    commandLine("/usr/local/bin/docker", "compose", "-f", dockerComposePath, "down", "db-tests")
+    commandLine("docker", "compose", "-f", dockerComposePath, "down", "db-tests")
 }
